@@ -2,16 +2,18 @@
 
 ## Overview
 
-This document describes a design for a secure, multi-tenant **BMC (Baseboard
+This document describes the design for a secure, multi-tenant **BMC (Baseboard
 Management Controller) access solution** for a hosting provider. The system
 allows customers to access their server's management interface (IPMI or Redfish)
-without exposing raw BMC ports publicly. It combines a **local agent per data
-center**, a **central gateway**, and a **customer CLI tool**.
+without exposing raw BMC ports publicly.
+
+It combines a **local agent per datacenter**, a **central gateway**, and a
+**customer CLI tool**.
 
 ### Control Plane vs Data Plane Separation
 
-The system separates **control plane** (management operations) from **data plane
-** (console/proxy traffic):
+The system separates **control plane** (management operations) from
+**data plane** (console/proxy traffic):
 
 - **Control Plane**: Authentication, server discovery, session management via
   HTTP/JSON and gRPC APIs
