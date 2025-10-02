@@ -64,7 +64,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and deeper design 
 - Role-based isolation for multi-tenancy
 - Audit logging (designed for SIEM integration)
 
-See [docs/SECURITY.md](docs/ARCHITECTURE.md) for broader security consideration notes.
+See [docs/SECURITY.md](docs/SECURITY.md) for broader security consideration
+notes.
 
 ## 🛠️ Quick Start (Development)
 
