@@ -1,0 +1,517 @@
+.PHONY: dev-up dev-down dev-logs dev-rebuild dev-shell-cli dev-shell-gateway dev-shell-manager dev-shell-agent dev-clean dev-install-air local-env-up local-env-down local-env-status local-env-logs local-env-deps local-env-setup local-env-clean local-env-restart local-env-logs-manager local-env-logs-gateway local-env-logs-agent local-env-logs-test local-env-check-processes
+
+# Development with Docker Compose + Air hot reloading
+
+# Start core BMC services only (manager, gateway, local-agent)
+dev-up:
+	@echo "🚀 Starting BMC Management Core Services..."
+	docker-compose -f docker-compose.core.yml up --build -d
+	@echo ""
+	@echo "✅ Core development services started!"
+	@echo ""
+	@echo "Core Services:"
+	@echo "  🔧 Manager:        http://localhost:8080"
+	@echo "  🌐 Gateway:        http://localhost:8081"
+	@echo "  🤖 Agent:          http://localhost:8082"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  make bmc-up             # Start persistent development BMC machines"
+	@echo "  make test-e2e           # Run E2E tests (starts temporary test machines)"
+	@echo "  make dev-logs           # View all service logs"
+	@echo "  make dev-down           # Stop all services"
+
+# Start full development environment (core + IPMI)
+dev-full-up:
+	@echo "🚀 Starting full development environment (core + IPMI)..."
+	@$(MAKE) dev-up
+	@$(MAKE) dev-ipmi-up
+
+# Stop all services (core + IPMI + any E2E)
+dev-down:
+	@echo "Stopping all development environments..."
+	docker-compose -f docker-compose.e2e.yml down 2>/dev/null || true
+	docker-compose -f docker-compose.virtualbmc.yml down 2>/dev/null || true
+	docker-compose -f docker-compose.core.yml down 2>/dev/null || true
+	@echo "All development services stopped"
+
+# Stop only core services (keep IPMI machines if running)
+dev-core-down:
+	@echo "Stopping core development services..."
+	docker-compose -f docker-compose.core.yml down
+	@echo "Core services stopped"
+
+# View logs from all services (core + IPMI)
+dev-logs:
+	@echo "Viewing logs from all development services..."
+	docker-compose -f docker-compose.core.yml -f docker-compose.virtualbmc.yml logs -f --tail=50
+
+# View logs from specific services
+dev-logs-gateway:
+	docker-compose -f docker-compose.core.yml logs -f gateway
+
+dev-logs-manager:
+	docker-compose -f docker-compose.core.yml logs -f manager
+
+dev-logs-agent:
+	docker-compose -f docker-compose.core.yml logs -f local-agent
+
+dev-logs-cli:
+	docker-compose -f docker-compose.core.yml logs -f cli
+
+# Rebuild and restart services (useful after dependency changes)
+dev-rebuild:
+	@echo "Rebuilding development environment..."
+	docker-compose -f docker-compose.core.yml down 2>/dev/null || true
+	docker-compose -f docker-compose.core.yml up -d --build
+	@echo "Core services rebuilt. Use 'make bmc-up' to restart BMC machines if needed."
+
+# Access shell in CLI container for testing CLI commands
+dev-shell-cli:
+	@echo "Accessing CLI container shell..."
+	@echo "Inside the container, you can run: go run . server list"
+	docker-compose -f docker-compose.core.yml exec cli sh
+
+# Access shell in Gateway container
+dev-shell-gateway:
+	docker-compose -f docker-compose.core.yml exec gateway sh
+
+# Access shell in Manager container
+dev-shell-manager:
+	docker-compose -f docker-compose.core.yml exec manager sh
+
+# Access shell in Local Agent container
+dev-shell-agent:
+	docker-compose -f docker-compose.core.yml exec local-agent sh
+
+# Clean up all development containers and volumes
+dev-clean:
+	@echo "Cleaning up all development environments..."
+	docker-compose -f docker-compose.e2e.yml down -v 2>/dev/null || true
+	docker-compose -f docker-compose.virtualbmc.yml down -v 2>/dev/null || true
+	docker-compose -f docker-compose.core.yml down -v 2>/dev/null || true
+	docker system prune -f
+	@echo "All development environments cleaned"
+
+# Install Air locally (alternative to Docker approach)
+dev-install-air:
+	@echo "Installing Air for local development..."
+	go install github.com/air-verse/air@latest
+	@echo "Air installed! You can now use 'air' command in each service directory."
+	@echo ""
+	@echo "To run services locally with Air:"
+	@echo "  cd gateway && air"
+	@echo "  cd manager && air"
+	@echo "  cd local-agent && air"
+	@echo "  cd cli && air"
+
+# Run specific service locally with Air (requires local Air installation)
+dev-gateway-local:
+	cd gateway && air
+
+dev-manager-local:
+	cd manager && air
+
+dev-agent-local:
+	cd local-agent && air
+
+dev-cli-local:
+	cd cli && air
+
+# Development status
+dev-status:
+	@echo "Development Environment Status:"
+	@echo "==============================="
+	@echo ""
+	@echo "Core Services:"
+	docker-compose -f docker-compose.core.yml ps
+	@echo ""
+	@echo "IPMI Development Machines:"
+	docker-compose -f docker-compose.virtualbmc.yml ps 2>/dev/null || echo "  (Not running - use 'make dev-ipmi-up' to start)"
+	@echo ""
+	@echo "Port mappings:"
+	@echo "  Manager:      localhost:8080"
+	@echo "  Gateway:      localhost:8081"
+	@echo "  Local Agent:  localhost:8082"
+	@echo "  Dev IPMI:     localhost:6230-6232 (if dev-ipmi-up)"
+	@echo "  E2E IPMI:     localhost:7230-7232 (during E2E tests)"
+
+# Help
+dev-help:
+	@echo "Development Commands"
+	@echo "===================================="
+	@echo ""
+	@echo "Docker Compose + Air (Recommended):"
+	@echo "  make dev-up              # Start all services with hot reloading"
+	@echo "  make dev-down            # Stop all services"
+	@echo "  make dev-logs            # View all logs"
+	@echo "  make dev-logs-gateway    # View gateway logs"
+	@echo "  make dev-logs-manager    # View manager logs"
+	@echo "  make dev-logs-agent      # View local-agent logs"
+	@echo "  make dev-rebuild         # Rebuild and restart services"
+	@echo "  make dev-clean           # Clean up containers and volumes"
+	@echo ""
+	@echo "Container Access:"
+	@echo "  make dev-shell-cli       # Access CLI container"
+	@echo "  make dev-shell-gateway   # Access Gateway container"
+	@echo "  make dev-shell-manager   # Access Manager container"
+	@echo "  make dev-shell-agent     # Access Local Agent container"
+	@echo ""
+	@echo "Local Air (Alternative):"
+	@echo "  make dev-install-air     # Install Air locally"
+	@echo "  make dev-gateway-local   # Run gateway with Air locally"
+	@echo "  make dev-manager-local   # Run manager with Air locally"
+	@echo "  make dev-agent-local     # Run local-agent with Air locally"
+	@echo "  make dev-cli-local       # Run CLI with Air locally"
+	@echo ""
+	@echo "Local Air (No Docker):"
+	@echo "  make local-env-up        # Start all services with Air locally"
+	@echo "  make local-env-down      # Stop all local services"
+	@echo "  make local-env-status    # Show status of local services"
+	@echo "  make local-env-logs      # View logs from local services"
+	@echo "  make local-env-check-processes # Check for remaining BMC processes"
+
+# Local Air Development Environment (No Docker)
+
+# Environment variables for local development
+LOCAL_DB_PATH := ./tmp/local-dev.db
+LOCAL_JWT_SECRET := dev-secret-key-change-in-production
+LOCAL_MANAGER_PORT := 8080
+LOCAL_GATEWAY_PORT := 8081
+LOCAL_AGENT_PORT := 8082
+LOCAL_TEST_PORTS := 9001,9002,9003
+LOCAL_LOGS_DIR := ./tmp/logs
+
+# PIDs file for tracking background processes
+LOCAL_PIDS_FILE := "$(CURDIR)/tmp/local-env.pids"
+
+# Install dependencies for local development
+local-env-deps:
+	@echo "Installing local development dependencies..."
+	@command -v air >/dev/null 2>&1 || (echo "Installing Air..." && go install github.com/air-verse/air@latest)
+	@command -v buf >/dev/null 2>&1 || (echo "Installing Buf..." && go install github.com/bufbuild/buf/cmd/buf@latest)
+	@command -v protoc-gen-go >/dev/null 2>&1 || (echo "Installing protoc-gen-go..." && go install google.golang.org/protobuf/cmd/protoc-gen-go@latest)
+	@command -v protoc-gen-connect-go >/dev/null 2>&1 || (echo "Installing protoc-gen-connect-go..." && go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest)
+	@echo "✅ All dependencies installed successfully!"
+
+# Prepare local environment directories
+local-env-setup:
+	@echo "Setting up local development environment..."
+	@mkdir -p tmp/logs
+	@mkdir -p tmp/data
+	@touch $(LOCAL_PIDS_FILE)
+	@echo "✅ Local environment directories created"
+
+# Start test BMC servers (synthetic Redfish endpoints)
+local-env-start-test-servers: local-env-setup
+	@echo "🔄 Starting test BMC servers..."
+	@cd cli && nohup go run . test setup start --daemon > ../tmp/logs/test-servers.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+	@sleep 3
+	@echo "✅ Test BMC servers started on ports $(LOCAL_TEST_PORTS)"
+
+# Start Manager service with Air
+local-env-start-manager: local-env-setup
+	@echo "🔄 Starting Manager service with Air..."
+	@cd manager && DB_PATH=../$(LOCAL_DB_PATH) JWT_SECRET=$(LOCAL_JWT_SECRET) PORT=$(LOCAL_MANAGER_PORT) \
+		nohup air -c .air.toml > ../tmp/logs/manager.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+	@sleep 3
+	@echo "✅ Manager service started on port $(LOCAL_MANAGER_PORT)"
+
+# Start Gateway service with Air
+local-env-start-gateway: local-env-setup
+	@echo "🔄 Starting Gateway service with Air..."
+	@cd gateway && BMC_MANAGER_ENDPOINT=http://localhost:$(LOCAL_MANAGER_PORT) JWT_SECRET=$(LOCAL_JWT_SECRET) \
+		PORT=$(LOCAL_GATEWAY_PORT) GATEWAY_ID=local-gateway-1 REGION=local-dev \
+		nohup air -c .air.toml > ../tmp/logs/gateway.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+	@sleep 3
+	@echo "✅ Gateway service started on port $(LOCAL_GATEWAY_PORT)"
+
+# Start Local Agent service with Air
+local-env-start-agent: local-env-setup
+	@echo "🔄 Starting Local Agent service with Air..."
+	@cd local-agent && BMC_REGIONAL_GATEWAY_ENDPOINT=http://localhost:$(LOCAL_GATEWAY_PORT) \
+		BMC_AGENT_ENDPOINT=http://localhost:$(LOCAL_AGENT_PORT) \
+		CONFIG_FILE=config/local-agent.yaml \
+		nohup air -c .air.toml > ../tmp/logs/local-agent.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+	@sleep 2
+	@echo "✅ Local Agent service started on port $(LOCAL_AGENT_PORT)"
+
+# Start all services in the correct order
+local-env-up: local-env-deps
+	@echo "🚀 Starting BMC Management System - Local Air Environment"
+	@echo "=========================================================="
+	@make -s local-env-start-test-servers
+	@make -s local-env-start-manager
+	@make -s local-env-start-gateway
+	@make -s local-env-start-agent
+	@echo ""
+	@echo "🎉 Local development environment started successfully!"
+	@echo ""
+	@echo "Services:"
+	@echo "  🔧 Manager:       http://localhost:$(LOCAL_MANAGER_PORT)"
+	@echo "  🌐 Gateway:       http://localhost:$(LOCAL_GATEWAY_PORT)"
+	@echo "  🤖 Local Agent:   http://localhost:$(LOCAL_AGENT_PORT)"
+	@echo "  🖥️  Test Servers:  localhost:$(LOCAL_TEST_PORTS)"
+	@echo ""
+	@echo "Data & Logs:"
+	@echo "  📁 Database:      $(LOCAL_DB_PATH)"
+	@echo "  📊 Logs:          $(LOCAL_LOGS_DIR)/"
+	@echo "  🆔 PIDs:          $(LOCAL_PIDS_FILE)"
+	@echo ""
+	@echo "Useful commands:"
+	@echo "  make local-env-status    # Check service status"
+	@echo "  make local-env-logs      # View all service logs"
+	@echo "  make local-env-down      # Stop all services"
+	@echo ""
+	@echo "CLI Usage:"
+	@echo "  cd cli && go run . server list"
+	@echo "  cd cli && go run . server power status server-001"
+	@echo ""
+	@echo "Health Checks:"
+	@echo "  curl http://localhost:$(LOCAL_MANAGER_PORT)/health"
+	@echo "  curl http://localhost:$(LOCAL_GATEWAY_PORT)/health"
+
+# Stop all local services
+local-env-down:
+	@echo "🛑 Stopping BMC Management System - Local Environment"
+	@echo "====================================================="
+	@# Step 1: Try graceful shutdown using PIDs file
+	@if [ -f $(LOCAL_PIDS_FILE) ]; then \
+		echo "📋 Stopping services from PIDs file..."; \
+		while IFS= read -r pid; do \
+			if [ ! -z "$$pid" ] && kill -0 $$pid 2>/dev/null; then \
+				echo "  Stopping process $$pid..."; \
+				kill -TERM $$pid 2>/dev/null || true; \
+			fi; \
+		done < $(LOCAL_PIDS_FILE); \
+		echo "  Waiting for graceful shutdown..."; \
+		sleep 2; \
+		while IFS= read -r pid; do \
+			if [ ! -z "$$pid" ] && kill -0 $$pid 2>/dev/null; then \
+				echo "  Force killing process $$pid..."; \
+				kill -KILL $$pid 2>/dev/null || true; \
+			fi; \
+		done < $(LOCAL_PIDS_FILE); \
+		rm -f $(LOCAL_PIDS_FILE); \
+		echo "✅ PIDs file processes stopped"; \
+	else \
+		echo "⚠️  No PIDs file found - proceeding with pattern-based cleanup"; \
+	fi
+	@# Step 2: Pattern-based cleanup for any remaining processes
+	@echo "🧹 Cleaning up remaining BMC processes..."
+	@# Kill Air processes first (parent processes)
+	@for pattern in "air.*manager" "air.*gateway" "air.*local-agent"; do \
+		pids=$$(pgrep -f "$$pattern" 2>/dev/null || true); \
+		if [ ! -z "$$pids" ]; then \
+			echo "  Killing $$pattern processes: $$pids"; \
+			echo "$$pids" | xargs -r kill -TERM 2>/dev/null || true; \
+		fi; \
+	done
+	@sleep 1
+	@# Kill service binaries (child processes)
+	@for pattern in "tmp/bmc-manager" "tmp/gateway" "tmp/local-agent"; do \
+		pids=$$(pgrep -f "$$pattern" 2>/dev/null || true); \
+		if [ ! -z "$$pids" ]; then \
+			echo "  Killing $$pattern processes: $$pids"; \
+			echo "$$pids" | xargs -r kill -TERM 2>/dev/null || true; \
+		fi; \
+	done
+	@# Kill test servers
+	@pids=$$(pgrep -f "bmc-cli.*test.*setup" 2>/dev/null || true); \
+	if [ ! -z "$$pids" ]; then \
+		echo "  Killing test servers: $$pids"; \
+		echo "$$pids" | xargs -r kill -TERM 2>/dev/null || true; \
+	fi
+	@sleep 1
+	@# Step 3: Force kill any remaining processes
+	@echo "💀 Force killing any remaining processes..."
+	@for pattern in "air.*manager" "air.*gateway" "air.*local-agent" "tmp/bmc-manager" "tmp/gateway" "tmp/local-agent" "bmc-cli.*test.*setup"; do \
+		pids=$$(pgrep -f "$$pattern" 2>/dev/null || true); \
+		if [ ! -z "$$pids" ]; then \
+			echo "  Force killing $$pattern processes: $$pids"; \
+			echo "$$pids" | xargs -r kill -KILL 2>/dev/null || true; \
+		fi; \
+	done
+	@# Step 3.5: Kill orphaned Air processes in our workspace
+	@echo "🔍 Cleaning up orphaned Air processes in workspace..."
+	@ps aux | grep "air -c .air.toml" | grep -v grep | while IFS= read -r line; do \
+		pid=$$(echo "$$line" | awk '{print $$2}'); \
+		cwd_info=$$(lsof -p $$pid 2>/dev/null | grep cwd | head -1 || true); \
+		if echo "$$cwd_info" | grep -q "bmc-mgmt"; then \
+			echo "  Killing orphaned Air process $$pid in workspace"; \
+			kill -KILL $$pid 2>/dev/null || true; \
+		fi; \
+	done
+	@# Step 4: Port-based cleanup as final safety
+	@echo "🔌 Checking for processes on BMC ports..."
+	@for port in $(LOCAL_MANAGER_PORT) $(LOCAL_GATEWAY_PORT) $(LOCAL_AGENT_PORT) 9001 9002 9003; do \
+		pid=$$(lsof -ti :$$port 2>/dev/null || true); \
+		if [ ! -z "$$pid" ]; then \
+			echo "  Killing process $$pid on port $$port"; \
+			kill -KILL $$pid 2>/dev/null || true; \
+		fi; \
+	done
+	@echo "✅ Local environment stopped and cleaned"
+
+# Show status of local services
+local-env-status:
+	@echo "BMC Management System - Local Environment Status"
+	@echo "==============================================="
+	@echo ""
+	@if [ -f $(LOCAL_PIDS_FILE) ]; then \
+		echo "Registered PIDs:"; \
+		cat $(LOCAL_PIDS_FILE) 2>/dev/null | while IFS= read -r pid; do \
+			if [ ! -z "$$pid" ]; then \
+				if kill -0 $$pid 2>/dev/null; then \
+					echo "  ✅ Process $$pid: Running"; \
+				else \
+					echo "  ❌ Process $$pid: Not running"; \
+				fi; \
+			fi; \
+		done; \
+	else \
+		echo "⚠️  No PIDs file found"; \
+	fi
+	@echo ""
+	@echo "Running Processes:"
+	@air_procs=$$(pgrep -f "air.*manager|air.*gateway|air.*local-agent" 2>/dev/null || true); \
+	if [ ! -z "$$air_procs" ]; then \
+		echo "  🔄 Air processes: $$air_procs"; \
+	else \
+		echo "  ❌ No Air processes found"; \
+	fi
+	@svc_procs=$$(pgrep -f "tmp/bmc-manager|tmp/gateway|tmp/local-agent" 2>/dev/null || true); \
+	if [ ! -z "$$svc_procs" ]; then \
+		echo "  ⚙️  Service processes: $$svc_procs"; \
+	else \
+		echo "  ❌ No service processes found"; \
+	fi
+	@test_procs=$$(pgrep -f "bmc-cli.*test.*setup" 2>/dev/null || true); \
+	if [ ! -z "$$test_procs" ]; then \
+		echo "  🖥️  Test server processes: $$test_procs"; \
+	else \
+		echo "  ❌ No test server processes found"; \
+	fi
+	@echo ""
+	@echo "Port Check:"
+	@for port in $(LOCAL_MANAGER_PORT) $(LOCAL_GATEWAY_PORT) $(LOCAL_AGENT_PORT) 9001 9002 9003; do \
+		pid=$$(lsof -ti :$$port 2>/dev/null || true); \
+		if [ ! -z "$$pid" ]; then \
+			echo "  ✅ Port $$port: In use (PID: $$pid)"; \
+		else \
+			echo "  ❌ Port $$port: Available"; \
+		fi; \
+	done
+	@echo ""
+	@echo "Health Checks:"
+	@if curl -s http://localhost:$(LOCAL_MANAGER_PORT)/health >/dev/null 2>&1; then \
+		echo "  ✅ Manager: Healthy"; \
+	else \
+		echo "  ❌ Manager: Not responding"; \
+	fi
+	@if curl -s http://localhost:$(LOCAL_GATEWAY_PORT)/health >/dev/null 2>&1; then \
+		echo "  ✅ Gateway: Healthy"; \
+	else \
+		echo "  ❌ Gateway: Not responding"; \
+	fi
+	@echo ""
+	@echo "Log Files:"
+	@if [ -d $(LOCAL_LOGS_DIR) ]; then \
+		ls -la $(LOCAL_LOGS_DIR)/ 2>/dev/null || echo "  No log files found"; \
+	else \
+		echo "  Log directory does not exist"; \
+	fi
+
+# View logs from local services
+local-env-logs:
+	@echo "BMC Management System - Local Environment Logs"
+	@echo "=============================================="
+	@if [ -d $(LOCAL_LOGS_DIR) ]; then \
+		echo "Available log files:"; \
+		ls $(LOCAL_LOGS_DIR)/*.log 2>/dev/null || echo "No log files found"; \
+		echo ""; \
+		echo "Recent logs (last 50 lines):"; \
+		echo ""; \
+		for log in $(LOCAL_LOGS_DIR)/*.log; do \
+			if [ -f "$$log" ]; then \
+				echo "=== $$(basename $$log) ==="; \
+				tail -n 50 "$$log" 2>/dev/null || echo "Could not read $$log"; \
+				echo ""; \
+			fi; \
+		done; \
+	else \
+		echo "No logs directory found"; \
+	fi
+
+# View specific service logs
+local-env-logs-manager:
+	@echo "Manager Service Logs:"
+	@echo "===================="
+	@if [ -f $(LOCAL_LOGS_DIR)/manager.log ]; then \
+		tail -f $(LOCAL_LOGS_DIR)/manager.log; \
+	else \
+		echo "Manager log file not found"; \
+	fi
+
+local-env-logs-gateway:
+	@echo "Gateway Service Logs:"
+	@echo "===================="
+	@if [ -f $(LOCAL_LOGS_DIR)/gateway.log ]; then \
+		tail -f $(LOCAL_LOGS_DIR)/gateway.log; \
+	else \
+		echo "Gateway log file not found"; \
+	fi
+
+local-env-logs-agent:
+	@echo "Local Agent Service Logs:"
+	@echo "========================"
+	@if [ -f $(LOCAL_LOGS_DIR)/local-agent.log ]; then \
+		tail -f $(LOCAL_LOGS_DIR)/local-agent.log; \
+	else \
+		echo "Local Agent log file not found"; \
+	fi
+
+local-env-logs-test:
+	@echo "Test Servers Logs:"
+	@echo "================="
+	@if [ -f $(LOCAL_LOGS_DIR)/test-servers.log ]; then \
+		tail -f $(LOCAL_LOGS_DIR)/test-servers.log; \
+	else \
+		echo "Test servers log file not found"; \
+	fi
+
+# Clean local environment data
+local-env-clean:
+	@echo "🧹 Cleaning local environment data..."
+	@make -s local-env-down
+	@rm -rf tmp/logs tmp/data tmp/local-dev.db* 2>/dev/null || true
+	@echo "✅ Local environment cleaned"
+
+# Restart local environment
+local-env-restart: local-env-down local-env-up
+
+# Check for any remaining BMC processes (debugging)
+local-env-check-processes:
+	@echo "BMC Management System - Process Check"
+	@echo "====================================="
+	@echo ""
+	@bmcprocs=$$(ps aux | grep -E "(air -c .air.toml|bmc-cli|tmp/gateway|tmp/bmc-manager|tmp/local-agent)" | grep -v grep | grep -v "local-env-check-processes" || true); \
+	if [ ! -z "$$bmcprocs" ]; then \
+		echo "⚠️  Found BMC-related processes:"; \
+		echo "$$bmcprocs"; \
+		echo ""; \
+		echo "🧹 To clean these up, run:"; \
+		echo "   make -f Makefile.dev local-env-down"; \
+	else \
+		echo "✅ No BMC-related processes found"; \
+	fi
+	@echo ""
+	@echo "Port usage:"
+	@for port in $(LOCAL_MANAGER_PORT) $(LOCAL_GATEWAY_PORT) $(LOCAL_AGENT_PORT) 9001 9002 9003; do \
+		pid=$$(lsof -ti :$$port 2>/dev/null || true); \
+		if [ ! -z "$$pid" ]; then \
+			proc_info=$$(ps -p $$pid -o pid,comm 2>/dev/null | tail -1 || echo "Unknown process"); \
+			echo "  🔌 Port $$port: $$proc_info"; \
+		else \
+			echo "  ✅ Port $$port: Available"; \
+		fi; \
+	done

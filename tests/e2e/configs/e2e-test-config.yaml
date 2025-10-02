@@ -1,0 +1,108 @@
+# E2E Test Configuration that uses the development environment
+# This config expects the dev environment to be running via "make dev-up"
+
+manager_endpoint: "http://localhost:8080"
+gateway_endpoint: "http://localhost:8081"
+agent_endpoint: "http://localhost:8082"
+
+# Test Configuration
+test_timeout: 30s
+retry_attempts: 3
+concurrent_tests: 1  # Keep tests sequential for E2E reliability
+
+# IPMI Endpoints - E2E test machines accessed via container network
+ipmi_endpoints:
+  - id: "bmc-dc-docker-01-e2e-virtualbmc-01-623"
+    address: "e2e-virtualbmc-01:623"  # Direct container access via bmc-network
+    username: "ipmiusr"
+    password: "test"
+    datacenter: "dc-docker-01"
+    description: "E2E Test VirtualBMC Server 01"
+    expected_features:
+      - "power"
+      - "sol"
+      - "console"
+      - "sensors"
+
+  - id: "bmc-dc-docker-01-e2e-virtualbmc-02-623"
+    address: "e2e-virtualbmc-02:623"  # Direct container access via bmc-network
+    username: "ipmiusr"
+    password: "test"
+    datacenter: "dc-docker-01"
+    description: "E2E Test VirtualBMC Server 02"
+    expected_features:
+      - "power"
+      - "sol"
+      - "console"
+      - "sensors"
+
+  - id: "bmc-dc-docker-01-e2e-virtualbmc-03-623"
+    address: "e2e-virtualbmc-03:623"  # Direct container access via bmc-network
+    username: "ipmiusr"
+    password: "test"
+    datacenter: "dc-docker-01"
+    description: "E2E Test VirtualBMC Server 03"
+    expected_features:
+      - "power"
+      - "sol"
+      - "console"
+      - "sensors"
+
+# Test Users - these will be dynamically created by the E2E test suite
+test_customers:
+  - email: "e2e-customer1@example.com"
+    api_key: "e2e-test-api-key-customer1"
+    name: "E2E Test Customer 1"
+    permissions: ["power", "console", "status"]
+    assigned_servers: ["bmc-dc-docker-01-e2e-virtualbmc-01-623"]
+
+  - email: "e2e-customer2@example.com"
+    api_key: "e2e-test-api-key-customer2"
+    name: "E2E Test Customer 2"
+    permissions: ["power", "status"]
+    assigned_servers: ["bmc-dc-docker-01-e2e-virtualbmc-02-623"]
+
+  - email: "e2e-admin@example.com"
+    api_key: "e2e-test-api-key-admin"
+    name: "E2E Test Admin"
+    permissions: ["power", "console", "status", "admin"]
+    assigned_servers:
+      - "bmc-dc-docker-01-e2e-virtualbmc-01-623"
+      - "bmc-dc-docker-01-e2e-virtualbmc-02-623"
+      - "bmc-dc-docker-01-e2e-virtualbmc-03-623"
+
+# Test Scenarios Configuration
+test_scenarios:
+  power_operations:
+    enabled: true
+    operations: ["status"]  # Start with just status for E2E reliability
+    wait_times:
+      status: "2s"
+
+  console_access:
+    enabled: false  # Disable complex console tests for now
+
+  authentication:
+    enabled: true
+    token_ttl: 3600s
+    test_invalid_tokens: true
+    test_expired_tokens: false  # Disable for E2E speed
+
+  multi_tenant:
+    enabled: true
+    test_isolation: true
+    test_unauthorized_access: true
+
+# Logging Configuration
+logging:
+  level: "info"
+  output: "e2e-test-results.log"
+  include_timestamps: true
+  include_request_ids: true
+
+# Reporting Configuration
+reporting:
+  output_format: "json"
+  output_file: "e2e-test-results.json"
+  include_metrics: true
+  include_performance_data: false

@@ -1,0 +1,123 @@
+agent:
+  id: "local-agent-001"
+  name: "Local Development Agent"
+  datacenter_id: "dc-local-01"
+  region: "local"
+  gateway_endpoint: "http://localhost:8081"
+  endpoint: "http://localhost:8082"
+  http_port: 8082
+
+  bmc_discovery:
+    enabled: false
+    scan_interval: "30s"
+    network_ranges:
+      - "127.0.0.0/8"
+      - "192.168.1.0/24"
+    scan_timeout: "10s"
+    max_concurrent: 10
+
+  vnc:
+    enabled: true
+    port: 5901
+    bind_address: "127.0.0.1"
+    max_connections: 5
+
+log:
+  level: "info"
+  format: "text"
+
+static:
+  hosts:
+    # Test Redfish instances for local development
+    - id: "server-001"
+      customer_id: "test@company.com"
+      features: ["power", "console", "vnc"]
+      metadata:
+        location: "rack-1"
+        model: "Test Server 1"
+
+      # Redfish Control API
+      control_endpoint:
+        endpoint: "http://localhost:9001"
+        type: "redfish"
+        username: "admin"
+        password: "password"
+        capabilities: ["power", "systems", "chassis", "managers"]
+        tls:
+          enabled: false
+          insecure_skip_verify: true
+
+      # Redfish Serial Console (if available)
+      sol_endpoint:
+        type: "redfish_serial"
+        endpoint: "ws://localhost:9001/redfish/v1/Systems/1/SerialConsole"
+        username: "admin"
+        password: "password"
+        config:
+          timeout_seconds: 600
+
+      # VNC via localhost noVNC (example)
+      vnc_endpoint:
+        endpoint: "ws://localhost:6080/websockify"
+
+    - id: "server-002"
+      customer_id: "test@company.com"
+      features: ["power", "console", "vnc"]
+      metadata:
+        location: "rack-1"
+        model: "Test Server 2"
+
+      # Redfish Control API
+      control_endpoint:
+        endpoint: "http://localhost:9002"
+        type: "redfish"
+        username: "admin"
+        password: "password"
+        capabilities: ["power", "systems", "chassis", "managers"]
+        tls:
+          enabled: false
+          insecure_skip_verify: true
+
+      # Redfish Serial Console (if available)
+      sol_endpoint:
+        type: "redfish_serial"
+        endpoint: "ws://localhost:9002/redfish/v1/Systems/1/SerialConsole"
+        username: "admin"
+        password: "password"
+        config:
+          timeout_seconds: 600
+
+      # VNC via localhost noVNC (example)
+      vnc_endpoint:
+        endpoint: "localhost:6081"
+
+    - id: "server-003"
+      customer_id: "test@company.com"
+      features: ["power", "console", "vnc"]
+      metadata:
+        location: "rack-1"
+        model: "Test Server 3"
+
+      # Redfish Control API
+      control_endpoint:
+        endpoint: "http://localhost:9003"
+        type: "redfish"
+        username: "admin"
+        password: "password"
+        capabilities: ["power", "systems", "chassis", "managers"]
+        tls:
+          enabled: false
+          insecure_skip_verify: true
+
+      # Redfish Serial Console (if available)
+      sol_endpoint:
+        type: "redfish_serial"
+        endpoint: "ws://localhost:9003/redfish/v1/Systems/1/SerialConsole"
+        username: "admin"
+        password: "password"
+        config:
+          timeout_seconds: 600
+
+      # VNC via localhost noVNC (example)
+      vnc_endpoint:
+        endpoint: "localhost:6082"

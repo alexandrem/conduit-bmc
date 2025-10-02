@@ -1,0 +1,5 @@
+bracketSpacing = true
+proseWrap = "always"
+semi = false
+singleQuote = false
+trailingComma = "all"

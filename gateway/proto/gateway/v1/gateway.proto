@@ -1,0 +1,391 @@
+syntax = "proto3";
+
+package gateway.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gateway/gen/gateway/v1;gatewayv1";
+
+// Regional Gateway service - stateless proxy to Local Agents
+//
+// The Gateway acts as a multi-tenant control plane that:
+// - Receives outbound connections from Local Agents in datacenters
+// - Validates customer access tokens issued by the BMC Manager
+// - Routes BMC operations to appropriate agents based on server mappings
+// - Manages proxy sessions for direct BMC access
+// - Provides secure tunnel endpoints for IPMI SOL and Redfish access
+service GatewayService {
+  // Health check endpoint for monitoring and load balancer health probes
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+
+  // Local Agent registration - agents initiate outbound connections for NAT/firewall traversal
+
+  // RegisterAgent allows a Local Agent to register itself and announce available servers
+  // This establishes the initial connection and server inventory
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+
+  // AgentHeartbeat maintains the agent connection and provides server status updates
+  // Agents send periodic heartbeats to keep the connection alive and update server state
+  rpc AgentHeartbeat(AgentHeartbeatRequest) returns (AgentHeartbeatResponse);
+
+  // BMC power operations - proxied through agents to actual BMC interfaces
+
+  // PowerOn sends power-on command to the server's BMC
+  rpc PowerOn(PowerOperationRequest) returns (PowerOperationResponse);
+
+  // PowerOff sends graceful or forced power-off command to the server's BMC
+  rpc PowerOff(PowerOperationRequest) returns (PowerOperationResponse);
+
+  // PowerCycle performs a power cycle (off then on) operation
+  rpc PowerCycle(PowerOperationRequest) returns (PowerOperationResponse);
+
+  // Reset performs a hard reset of the server (equivalent to reset button)
+  rpc Reset(PowerOperationRequest) returns (PowerOperationResponse);
+
+  // GetPowerStatus queries the current power state of the server
+  rpc GetPowerStatus(PowerStatusRequest) returns (PowerStatusResponse);
+
+  // VNC Console streaming endpoints
+
+  // CreateVNCSession creates a VNC console session for remote access
+  rpc CreateVNCSession(CreateVNCSessionRequest) returns (CreateVNCSessionResponse);
+
+  // GetVNCSession retrieves information about an existing VNC session
+  rpc GetVNCSession(GetVNCSessionRequest) returns (GetVNCSessionResponse);
+
+  // CloseVNCSession terminates an active VNC session
+  rpc CloseVNCSession(CloseVNCSessionRequest) returns (CloseVNCSessionResponse);
+
+  // StartVNCProxy requests an agent to start a VNC proxy for a specific BMC
+  rpc StartVNCProxy(StartVNCProxyRequest) returns (StartVNCProxyResponse);
+
+  // SOL Console streaming endpoints
+
+  // CreateSOLSession creates a SOL console session for serial terminal access
+  rpc CreateSOLSession(CreateSOLSessionRequest) returns (CreateSOLSessionResponse);
+
+  // GetSOLSession retrieves information about an existing SOL session
+  rpc GetSOLSession(GetSOLSessionRequest) returns (GetSOLSessionResponse);
+
+  // CloseSOLSession terminates an active SOL session
+  rpc CloseSOLSession(CloseSOLSessionRequest) returns (CloseSOLSessionResponse);
+
+  // Streaming RPC for VNC data (Gateway <-> Agent bidirectional streaming)
+  // Gateway initiates this stream to agent, then bidirectionally streams VNC data
+  rpc StreamVNCData(stream VNCDataChunk) returns (stream VNCDataChunk);
+
+  // Streaming RPC for SOL/Console data (Gateway <-> Agent bidirectional streaming)
+  // Gateway initiates this stream to agent, then bidirectionally streams console data
+  rpc StreamConsoleData(stream ConsoleDataChunk) returns (stream ConsoleDataChunk);
+}
+
+// BMCType specifies the type of BMC interface available on a server
+enum BMCType {
+  BMC_TYPE_UNSPECIFIED = 0;  // Unknown or not specified BMC type
+  BMC_TYPE_IPMI = 1;          // Traditional IPMI interface (typically port 623)
+  BMC_TYPE_REDFISH = 2;       // Modern Redfish REST API interface (typically HTTPS)
+}
+
+// HealthCheckRequest - empty request for service health verification
+message HealthCheckRequest {}
+
+// HealthCheckResponse provides basic service health information
+message HealthCheckResponse {
+  string status = 1;                           // Health status (e.g., "healthy", "degraded", "unhealthy")
+  google.protobuf.Timestamp timestamp = 2;     // Timestamp when health check was performed
+}
+
+// BMC Power Operations - these messages are used for all power-related commands
+
+// PowerOperationRequest is used for all power operations (on, off, cycle, reset)
+// CLI sends server_id, Gateway resolves to BMC endpoint using delegated token
+message PowerOperationRequest {
+  string server_id = 1;  // The server ID to perform the power operation on
+}
+
+// PowerOperationResponse indicates the result of a power operation
+message PowerOperationResponse {
+  bool success = 1;   // Whether the operation was successful
+  string message = 2; // Human-readable status message or error description
+}
+
+// PowerStatusRequest queries the current power state of a server
+// CLI sends server_id, Gateway resolves to BMC endpoint using delegated token
+message PowerStatusRequest {
+  string server_id = 1;  // The server ID to query power status for
+}
+
+// PowerState represents the various power states a server can be in
+enum PowerState {
+  POWER_STATE_UNKNOWN = 0;   // Power state could not be determined
+  POWER_STATE_ON = 1;        // Server is powered on and running
+  POWER_STATE_OFF = 2;       // Server is powered off
+  POWER_STATE_CYCLING = 3;   // Server is in the process of power cycling
+}
+
+// PowerStatusResponse contains the current power state of a server
+message PowerStatusResponse {
+  PowerState state = 1;  // Current power state of the server
+  string message = 2;    // Additional status information or error details
+}
+
+// Local Agent registration and heartbeat messages
+// These messages enable agents to connect outbound to gateways for NAT/firewall traversal
+
+// RegisterAgentRequest is sent by Local Agents to register with the Gateway
+message RegisterAgentRequest {
+  string agent_id = 1;                              // Unique identifier for this agent instance
+  string datacenter_id = 2;                         // Datacenter where this agent is deployed
+  string endpoint = 3;                              // Agent's internal endpoint for callbacks (if any)
+  repeated BMCEndpointRegistration bmc_endpoints = 4; // Initial list of BMC endpoints managed by this agent
+}
+
+// RegisterAgentResponse confirms agent registration
+message RegisterAgentResponse {
+  bool success = 1;   // Whether registration was successful
+  string message = 2; // Success confirmation or error details
+}
+
+// AgentHeartbeatRequest maintains the agent connection and updates BMC endpoint inventory
+message AgentHeartbeatRequest {
+  string agent_id = 1;                              // Agent identifier from registration
+  repeated BMCEndpointRegistration bmc_endpoints = 2; // Current list of BMC endpoints (may have changed since registration)
+}
+
+// AgentHeartbeatResponse acknowledges heartbeat and provides configuration
+message AgentHeartbeatResponse {
+  bool success = 1;                             // Whether heartbeat was accepted
+  int32 heartbeat_interval_seconds = 2;         // How often the agent should send heartbeats (e.g., 30 seconds)
+}
+
+// BMCEndpointRegistration describes a server with separate endpoint types
+// Agents register servers with distinct control, SOL, and VNC endpoints
+message BMCEndpointRegistration {
+  string server_id = 1;                    // Logical server identifier
+  BMCControlEndpoint control_endpoint = 2;  // IPMI/Redfish management API
+  SOLEndpoint sol_endpoint = 3;            // Serial-over-LAN access (optional)
+  VNCEndpoint vnc_endpoint = 4;            // VNC/KVM access (optional)
+  repeated string features = 5;            // High-level features (power, sensors, etc.)
+  string status = 6;                       // Overall server status
+  map<string, string> metadata = 7;       // Additional server metadata
+}
+
+// BMC Control API endpoint (IPMI/Redfish)
+message BMCControlEndpoint {
+  string endpoint = 1;                     // BMC API endpoint (e.g., "192.168.1.100:623", "https://192.168.1.100")
+  BMCType type = 2;                        // IPMI or Redfish
+  string username = 3;                     // BMC credentials
+  string password = 4;                     // BMC credentials
+  TLSConfig tls = 5;                       // TLS configuration for Redfish
+  repeated string capabilities = 6;        // Control capabilities (power, sensors, sel, etc.)
+}
+
+// Serial-over-LAN console endpoint
+message SOLEndpoint {
+  SOLType type = 1;                        // IPMI SOL or Redfish serial console
+  string endpoint = 2;                     // SOL-specific endpoint (may differ from control)
+  string username = 3;                     // SOL credentials (may differ from BMC)
+  string password = 4;                     // SOL credentials
+  SOLConfig config = 5;                    // SOL-specific configuration
+}
+
+// VNC/KVM graphical console endpoint
+message VNCEndpoint {
+  VNCType type = 1;                        // BMC native VNC, noVNC proxy, or external KVM
+  string endpoint = 2;                     // VNC endpoint (websocket, TCP, or HTTP)
+  string username = 3;                     // VNC credentials
+  string password = 4;                     // VNC credentials
+  VNCConfig config = 5;                    // VNC-specific configuration
+}
+
+enum SOLType {
+  SOL_TYPE_UNSPECIFIED = 0;
+  SOL_TYPE_IPMI = 1;                       // IPMI Serial-over-LAN
+  SOL_TYPE_REDFISH_SERIAL = 2;             // Redfish serial console
+}
+
+enum VNCType {
+  VNC_TYPE_UNSPECIFIED = 0;
+  VNC_TYPE_NATIVE = 1;                     // Native VNC TCP (port 5900)
+  VNC_TYPE_WEBSOCKET = 2;                  // WebSocket-wrapped VNC/RFB
+}
+
+message TLSConfig {
+  bool enabled = 1;
+  bool insecure_skip_verify = 2;
+  string ca_cert = 3;                      // Optional CA certificate
+}
+
+message SOLConfig {
+  int32 baud_rate = 1;                     // Serial baud rate (default: 115200)
+  string flow_control = 2;                 // Flow control settings
+  int32 timeout_seconds = 3;               // SOL session timeout
+}
+
+message VNCConfig {
+  string protocol = 1;                     // "websocket", "tcp", "http"
+  string path = 2;                         // URL path for HTTP/WebSocket
+  int32 display = 3;                       // VNC display number
+  bool read_only = 4;                      // Read-only access
+}
+
+// VNC Console Session Management Messages
+
+// CreateVNCSessionRequest creates a new VNC console session
+// CLI sends server_id, Gateway resolves to BMC endpoint using delegated token
+message CreateVNCSessionRequest {
+  string server_id = 1;  // The server ID for which to create a VNC session
+}
+
+// CreateVNCSessionResponse provides the created VNC session details
+message CreateVNCSessionResponse {
+  string session_id = 1;                      // Unique VNC session identifier
+  string websocket_endpoint = 2;              // WebSocket endpoint for VNC streaming (e.g., "wss://gateway.example.com/vnc/session123")
+  google.protobuf.Timestamp expires_at = 3;   // When the session expires and will be automatically closed
+  string viewer_url = 4;                      // Direct URL to web-based VNC viewer
+}
+
+// GetVNCSessionRequest retrieves information about an existing VNC session
+message GetVNCSessionRequest {
+  string session_id = 1;  // The VNC session ID to retrieve information for
+}
+
+// VNCSession contains detailed information about a VNC console session
+message VNCSession {
+  string id = 1;                               // Unique session identifier
+  string customer_id = 2;                      // Customer ID that owns this session
+  string server_id = 3;                       // Target server ID for this session
+  string agent_id = 4;                        // Agent ID handling the VNC connection
+  string status = 5;                          // Session status (e.g., "active", "connecting", "expired", "closed")
+  string websocket_endpoint = 6;              // WebSocket endpoint for VNC streaming
+  string viewer_url = 7;                      // Web-based VNC viewer URL
+  google.protobuf.Timestamp created_at = 8;   // When the session was created
+  google.protobuf.Timestamp expires_at = 9;   // When the session expires
+}
+
+// GetVNCSessionResponse contains the requested VNC session information
+message GetVNCSessionResponse {
+  VNCSession session = 1;  // The VNC session details, or error if not found/accessible
+}
+
+// CloseVNCSessionRequest terminates an active VNC session
+message CloseVNCSessionRequest {
+  string session_id = 1;  // The VNC session ID to close and clean up
+}
+
+// CloseVNCSessionResponse confirms VNC session closure
+message CloseVNCSessionResponse {
+  // Empty response - success indicated by lack of error
+}
+
+// SOL Console Session Management
+// These messages handle Serial-over-LAN console sessions for direct terminal access
+
+// CreateSOLSessionRequest creates a new SOL console session
+message CreateSOLSessionRequest {
+  string server_id = 1;  // The server ID for which to create a SOL session
+}
+
+// CreateSOLSessionResponse provides the created SOL session details
+message CreateSOLSessionResponse {
+  string session_id = 1;                      // Unique SOL session identifier
+  string websocket_endpoint = 2;              // WebSocket endpoint for SOL streaming (e.g., "wss://gateway.example.com/sol/session123")
+  google.protobuf.Timestamp expires_at = 3;   // When the session expires and will be automatically closed
+  string console_url = 4;                     // Direct URL to web-based SOL console
+}
+
+// GetSOLSessionRequest retrieves information about an existing SOL session
+message GetSOLSessionRequest {
+  string session_id = 1;  // The SOL session ID to retrieve information for
+}
+
+// SOLSession contains detailed information about a SOL console session
+message SOLSession {
+  string id = 1;                               // Unique session identifier
+  string customer_id = 2;                      // Customer ID that owns this session
+  string server_id = 3;                       // Target server ID for this session
+  string agent_id = 4;                        // Agent ID handling the SOL connection
+  string status = 5;                          // Session status (e.g., "active", "connecting", "expired", "closed")
+  string websocket_endpoint = 6;              // WebSocket endpoint for SOL streaming
+  string console_url = 7;                     // Web-based SOL console URL
+  google.protobuf.Timestamp created_at = 8;   // When the session was created
+  google.protobuf.Timestamp expires_at = 9;   // When the session expires
+}
+
+// GetSOLSessionResponse contains the requested SOL session information
+message GetSOLSessionResponse {
+  SOLSession session = 1;  // The SOL session details, or error if not found/accessible
+}
+
+// CloseSOLSessionRequest terminates an active SOL session
+message CloseSOLSessionRequest {
+  string session_id = 1;  // The SOL session ID to close and clean up
+}
+
+// CloseSOLSessionResponse confirms SOL session closure
+message CloseSOLSessionResponse {
+  // Empty response - success indicated by lack of error
+}
+
+// Gateway reporting to Manager - these messages are used for Manager integration
+
+// ReportAvailableEndpointsRequest reports BMC endpoints that this gateway can proxy
+// This is sent by Gateway -> Manager to register available BMC endpoints
+message ReportAvailableEndpointsRequest {
+  string gateway_id = 1;                             // Gateway identifier
+  string region = 2;                                 // Gateway region
+  repeated BMCEndpointAvailability bmc_endpoints = 3; // BMC endpoints available through this gateway
+}
+
+// BMCEndpointAvailability describes a BMC endpoint available through a gateway
+message BMCEndpointAvailability {
+  string bmc_endpoint = 1;        // BMC endpoint (e.g., "192.168.1.100:623")
+  string agent_id = 2;            // Agent that provides access to this endpoint
+  string datacenter_id = 3;       // Datacenter containing this BMC
+  BMCType bmc_type = 4;           // Type of BMC interface
+  repeated string features = 5;   // Available features
+  string status = 6;              // Endpoint status
+  google.protobuf.Timestamp last_seen = 7; // When this endpoint was last verified
+}
+
+// ReportAvailableEndpointsResponse confirms endpoint registration
+message ReportAvailableEndpointsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// VNC Proxy Request Messages - for agent-to-BMC VNC proxying
+
+// StartVNCProxyRequest asks an agent to start a VNC proxy to a BMC
+message StartVNCProxyRequest {
+  string session_id = 1;         // VNC session identifier
+  string bmc_endpoint = 2;       // BMC endpoint to connect to (server ID)
+  string bmc_type = 3;           // BMC type ("redfish" or "ipmi")
+  string gateway_endpoint = 4;   // Gateway endpoint for reverse connection
+  string agent_id = 5;           // Agent ID to handle this session
+}
+
+// StartVNCProxyResponse confirms VNC proxy startup
+message StartVNCProxyResponse {
+  bool success = 1;               // Whether the proxy was started successfully
+  string message = 2;             // Success message or error details
+  string proxy_endpoint = 3;      // Endpoint where the proxy is listening (if applicable)
+}
+
+// VNCDataChunk represents a chunk of VNC data being streamed
+message VNCDataChunk {
+  string session_id = 1;          // Session identifier for this VNC stream
+  string server_id = 2;           // Server ID (used in initial handshake)
+  bytes data = 3;                 // Raw VNC protocol data
+  bool is_handshake = 4;          // True if this is the initial connection handshake
+  bool close_stream = 5;          // True to signal stream closure
+}
+
+// ConsoleDataChunk represents a chunk of console/SOL data being streamed
+message ConsoleDataChunk {
+  string session_id = 1;          // Session identifier for this console stream
+  string server_id = 2;           // Server ID (used in initial handshake)
+  bytes data = 3;                 // Raw console/SOL data
+  bool is_handshake = 4;          // True if this is the initial connection handshake
+  bool close_stream = 5;          // True to signal stream closure
+}

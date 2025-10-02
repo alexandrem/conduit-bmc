@@ -1,0 +1,155 @@
+# ==========================================
+# BMC Development Environment
+# ==========================================
+# This makefile contains BMC-specific development commands:
+# - BMC simulation environment (VirtualBMC + Redfish + VNC)
+# - IPMI/Redfish testing and validation
+# - BMC machine management
+# Actual E2E test targets are in Makefile.e2e
+
+.PHONY: bmc-help bmc-up bmc-down bmc-full-up bmc-logs bmc-rebuild
+.PHONY: bmc-test-ipmi bmc-test-redfish bmc-shell-ipmi bmc-shell-redfish
+
+# ==========================================
+# BMC Environment Management
+# ==========================================
+
+# Start BMC simulation environment (VirtualBMC + Redfish + VNC)
+bmc-up:
+	@echo "🖥️  Starting BMC simulation environment..."
+	docker-compose -f docker-compose.virtualbmc.yml up --build -d
+	@echo ""
+	@echo "✅ BMC simulation environment started!"
+	@echo ""
+	@echo "BMC Simulation (Persistent Development):"
+	@echo "  🖥️  IPMI Servers:  localhost:6230-6232 (VirtualBMC + IPMI protocol)"
+	@echo "  🌐 Redfish APIs:   localhost:8000-8002 (full Redfish emulation)"
+	@echo "  📟 VNC Console:    localhost:6080-6082 (web console access)"
+	@echo ""
+	@echo "Real BMC implementations tested:"
+	@echo "  • VirtualBMC (IPMI v2.0 RMCP+)"
+	@echo "  • Redfish API (DMTF standard)"
+	@echo ""
+	@echo "Useful commands:"
+	@echo "  make bmc-test-ipmi      # Test IPMI connectivity"
+	@echo "  make bmc-test-redfish   # Test Redfish APIs"
+	@echo "  make bmc-down           # Stop BMC environment"
+	@echo "  make dev-down           # Stop all services"
+
+# Start full development environment (core services + BMC simulation)
+bmc-full-up:
+	@echo "🚀 Starting full development environment (core + BMC)..."
+	@$(MAKE) dev-up -f tooling/make/Makefile.dev
+	@$(MAKE) bmc-up
+
+# Stop BMC simulation environment (keep core services running)
+bmc-down:
+	@echo "🛑 Stopping BMC simulation environment..."
+	docker-compose -f docker-compose.virtualbmc.yml down
+	@echo "✅ BMC simulation stopped (core services still running)"
+
+# View BMC simulation logs
+bmc-logs:
+	@echo "📋 BMC simulation environment logs:"
+	docker-compose -f docker-compose.virtualbmc.yml logs -f --tail=50
+
+# Rebuild BMC simulation environment
+bmc-rebuild:
+	@echo "🔨 Rebuilding BMC simulation environment..."
+	docker-compose -f docker-compose.virtualbmc.yml down
+	docker-compose -f docker-compose.virtualbmc.yml up -d --build
+	@echo "✅ BMC simulation environment rebuilt"
+
+# ==========================================
+# BMC Testing & Validation
+# ==========================================
+
+# Test IPMI connectivity (requires BMC environment to be running)
+bmc-test-ipmi:
+	@echo "🧪 Testing IPMI connectivity..."
+	@echo "Testing Server 01 (localhost:6230):"
+	@ipmitool -I lanplus -H localhost -p 6230 -U ipmiusr -P test power status || echo "❌ Server 01 IPMI failed"
+	@echo "Testing Server 02 (localhost:6231):"
+	@ipmitool -I lanplus -H localhost -p 6231 -U ipmiusr -P test power status || echo "❌ Server 02 IPMI failed"
+	@echo "Testing Server 03 (localhost:6232):"
+	@ipmitool -I lanplus -H localhost -p 6232 -U ipmiusr -P test power status || echo "❌ Server 03 IPMI failed"
+
+# Test Redfish API connectivity (requires BMC environment to be running)
+bmc-test-redfish:
+	@echo "🧪 Testing Redfish API connectivity..."
+	@echo "Testing Server 01 (localhost:8000):"
+	@curl -f http://localhost:8000/redfish/v1 >/dev/null 2>&1 && echo "✅ Server 01 Redfish OK" || echo "❌ Server 01 Redfish failed"
+	@echo "Testing Server 02 (localhost:8001):"
+	@curl -f http://localhost:8001/redfish/v1 >/dev/null 2>&1 && echo "✅ Server 02 Redfish OK" || echo "❌ Server 02 Redfish failed"
+	@echo "Testing Server 03 (localhost:8002):"
+	@curl -f http://localhost:8002/redfish/v1 >/dev/null 2>&1 && echo "✅ Server 03 Redfish OK" || echo "❌ Server 03 Redfish failed"
+
+# Interactive IPMI testing shell
+bmc-shell-ipmi:
+	@echo "🧪 IPMI Interactive Testing"
+	@echo "Available servers:"
+	@echo "  Server 01: ipmitool -I lanplus -H localhost -p 6230 -U ipmiusr -P test <command>"
+	@echo "  Server 02: ipmitool -I lanplus -H localhost -p 6231 -U ipmiusr -P test <command>"
+	@echo "  Server 03: ipmitool -I lanplus -H localhost -p 6232 -U ipmiusr -P test <command>"
+	@echo ""
+	@echo "Common commands:"
+	@echo "  power status         # Check power state"
+	@echo "  power on            # Power on server"
+	@echo "  power off           # Power off server"
+	@echo "  power cycle         # Power cycle server"
+	@echo "  chassis status      # Chassis information"
+	@echo "  sdr list            # List all sensors"
+	@echo "  sel list            # List system event log"
+	@echo ""
+	@bash
+
+# Interactive Redfish testing shell
+bmc-shell-redfish:
+	@echo "🧪 Redfish Interactive Testing"
+	@echo "Available endpoints:"
+	@echo "  Server 01: curl http://localhost:8000/redfish/v1/<endpoint>"
+	@echo "  Server 02: curl http://localhost:8001/redfish/v1/<endpoint>"
+	@echo "  Server 03: curl http://localhost:8002/redfish/v1/<endpoint>"
+	@echo ""
+	@echo "Common endpoints:"
+	@echo "  /redfish/v1                             # Service root"
+	@echo "  /redfish/v1/Systems                     # Computer systems"
+	@echo "  /redfish/v1/Systems/1                   # System details"
+	@echo "  /redfish/v1/Systems/1/Actions/ComputerSystem.Reset  # Power actions"
+	@echo ""
+	@bash
+
+# ==========================================
+# BMC Development Environment Help
+# ==========================================
+bmc-help:
+	@echo "BMC Development Environment Commands"
+	@echo "===================================="
+	@echo ""
+	@echo "🖥️  BMC Simulation:"
+	@echo "  bmc-up             - Start BMC environment (VirtualBMC + Redfish + VNC)"
+	@echo "  bmc-full-up        - Start core services + BMC simulation"
+	@echo "  bmc-down           - Stop BMC simulation (keep core running)"
+	@echo "  bmc-logs           - View BMC simulation logs"
+	@echo "  bmc-rebuild        - Rebuild BMC simulation environment"
+	@echo ""
+	@echo "🧪 BMC Testing:"
+	@echo "  bmc-test-ipmi      - Test IPMI connectivity (ipmitool)"
+	@echo "  bmc-test-redfish   - Test Redfish API endpoints (curl)"
+	@echo "  bmc-shell-ipmi     - Interactive IPMI testing shell"
+	@echo "  bmc-shell-redfish  - Interactive Redfish testing shell"
+	@echo ""
+	@echo "🐳 Core Development:"
+	@echo "  dev-help           - Show Docker environment commands"
+	@echo "  dev-up             - Start core services (Manager, Gateway, Agent)"
+	@echo "  dev-down           - Stop all services (core + BMC + E2E)"
+	@echo ""
+	@echo "🧪 E2E Testing:"
+	@echo "  test-e2e-help      - Show detailed E2E testing commands"
+	@echo "  test-e2e           - Run all E2E tests"
+	@echo "  test-vnc           - Run VNC console tests"
+	@echo ""
+	@echo "📚 More Help:"
+	@echo "  make help          - Show main build commands"
+	@echo "  make dev-help      - Show Docker environment commands"
+	@echo "  make test-e2e-help - Show detailed E2E testing commands"

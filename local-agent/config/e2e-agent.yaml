@@ -1,0 +1,115 @@
+agent:
+  id: "e2e-agent-001"
+  name: "E2E Test Agent"
+  datacenter_id: "dc-docker-01"
+  region: "e2e"
+  gateway_endpoint: "http://gateway:8081"
+  endpoint: "http://local-agent:8082"
+  http_port: 8082
+
+  bmc_discovery:
+    enabled: false
+    scan_interval: "30s"
+    network_ranges:
+      - "172.21.0.0/16"
+    scan_timeout: "10s"
+    max_concurrent: 10
+
+  vnc:
+    enabled: true
+    port: 5901
+    bind_address: "0.0.0.0"
+    max_connections: 5
+
+log:
+  level: "info"
+  format: "text"
+
+static:
+  hosts:
+    # ==========================================
+    # E2E Test VirtualBMC IPMI Servers
+    # ==========================================
+    - id: "ipmi-server-01"
+      customer_id: "system"
+      features: ["power", "console", "sensors"]
+      metadata:
+        location: "rack-2"
+        model: "E2E Test VirtualBMC Server 01"
+        profile: "ipmi"
+        external_port: 7230
+        server_container: "e2e-server-01"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "e2e-virtualbmc-01:623"
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # IPMI Serial-over-LAN
+      sol_endpoint:
+        type: "ipmi"
+        endpoint: "e2e-virtualbmc-01:623"
+        username: "ipmiusr"
+        password: "test"
+        config:
+          baud_rate: 115200
+          timeout_seconds: 300
+
+    - id: "ipmi-server-02"
+      customer_id: "system"
+      features: ["power", "console", "sensors"]
+      metadata:
+        location: "rack-2"
+        model: "E2E Test VirtualBMC Server 02"
+        profile: "ipmi"
+        external_port: 7231
+        server_container: "e2e-server-02"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "e2e-virtualbmc-02:623"
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # IPMI Serial-over-LAN
+      sol_endpoint:
+        type: "ipmi"
+        endpoint: "e2e-virtualbmc-02:623"
+        username: "ipmiusr"
+        password: "test"
+        config:
+          baud_rate: 115200
+          timeout_seconds: 300
+
+    - id: "ipmi-server-03"
+      customer_id: "system"
+      features: ["power", "console", "sensors"]
+      metadata:
+        location: "rack-2"
+        model: "E2E Test VirtualBMC Server 03"
+        profile: "ipmi"
+        external_port: 7232
+        server_container: "e2e-server-03"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "e2e-virtualbmc-03:623"
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # IPMI Serial-over-LAN
+      sol_endpoint:
+        type: "ipmi"
+        endpoint: "e2e-virtualbmc-03:623"
+        username: "ipmiusr"
+        password: "test"
+        config:
+          baud_rate: 115200
+          timeout_seconds: 300

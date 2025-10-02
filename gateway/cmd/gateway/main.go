@@ -1,0 +1,638 @@
+package main
+
+import (
+	"context"
+	"crypto/tls"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"os"
+	"time"
+
+	"connectrpc.com/connect"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
+	baseconf "core/config"
+	streaming "core/streaming"
+	gatewayv1 "gateway/gen/gateway/v1"
+	"gateway/gen/gateway/v1/gatewayv1connect"
+	"gateway/internal/gateway"
+	gatewaystreaming "gateway/internal/streaming"
+	"gateway/internal/webui"
+	"gateway/pkg/config"
+	"manager/pkg/auth"
+)
+
+func init() {
+	// Configure zerolog for human-friendly console output
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Kitchen})
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+}
+
+func main() {
+	// Load configuration
+	configFile := baseconf.FindConfigFile("gateway")
+	envFile := baseconf.FindEnvironmentFile("gateway")
+
+	cfg, err := config.Load(configFile, envFile)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load configuration")
+	}
+
+	// Configure logging based on config
+	cfg.Log.ConfigureZerolog()
+
+	log.Info().Msg("Starting BMC Gateway Service")
+	log.Info().Str("config_file", configFile).Msg("Configuration loaded")
+	log.Info().Str("env_file", envFile).Msg("Environment loaded")
+	log.Info().
+		Str("log_level", cfg.Log.Level).
+		Bool("debug", cfg.Log.Debug).
+		Msg("Log level configured")
+
+	// Initialize JWT manager for token validation
+	jwtManager := auth.NewJWTManager(cfg.Auth.JWTSecretKey)
+
+	// Initialize Gateway handler
+	gatewayHandler := gateway.NewGatewayHandler(cfg.Gateway.ManagerEndpoint, jwtManager, "gateway-01", cfg.Gateway.Region, cfg.GetListenAddress())
+
+	// Start periodic gateway registration with manager
+	ctx := context.Background()
+	gatewayHandler.StartPeriodicRegistration(ctx)
+
+	// Create interceptors for delegated token validation
+	interceptors := connect.WithInterceptors(gatewayHandler.TokenValidationInterceptor())
+
+	// Create the Connect service handler
+	path, handler := gatewayv1connect.NewGatewayServiceHandler(
+		gatewayHandler,
+		interceptors,
+	)
+
+	log.Info().Msg("Gateway starting with shared webui templates")
+
+	corsHandler := setupRouter(path, cfg.Gateway.Region, handler, gatewayHandler)
+
+	// Create server with HTTP/2 support
+	server := &http.Server{
+		Addr:    cfg.GetListenAddress(),
+		Handler: h2c.NewHandler(corsHandler, &http2.Server{}),
+	}
+
+	log.Info().
+		Str("address", cfg.GetListenAddress()).
+		Str("gateway_id", "gateway-01").
+		Str("region", cfg.Gateway.Region).
+		Str("manager_endpoint", cfg.Gateway.ManagerEndpoint).
+		Str("rpc_path", path).
+		Bool("rate_limiting", cfg.Gateway.RateLimit.Enabled).
+		Msg("Starting gateway server")
+	log.Info().Msgf("Health check: http://%s/health", cfg.GetListenAddress())
+
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatal().Err(err).Msg("Server failed to start")
+	}
+}
+
+func setupRouter(path, region string, handler http.Handler, gatewayHandler *gateway.RegionalGatewayHandler) http.Handler {
+	// Create a new Gorilla Mux router
+	r := mux.NewRouter()
+
+	// Register the provided path with the handler
+	r.PathPrefix(path).Handler(handler)
+
+	// Add health check endpoint
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "healthy", "service": "gateway", "region": "` + region + `"}`))
+	}).Methods("GET")
+
+	// Add metrics endpoint for monitoring
+	r.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("# Gateway Metrics\n# TODO: Implement Prometheus metrics\n"))
+	}).Methods("GET")
+
+	// Create WebSocket upgrader
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true // Allow all origins for now
+		},
+	}
+
+	// VNC HTML viewer handler (serves noVNC interface)
+	r.HandleFunc("/vnc/{sessionId}", func(w http.ResponseWriter, r *http.Request) {
+		vncViewerHandler(w, r, gatewayHandler)
+	}).Methods("GET")
+
+	// VNC WebSocket handler (for data streaming)
+	r.HandleFunc("/vnc/{sessionId}/ws", func(w http.ResponseWriter, r *http.Request) {
+		vncWebSocketHandler(w, r, gatewayHandler, &upgrader)
+	}).Methods("GET")
+
+	// Console HTML viewer handler (serves console interface)
+	r.HandleFunc("/console/{sessionId}", func(w http.ResponseWriter, r *http.Request) {
+		consoleViewerHandler(w, r, gatewayHandler)
+	}).Methods("GET")
+
+	// Console WebSocket handler (for terminal data streaming)
+	r.HandleFunc("/console/{sessionId}/ws", func(w http.ResponseWriter, r *http.Request) {
+		consoleWebSocketHandler(w, r, gatewayHandler, &upgrader)
+	}).Methods("GET")
+
+	// Power operations REST API endpoints
+	r.HandleFunc("/api/servers/{serverId}/power/{operation}", func(w http.ResponseWriter, r *http.Request) {
+		powerOperationHandler(w, r, gatewayHandler)
+	}).Methods("POST")
+
+	r.HandleFunc("/api/servers/{serverId}/power/status", func(w http.ResponseWriter, r *http.Request) {
+		powerStatusHandler(w, r, gatewayHandler)
+	}).Methods("GET")
+
+	// Add CORS middleware for web clients
+	corsHandler := addCORS(r)
+
+	return corsHandler
+}
+
+// proxyVNCThroughAgent uses buf Connect streaming RPC to proxy VNC data between WebSocket and agent
+func proxyVNCThroughAgent(wsConn *websocket.Conn, vncSession *gateway.VNCSession, gatewayHandler *gateway.RegionalGatewayHandler) error {
+	log.Info().
+		Str("session_id", vncSession.SessionID).
+		Str("server_id", vncSession.ServerID).
+		Str("agent_id", vncSession.AgentID).
+		Msg("Starting buf Connect streaming VNC proxy")
+
+	// Get agent information to create client connection
+	agentInfo := gatewayHandler.GetAgentRegistry().Get(vncSession.AgentID)
+	if agentInfo == nil {
+		return fmt.Errorf("agent not found: %s", vncSession.AgentID)
+	}
+
+	// Create Connect client for the agent with HTTP/2 support
+	httpClient := &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// Use plain HTTP connection for h2c (HTTP/2 without TLS)
+				return net.Dial(network, addr)
+			},
+		},
+	}
+	agentClient := gatewayv1connect.NewGatewayServiceClient(httpClient, agentInfo.Endpoint)
+
+	// Create bidirectional streaming connection to agent
+	ctx := context.Background()
+	stream := agentClient.StreamVNCData(ctx)
+
+	// Send initial handshake to agent
+	helper := streaming.NewHandshakeHelper(&gatewaystreaming.VNCChunkFactory{})
+	if err := helper.SendHandshake(stream, vncSession.SessionID, vncSession.ServerID); err != nil {
+		return fmt.Errorf("failed to send handshake to agent: %w", err)
+	}
+
+	log.Debug().Str("server_id", vncSession.ServerID).Msg("Sent VNC handshake to agent")
+
+	// Use common streaming proxy to handle bidirectional data flow
+	logger := log.With().
+		Str("session_id", vncSession.SessionID).
+		Str("server_id", vncSession.ServerID).
+		Str("protocol", "vnc").
+		Logger()
+
+	proxy := streaming.NewWebSocketToStreamProxy(
+		wsConn,
+		vncSession.SessionID,
+		vncSession.ServerID,
+		logger,
+		&gatewaystreaming.VNCChunkFactory{},
+	)
+
+	return proxy.ProxyToStream(ctx, stream)
+}
+
+// proxySOLThroughAgent establishes a SOL proxy connection through the appropriate agent
+func proxySOLThroughAgent(wsConn *websocket.Conn, solSession *gateway.SOLSession, gatewayHandler *gateway.RegionalGatewayHandler) error {
+	log.Info().
+		Str("session_id", solSession.SessionID).
+		Str("server_id", solSession.ServerID).
+		Str("agent_id", solSession.AgentID).
+		Msg("Starting buf Connect streaming SOL proxy")
+
+	// Get agent information to create client connection
+	agentInfo := gatewayHandler.GetAgentRegistry().Get(solSession.AgentID)
+	if agentInfo == nil {
+		return fmt.Errorf("agent not found: %s", solSession.AgentID)
+	}
+
+	// Create Connect client for the agent with HTTP/2 support
+	httpClient := &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// Use plain HTTP connection for h2c (HTTP/2 without TLS)
+				return net.Dial(network, addr)
+			},
+		},
+	}
+	agentClient := gatewayv1connect.NewGatewayServiceClient(httpClient, agentInfo.Endpoint)
+
+	// Create bidirectional streaming connection to agent
+	ctx := context.Background()
+	stream := agentClient.StreamConsoleData(ctx)
+
+	// Send initial handshake to agent
+	helper := streaming.NewHandshakeHelper(&gatewaystreaming.ConsoleChunkFactory{})
+	if err := helper.SendHandshake(stream, solSession.SessionID, solSession.ServerID); err != nil {
+		return fmt.Errorf("failed to send handshake to agent: %w", err)
+	}
+
+	log.Debug().Str("server_id", solSession.ServerID).Msg("Sent SOL handshake to agent")
+
+	// Use common streaming proxy to handle bidirectional data flow
+	logger := log.With().
+		Str("session_id", solSession.SessionID).
+		Str("server_id", solSession.ServerID).
+		Str("protocol", "sol").
+		Logger()
+
+	proxy := streaming.NewWebSocketToStreamProxy(
+		wsConn,
+		solSession.SessionID,
+		solSession.ServerID,
+		logger,
+		&gatewaystreaming.ConsoleChunkFactory{},
+	)
+
+	return proxy.ProxyToStream(ctx, stream)
+}
+
+func vncWebSocketHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler, upgrader *websocket.Upgrader) {
+	log.Debug().Str("url_path", r.URL.Path).Msg("VNC WebSocket handler called")
+
+	// Extract session ID from URL parameters
+	vars := mux.Vars(r)
+	sessionID := vars["sessionId"]
+
+	if sessionID == "" {
+		log.Warn().Msg("VNC WebSocket: No session ID provided")
+		http.Error(w, "Session ID required", http.StatusBadRequest)
+		return
+	}
+
+	log.Debug().Str("session_id", sessionID).Msg("VNC WebSocket: Looking for session")
+
+	// Get VNC session from gateway handler
+	vncSession, exists := gatewayHandler.GetVNCSessionByID(sessionID)
+	if !exists {
+		log.Warn().Str("session_id", sessionID).Msg("VNC WebSocket: Session not found or expired")
+		http.Error(w, "VNC session not found or expired", http.StatusNotFound)
+		return
+	}
+
+	log.Debug().Str("server_id", vncSession.ServerID).Msg("VNC WebSocket: Found session")
+
+	// Upgrade HTTP connection to WebSocket
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Error().Err(err).Msg("VNC WebSocket: Failed to upgrade to WebSocket")
+		return
+	}
+	defer conn.Close()
+
+	log.Info().
+		Str("session_id", sessionID).
+		Str("server_id", vncSession.ServerID).
+		Msg("VNC WebSocket connection established")
+
+	// Use buf Connect RPC to request agent to start VNC proxy
+	err = proxyVNCThroughAgent(conn, vncSession, gatewayHandler)
+	if err != nil {
+		log.Error().Err(err).Msg("VNC proxy failed")
+		return
+	}
+
+	log.Info().Str("session_id", sessionID).Msg("VNC WebSocket connection closed")
+}
+
+func vncViewerHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) {
+	// Extract session ID from URL parameters
+	vars := mux.Vars(r)
+	sessionID := vars["sessionId"]
+
+	if sessionID == "" {
+		http.Error(w, "Session ID required", http.StatusBadRequest)
+		return
+	}
+
+	// Get VNC session from gateway handler
+	vncSession, exists := gatewayHandler.GetVNCSessionByID(sessionID)
+	if !exists {
+		http.Error(w, "VNC session not found or expired", http.StatusNotFound)
+		return
+	}
+
+	// Generate WebSocket URL for this session
+	protocol := "ws"
+	if r.TLS != nil {
+		protocol = "wss"
+	}
+	wsURL := protocol + "://" + r.Host + "/vnc/" + sessionID + "/ws"
+
+	// Prepare data for VNC template
+	data := webui.VNCData{
+		TemplateData: webui.TemplateData{
+			Title:         "VNC Console - " + vncSession.ServerID,
+			IconText:      "VNC",
+			HeaderTitle:   "VNC Console - " + vncSession.ServerID,
+			InitialStatus: "Connecting...",
+		},
+		SessionID:    sessionID,
+		ServerID:     vncSession.ServerID,
+		WebSocketURL: wsURL,
+	}
+
+	// Render template
+	reader, err := webui.RenderVNC(data)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to render VNC template")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Serve HTML
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	io.Copy(w, reader)
+
+	log.Info().
+		Str("session_id", sessionID).
+		Str("server_id", vncSession.ServerID).
+		Msg("Served VNC viewer")
+}
+
+// CORS middleware to handle web clients
+func addCORS(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key, Connect-Protocol-Version, Connect-Timeout-Ms")
+		w.Header().Set("Access-Control-Expose-Headers", "Connect-Protocol-Version, Connect-Timeout-Ms")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
+// consoleViewerHandler serves the console HTML interface
+func consoleViewerHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) {
+	// Extract session ID from URL parameters
+	vars := mux.Vars(r)
+	sessionID := vars["sessionId"]
+
+	if sessionID == "" {
+		http.Error(w, "Session ID required", http.StatusBadRequest)
+		return
+	}
+
+	// Get SOL session from gateway handler
+	solSession, exists := gatewayHandler.GetSOLSessionByID(sessionID)
+	if !exists {
+		http.Error(w, "Console session not found or expired", http.StatusNotFound)
+		return
+	}
+
+	// Generate WebSocket URL for this session
+	protocol := "ws"
+	if r.TLS != nil {
+		protocol = "wss"
+	}
+	wsURL := protocol + "://" + r.Host + "/console/" + sessionID + "/ws"
+
+	// Prepare data for console template
+	data := webui.ConsoleData{
+		TemplateData: webui.TemplateData{
+			Title:         "SOL Console - " + solSession.ServerID,
+			IconText:      "SOL",
+			HeaderTitle:   "SOL Console - " + solSession.ServerID,
+			InitialStatus: "Connecting...",
+		},
+		SessionID:       sessionID,
+		ServerID:        solSession.ServerID,
+		GatewayEndpoint: r.Host,
+		WebSocketURL:    wsURL,
+	}
+
+	// Render console template
+	reader, err := webui.RenderConsole(data)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to render console template")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Serve HTML
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	io.Copy(w, reader)
+
+	log.Info().
+		Str("session_id", sessionID).
+		Str("server_id", solSession.ServerID).
+		Msg("Served console viewer")
+}
+
+// consoleWebSocketHandler handles WebSocket connections for console data
+func consoleWebSocketHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler, upgrader *websocket.Upgrader) {
+	// Extract session ID from URL parameters
+	vars := mux.Vars(r)
+	sessionID := vars["sessionId"]
+
+	if sessionID == "" {
+		http.Error(w, "Session ID required", http.StatusBadRequest)
+		return
+	}
+
+	// Get SOL session from gateway handler
+	solSession, exists := gatewayHandler.GetSOLSessionByID(sessionID)
+	if !exists {
+		http.Error(w, "Console session not found or expired", http.StatusNotFound)
+		return
+	}
+
+	// Upgrade HTTP connection to WebSocket
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to upgrade to WebSocket")
+		return
+	}
+	defer conn.Close()
+
+	log.Info().
+		Str("session_id", sessionID).
+		Str("server_id", solSession.ServerID).
+		Msg("Console WebSocket connection established")
+
+	// Send initial connection message
+	welcomeMsg := map[string]interface{}{
+		"type": "welcome",
+		"data": map[string]string{
+			"message":   "Console session connected",
+			"sessionId": sessionID,
+			"serverId":  solSession.ServerID,
+		},
+	}
+
+	if err := conn.WriteJSON(welcomeMsg); err != nil {
+		log.Error().Err(err).Msg("Failed to write welcome message")
+		return
+	}
+
+	// Proxy SOL data through the agent
+	err = proxySOLThroughAgent(conn, solSession, gatewayHandler)
+	if err != nil {
+		log.Error().Err(err).Msg("SOL proxy error")
+	}
+
+	log.Info().Str("session_id", sessionID).Msg("Console WebSocket connection closed")
+}
+
+// powerOperationHandler handles REST API power operations
+func powerOperationHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) {
+	vars := mux.Vars(r)
+	serverID := vars["serverId"]
+	operation := vars["operation"]
+
+	if serverID == "" || operation == "" {
+		http.Error(w, "Server ID and operation required", http.StatusBadRequest)
+		return
+	}
+
+	// Extract and validate Bearer token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header required", http.StatusUnauthorized)
+		return
+	}
+
+	token := ""
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	} else {
+		http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+		return
+	}
+
+	// Add token to context for handler
+	ctx := context.WithValue(r.Context(), "token", token)
+
+	// Create RPC request
+	powerReq := &gatewayv1.PowerOperationRequest{
+		ServerId: serverID,
+	}
+	reqWrapper := connect.NewRequest(powerReq)
+
+	// Add authorization header
+	reqWrapper.Header().Set("Authorization", "Bearer "+token)
+
+	// Map REST operation to RPC call
+	var err error
+	switch operation {
+	case "on":
+		_, err = gatewayHandler.PowerOn(ctx, reqWrapper)
+	case "off":
+		_, err = gatewayHandler.PowerOff(ctx, reqWrapper)
+	case "cycle":
+		_, err = gatewayHandler.PowerCycle(ctx, reqWrapper)
+	case "reset":
+		_, err = gatewayHandler.Reset(ctx, reqWrapper)
+	default:
+		http.Error(w, "Invalid operation", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"success": true, "message": "Operation completed"}`))
+	}
+}
+
+// powerStatusHandler handles REST API power status requests
+func powerStatusHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) {
+	vars := mux.Vars(r)
+	serverID := vars["serverId"]
+
+	if serverID == "" {
+		http.Error(w, "Server ID required", http.StatusBadRequest)
+		return
+	}
+
+	// Extract and validate Bearer token
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header required", http.StatusUnauthorized)
+		return
+	}
+
+	token := ""
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	} else {
+		http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+		return
+	}
+
+	// Add token to context for handler
+	ctx := context.WithValue(r.Context(), "token", token)
+
+	// Create RPC request for power status
+	statusReq := &gatewayv1.PowerStatusRequest{
+		ServerId: serverID,
+	}
+	reqWrapper := connect.NewRequest(statusReq)
+	reqWrapper.Header().Set("Authorization", "Bearer "+token)
+
+	// Call power status RPC
+	resp, err := gatewayHandler.GetPowerStatus(ctx, reqWrapper)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		return
+	}
+
+	// Convert power state to string
+	var status string
+	switch resp.Msg.State.String() {
+	case "POWER_STATE_ON":
+		status = "on"
+	case "POWER_STATE_OFF":
+		status = "off"
+	case "POWER_STATE_UNKNOWN":
+		status = "unknown"
+	default:
+		status = "unknown"
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(status))
+}
+
+// handleSimpleVNCTest - simple test to verify WebSocket is working before trying full VNC protocol

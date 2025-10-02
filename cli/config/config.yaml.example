@@ -1,0 +1,26 @@
+# BMC CLI Configuration
+# This file is stored at ~/.bmc-cli/config.yaml (automatically created after login)
+# You can also place it at:
+#   - ./config.yaml (current directory)
+#   - /etc/bmc-cli/config.yaml (system-wide)
+
+# BMC Manager endpoint
+manager:
+  endpoint: http://localhost:8080
+
+# Legacy gateway URL (for backward compatibility)
+# Most operations use the manager endpoint
+gateway:
+  url: http://localhost:8081
+
+# Authentication (automatically managed by login/logout commands)
+# Do not manually edit these values
+auth:
+  access_token: ""
+  refresh_token: ""
+  token_expires_at: null
+  email: ""
+
+  # Legacy authentication (deprecated)
+  api_key: ""
+  token: ""

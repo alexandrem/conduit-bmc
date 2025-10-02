@@ -1,0 +1,5 @@
+.claude
+.cache
+.git
+*.iso
+tmp/

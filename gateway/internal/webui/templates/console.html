@@ -1,0 +1,594 @@
+{{template "base.html" .}}
+
+{{define "styles"}}{{end}}
+
+{{define "content"}}
+<!-- Console Area -->
+<div class="flex-1 flex flex-col bg-black/20 m-3 rounded-xl overflow-hidden backdrop-blur-md border border-white/10">
+    <!-- SOL Console Header -->
+    <div class="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center">
+        <div class="text-sm font-medium opacity-90 flex items-center gap-2">
+            <span class="text-lg">📟</span>
+            SOL Console Session
+        </div>
+        <div class="flex gap-2">
+            <button onclick="sendCtrlAltDel()"
+                    class="px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-md transition-all hover:-translate-y-px">
+                Ctrl+Alt+Del
+            </button>
+            <button onclick="toggleFullscreen()"
+                    class="px-3 py-1 text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-600 rounded-md transition-all hover:-translate-y-px">
+                Fullscreen
+            </button>
+            <button onclick="reconnect()"
+                    class="px-3 py-1 text-xs font-medium bg-gradient-to-r from-red-500 to-orange-500 rounded-md transition-all hover:-translate-y-px">
+                Reconnect
+            </button>
+        </div>
+    </div>
+
+    <!-- Terminal Container -->
+    <div id="terminal-container" class="flex-1 bg-console-bg"></div>
+
+    <!-- Input Area -->
+    <div class="bg-black/40 p-3 border-t border-white/10 flex gap-2 items-center">
+        <input type="text" id="input" placeholder="Type commands here..."
+               class="flex-1 bg-white/10 border border-white/20 rounded-md px-3 py-2 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:border-blue-400 focus:bg-white/15" />
+        <button onclick="sendCommand()"
+                class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-600 rounded-md transition-all hover:-translate-y-px">
+            Send
+        </button>
+    </div>
+</div>
+
+<!-- Server Control Sidebar -->
+<div class="w-80 bg-black/30 backdrop-blur-md border-l border-white/10 p-5 overflow-y-auto">
+    <!-- Server Information -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Server Information</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Server ID</span>
+                <span class="font-medium">{{.ServerID}}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Session ID</span>
+                <span class="font-mono text-xs">{{.SessionID}}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Gateway</span>
+                <span class="text-xs">{{.GatewayEndpoint}}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Protocol</span>
+                <span>SOL/WebSocket</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Console Type</span>
+                <span>Serial Terminal</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server State -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90 flex items-center gap-2">
+            Server State
+            <div class="w-2 h-2 bg-yellow-400 rounded-full pulse-animation" id="server-state-dot"></div>
+        </h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Power State</span>
+                <span id="power-status" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-600 text-white">Unknown</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">BMC Status</span>
+                <span id="bmc-status" class="px-2 py-1 text-xs font-medium rounded-full bg-green-600 text-white">Connected</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Last Check</span>
+                <span id="last-check" class="text-xs">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Power Operations -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Power Control</h3>
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="powerOperation('on')"
+                    class="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="power-on-btn">
+                <div class="text-center">
+                    <div class="text-lg">⚡</div>
+                    <div>Power On</div>
+                </div>
+            </button>
+            <button onclick="powerOperation('off')"
+                    class="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="power-off-btn">
+                <div class="text-center">
+                    <div class="text-lg">⏻</div>
+                    <div>Power Off</div>
+                </div>
+            </button>
+            <button onclick="powerOperation('reset')"
+                    class="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="reset-btn">
+                <div class="text-center">
+                    <div class="text-lg">🔄</div>
+                    <div>Reset</div>
+                </div>
+            </button>
+            <button onclick="powerOperation('cycle')"
+                    class="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="cycle-btn">
+                <div class="text-center">
+                    <div class="text-lg">🔁</div>
+                    <div>Power Cycle</div>
+                </div>
+            </button>
+        </div>
+        <button onclick="refreshPowerStatus()"
+                class="w-full mt-2 p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-all">
+            <span class="inline-block mr-2">🔍</span>Refresh Status
+        </button>
+    </div>
+
+    <!-- SOL Terminal Controls -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Terminal Controls</h3>
+        <div class="space-y-2">
+            <button onclick="sendSpecialKey('ESC')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">⎋</span>Send ESC
+            </button>
+            <button onclick="sendSpecialKey('F12')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">🔧</span>Boot Menu (F12)
+            </button>
+            <button onclick="sendSpecialKey('DELETE')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">⚙️</span>BIOS Setup
+            </button>
+            <button onclick="sendSpecialKey('BREAK')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">⏸️</span>Send Break
+            </button>
+            <button onclick="clearTerminal()"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">🧹</span>Clear Terminal
+            </button>
+            <button onclick="copyOutput()"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">📋</span>Copy Output
+            </button>
+        </div>
+    </div>
+
+    <!-- Connection Info -->
+    <div class="mb-4">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Connection Info</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Connected</span>
+                <span id="connect-time">--</span>
+            </div>
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Messages</span>
+                <span id="message-count">0</span>
+            </div>
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Last Activity</span>
+                <span id="last-activity">--</span>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+// XTerm.js Terminal Setup
+let term = null;
+let fitAddon = null;
+let webLinksAddon = null;
+let ws = null;
+
+// Connection tracking
+let messageCounter = 0;
+let connectionStart = null;
+let powerOperationsInProgress = new Set();
+let authToken = null;
+
+// Initialize XTerm terminal
+function initializeTerminal() {
+    // Create terminal instance
+    term = new Terminal({
+        theme: {
+            background: '#0a0a0a',
+            foreground: '#00ff41',
+            cursor: '#00ff41',
+            selection: 'rgba(255, 255, 255, 0.3)',
+        },
+        fontFamily: 'SF Mono, Consolas, Cascadia Code, Monaco, monospace',
+        fontSize: 13,
+        lineHeight: 1.2,
+        cursorBlink: true,
+        cursorStyle: 'block',
+        scrollback: 10000,
+        allowTransparency: true,
+        convertEol: true
+    });
+
+    // Add addons
+    fitAddon = new FitAddon.FitAddon();
+    webLinksAddon = new WebLinksAddon.WebLinksAddon();
+
+    term.loadAddon(fitAddon);
+    term.loadAddon(webLinksAddon);
+
+    // Mount terminal
+    const container = document.getElementById('terminal-container');
+    term.open(container);
+
+    // Fit terminal to container
+    fitAddon.fit();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        setTimeout(() => fitAddon.fit(), 10);
+    });
+
+    // Terminal input handling
+    term.onData(data => {
+        // Send input data to server via WebSocket
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type: 'input',
+                data: data
+            }));
+        } else {
+            logToTerminal('WebSocket not connected - input ignored', 'warning');
+        }
+    });
+
+    // Initial welcome message
+    term.writeln('\\x1b[32mSOL Console Session Initialized\\x1b[0m');
+    term.writeln('\\x1b[36mServer: {{.ServerID}}\\x1b[0m');
+    term.writeln('\\x1b[36mGateway: {{.GatewayEndpoint}}\\x1b[0m');
+    term.writeln('\\x1b[36mSession: {{.SessionID}}\\x1b[0m');
+    term.writeln('\\x1b[37mSerial Over LAN (SOL) - Text-based console access\\x1b[0m');
+    term.writeln('\\x1b[37mConnecting to WebSocket...\\x1b[0m');
+    term.writeln('');
+}
+
+function logToTerminal(message, type = 'info') {
+    if (!term) return;
+
+    const timestamp = new Date().toLocaleTimeString();
+    let colorCode = '';
+
+    switch(type) {
+        case 'error': colorCode = '\\x1b[31m'; break; // Red
+        case 'success': colorCode = '\\x1b[32m'; break; // Green
+        case 'warning': colorCode = '\\x1b[33m'; break; // Yellow
+        case 'info': colorCode = '\\x1b[36m'; break; // Cyan
+        case 'input': colorCode = '\\x1b[35m'; break; // Magenta
+        default: colorCode = '\\x1b[37m'; // White
+    }
+
+    term.writeln(`\\x1b[90m[${timestamp}]\\x1b[0m ${colorCode}${message}\\x1b[0m`);
+
+    messageCounter++;
+    updateConnectionInfo();
+}
+
+// Power Operations
+async function powerOperation(operation) {
+    if (powerOperationsInProgress.has(operation)) {
+        return;
+    }
+
+    const serverID = '{{.ServerID}}';
+    const button = document.getElementById(`${operation === 'on' ? 'power-on' : operation === 'off' ? 'power-off' : operation}-btn`);
+
+    // Disable button and show loading
+    if (button) {
+        button.disabled = true;
+        button.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    powerOperationsInProgress.add(operation);
+    logToTerminal(`Executing power ${operation} operation...`, 'info');
+
+    try {
+        const response = await fetch(`/api/servers/${serverID}/power/${operation}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getAuthToken()
+            }
+        });
+
+        if (response.ok) {
+            logToTerminal(`Power ${operation} operation completed successfully`, 'success');
+            // Refresh power status after successful operation
+            setTimeout(() => refreshPowerStatus(), 2000);
+        } else {
+            const error = await response.text();
+            logToTerminal(`Power ${operation} operation failed: ${error}`, 'error');
+        }
+    } catch (error) {
+        logToTerminal(`Power ${operation} operation error: ${error.message}`, 'error');
+    } finally {
+        powerOperationsInProgress.delete(operation);
+        if (button) {
+            button.disabled = false;
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+}
+
+// Refresh power status
+async function refreshPowerStatus() {
+    const serverID = '{{.ServerID}}';
+    const statusElement = document.getElementById('power-status');
+    const lastCheckElement = document.getElementById('last-check');
+    const serverStateDot = document.getElementById('server-state-dot');
+
+    try {
+        logToTerminal('Refreshing power status...', 'info');
+
+        const response = await fetch(`/api/servers/${serverID}/power/status`, {
+            headers: {
+                'Authorization': 'Bearer ' + getAuthToken()
+            }
+        });
+
+        if (response.ok) {
+            const status = await response.text();
+
+            // Update power status display
+            if (statusElement) {
+                statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                statusElement.className = 'px-2 py-1 text-xs font-medium rounded-full';
+
+                // Color coding based on status
+                if (status === 'on') {
+                    statusElement.classList.add('bg-green-600', 'text-white');
+                } else if (status === 'off') {
+                    statusElement.classList.add('bg-red-600', 'text-white');
+                } else {
+                    statusElement.classList.add('bg-gray-600', 'text-white');
+                }
+            }
+
+            // Update server state indicator
+            if (serverStateDot) {
+                serverStateDot.className = 'w-2 h-2 rounded-full';
+                if (status === 'on') {
+                    serverStateDot.classList.add('bg-green-400');
+                } else if (status === 'off') {
+                    serverStateDot.classList.add('bg-red-400');
+                } else {
+                    serverStateDot.classList.add('bg-gray-400');
+                }
+            }
+
+            if (lastCheckElement) {
+                lastCheckElement.textContent = new Date().toLocaleTimeString();
+            }
+
+            logToTerminal(`Power status: ${status}`, 'success');
+        } else {
+            const error = await response.text();
+            logToTerminal(`Failed to get power status: ${error}`, 'error');
+        }
+    } catch (error) {
+        logToTerminal(`Error getting power status: ${error.message}`, 'error');
+    }
+}
+
+// WebSocket initialization
+function initializeWebSocket() {
+    const wsUrl = '{{.WebSocketURL}}';
+
+    logToTerminal('Connecting to WebSocket: ' + wsUrl, 'info');
+
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = function(event) {
+        logToTerminal('WebSocket connection established', 'success');
+        updateStatus('Connected', 'connected');
+        connectionStart = new Date();
+    };
+
+    ws.onmessage = function(event) {
+        try {
+            const message = JSON.parse(event.data);
+            handleWebSocketMessage(message);
+        } catch (e) {
+            // Handle raw text messages
+            term.write(event.data);
+        }
+        updateConnectionInfo();
+    };
+
+    ws.onclose = function(event) {
+        logToTerminal('WebSocket connection closed: ' + event.code, 'warning');
+        updateStatus('Disconnected', 'error');
+    };
+
+    ws.onerror = function(error) {
+        logToTerminal('WebSocket error: ' + error, 'error');
+        updateStatus('Error', 'error');
+    };
+}
+
+function handleWebSocketMessage(message) {
+    switch (message.type) {
+        case 'welcome':
+            logToTerminal('Server: ' + message.data.message, 'success');
+            break;
+        case 'output':
+            term.write(message.data);
+            break;
+        case 'echo':
+            logToTerminal('Echo: ' + JSON.stringify(message.data), 'info');
+            break;
+        default:
+            logToTerminal('Unknown message type: ' + message.type, 'warning');
+    }
+}
+
+// Utility functions
+function getAuthToken() {
+    if (authToken) {
+        return authToken;
+    }
+
+    // Try to extract token from URL parameters or session storage
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+
+    if (tokenFromUrl) {
+        authToken = tokenFromUrl;
+        return authToken;
+    }
+
+    // For development/testing, use a placeholder
+    // In production, this should be properly managed
+    logToTerminal('Warning: Using placeholder token for development', 'warning');
+    return 'placeholder-token';
+}
+
+function updateConnectionInfo() {
+    if (connectionStart) {
+        const duration = Math.floor((new Date() - connectionStart) / 1000);
+        const connectTime = document.getElementById('connect-time');
+        if (connectTime) {
+            connectTime.textContent = formatDuration(duration);
+        }
+    }
+
+    const messageCount = document.getElementById('message-count');
+    const lastActivity = document.getElementById('last-activity');
+
+    if (messageCount) messageCount.textContent = messageCounter;
+    if (lastActivity) lastActivity.textContent = new Date().toLocaleTimeString();
+}
+
+function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+}
+
+// Legacy functions for compatibility
+function sendCommand() {
+    const input = document.getElementById('input');
+    const command = input.value.trim();
+    if (command) {
+        logToTerminal(`Command: ${command}`, 'input');
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type: 'command',
+                data: command
+            }));
+        } else {
+            logToTerminal('[WebSocket not connected] Command would be sent to BMC via gateway', 'warning');
+        }
+
+        input.value = '';
+    }
+}
+
+function sendCtrlAltDel() {
+    logToTerminal('Sent Ctrl+Alt+Del key combination', 'input');
+    logToTerminal('[PLACEHOLDER] Ctrl+Alt+Del would be sent to BMC', 'info');
+}
+
+function sendSpecialKey(key) {
+    logToTerminal(`Sent special key: ${key}`, 'input');
+    logToTerminal(`[PLACEHOLDER] Special key would be sent to BMC: ${key}`, 'info');
+}
+
+function clearTerminal() {
+    if (term) {
+        term.clear();
+        logToTerminal('Terminal cleared', 'info');
+    }
+}
+
+function copyOutput() {
+    if (term) {
+        const text = term.getSelection();
+        if (text) {
+            navigator.clipboard.writeText(text).then(() => {
+                logToTerminal('Selected text copied to clipboard', 'success');
+            }).catch(() => {
+                logToTerminal('Failed to copy to clipboard', 'error');
+            });
+        } else {
+            logToTerminal('No text selected', 'warning');
+        }
+    }
+}
+
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+        logToTerminal('Exited fullscreen mode', 'info');
+    } else {
+        document.documentElement.requestFullscreen();
+        logToTerminal('Entered fullscreen mode', 'info');
+    }
+}
+
+function reconnect() {
+    if (ws && ws.readyState !== WebSocket.CLOSED) {
+        ws.close();
+    }
+    if (term) {
+        term.clear();
+    }
+    messageCounter = 0;
+    connectionStart = null;
+    updateStatus('Connecting...', '');
+    logToTerminal('Reconnecting to gateway...', 'info');
+    setTimeout(() => {
+        initializeTerminal();
+        initializeWebSocket();
+        refreshPowerStatus();
+    }, 1000);
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize terminal
+    initializeTerminal();
+
+    // Initialize WebSocket connection
+    initializeWebSocket();
+
+    // Setup input handler
+    const input = document.getElementById('input');
+    if (input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendCommand();
+            }
+        });
+        input.focus();
+    }
+
+    // Initial power status check
+    refreshPowerStatus();
+});
+
+// Update connection info every second
+setInterval(updateConnectionInfo, 1000);
+// Refresh power status every 30 seconds
+setInterval(refreshPowerStatus, 30000);
+{{end}}

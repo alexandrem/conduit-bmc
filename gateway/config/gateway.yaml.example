@@ -1,0 +1,75 @@
+# BMC Gateway Service Configuration
+# This file contains non-sensitive configuration options for the BMC Gateway service.
+# Sensitive values should be set via environment variables.
+
+# Logging configuration
+log:
+  level: info        # trace, debug, info, warn, error, fatal, panic
+  format: json       # json or console
+  debug: false       # Override level to debug if true
+
+# Gateway service configuration
+gateway:
+  host: 0.0.0.0
+  port: 8081
+
+  # Manager endpoint MUST be set via BMC_MANAGER_ENDPOINT environment variable
+  # manager_endpoint: http://localhost:8080
+
+  # Region identifier
+  region: default
+
+  # Rate limiting configuration
+  rate_limit:
+    enabled: true
+
+  # =============================================================================
+  # The following sections are defined but not currently used in the code
+  # They are kept for future implementation
+  # =============================================================================
+
+  # Datacenter configuration (not currently used)
+  # datacenters:
+  #   - dc-local-01
+  #   - dc-docker-01
+
+  # Proxy configuration (not currently used)
+  # proxy:
+  #   bmc_timeout: 60s
+  #   ipmi_timeout: 30s
+  #   redfish_timeout: 45s
+  #   max_retries: 3
+
+  # WebSocket configuration (not currently used)
+  # websocket:
+  #   vnc_frame_rate: 15
+  #   vnc_quality: 6
+  #   vnc_compression: 2
+
+  # Session management configuration (not currently used)
+  # session_management:
+  #   proxy_session_ttl: 1h
+  #   vnc_session_ttl: 4h
+  #   console_session_ttl: 2h
+
+  # Web UI configuration (not currently used)
+  # webui:
+  #   enabled: true
+  #   title: BMC Management Console
+
+  # Agent connection management (not currently used)
+  # agent_connections:
+  #   max_connections: 100
+  #   heartbeat_interval: 30s
+
+# Authentication configuration
+auth:
+  # JWT secret key MUST be set via JWT_SECRET_KEY environment variable
+
+# TLS configuration (optional)
+tls:
+  enabled: false
+  # cert_file and key_file should be set via environment variables if TLS is enabled
+  # cert_file: /path/to/cert.pem
+  # key_file: /path/to/key.pem
+  # ca_file: /path/to/ca.pem

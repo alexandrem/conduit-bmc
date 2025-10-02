@@ -1,0 +1,271 @@
+agent:
+  id: "docker-agent-001"
+  name: "Docker Environment Agent"
+  datacenter_id: "dc-docker-01"
+  region: "docker"
+  gateway_endpoint: "http://gateway:8081"
+  endpoint: "http://local-agent:8082"
+  http_port: 8082
+
+  bmc_discovery:
+    enabled: false
+    scan_interval: "30s"
+    network_ranges:
+      - "127.0.0.0/8"
+      - "192.168.1.0/24"
+      - "172.21.0.0/16"
+    scan_timeout: "10s"
+    max_concurrent: 10
+
+  vnc:
+    enabled: true
+    port: 5901
+    bind_address: "0.0.0.0"
+    max_connections: 5
+
+log:
+  level: "info"
+  format: "text"
+
+static:
+  hosts:
+    # ==========================================
+    # Static BMC Host Configuration
+    # ==========================================
+    # NOTE: All BMC types are configured below. Start only the containers
+    #       you need - the agent will gracefully skip unreachable endpoints.
+    #
+    # Usage:
+    #   - VirtualBMC only:  docker-compose -f docker-compose.virtualbmc.yml up dev-virtualbmc-* dev-server-* dev-novnc
+    #   - Redfish only:     docker-compose -f docker-compose.virtualbmc.yml up dev-redfish-* dev-server-* dev-novnc
+    #   - All simulators:   docker-compose -f docker-compose.virtualbmc.yml up
+    #
+    # ==========================================
+    # VirtualBMC IPMI Servers (Advanced Simulation)
+    # ==========================================
+    - id: "ipmi-server-01"
+      customer_id: "system"
+      features: ["power", "sensors", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "VirtualBMC Server 01"
+        profile: "ipmi"
+        external_port: 6230
+        server_container: "server-01"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "dev-virtualbmc-01:623"
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # IPMI Serial-over-LAN
+      sol_endpoint:
+        type: "ipmi"
+        endpoint: "dev-virtualbmc-01:623"
+        username: "ipmiusr"
+        password: "test"
+        config:
+          baud_rate: 115200
+          timeout_seconds: 300
+
+      # VNC endpoint (transport auto-detected from URL scheme)
+      vnc_endpoint:
+        endpoint: "dev-server-01:5901"
+
+    - id: "ipmi-server-02"
+      customer_id: "system"
+      features: ["power", "sensors", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "VirtualBMC Server 02"
+        profile: "ipmi"
+        external_port: 6231
+        server_container: "server-02"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "dev-virtualbmc-02:623"
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # IPMI Serial-over-LAN
+      sol_endpoint:
+        type: "ipmi"
+        endpoint: "dev-virtualbmc-02:623"
+        username: "ipmiusr"
+        password: "test"
+        config:
+          baud_rate: 115200
+          timeout_seconds: 300
+
+      # VNC endpoint (transport auto-detected from URL scheme)
+      vnc_endpoint:
+        endpoint: "dev-server-02:5901"
+
+    - id: "ipmi-server-03"
+      customer_id: "system"
+      features: ["power", "sensors", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "VirtualBMC Server 03"
+        profile: "ipmi"
+        external_port: 6232
+        server_container: "server-03"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "dev-virtualbmc-03:623"
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # IPMI Serial-over-LAN
+      sol_endpoint:
+        type: "ipmi"
+        endpoint: "dev-virtualbmc-03:623"
+        username: "ipmiusr"
+        password: "test"
+        config:
+          baud_rate: 115200
+          timeout_seconds: 300
+
+      # VNC endpoint (transport auto-detected from URL scheme)
+      vnc_endpoint:
+        endpoint: "dev-server-03:5901"
+
+    - id: "ipmi-server-01-ws"
+      customer_id: "system"
+      features: ["power", "sensors", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "VirtualBMC Server 01"
+        profile: "ipmi"
+        external_port: 6230
+        server_container: "server-01"
+
+      # IPMI Control API
+      control_endpoint:
+        endpoint: "dev-virtualbmc-04:623" # this is fake
+        type: "ipmi"
+        username: "ipmiusr"
+        password: "test"
+        capabilities: ["power", "sensors", "sel", "fru"]
+
+      # VNC via noVNC proxy
+      vnc_endpoint:
+        type: "novnc_proxy"
+        endpoint: "ws://dev-novnc:6080/websockify"
+
+    # ==========================================
+    # Redfish API Servers (Advanced Emulation)
+    # ==========================================
+    - id: "redfish-server-01"
+      customer_id: "system"
+      features: ["power", "systems", "chassis", "managers", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "Redfish Emulator Server 01"
+        profile: "redfish"
+        external_port: 8000
+        server_container: "server-01"
+        sushy_emulator: true
+
+      # Redfish Control API
+      control_endpoint:
+        endpoint: "http://dev-redfish-01:8000"
+        type: "redfish"
+        username: ""
+        password: ""
+        capabilities: ["power", "systems", "chassis", "managers"]
+        tls:
+          enabled: false
+          insecure_skip_verify: true
+
+      # Redfish Serial Console
+      sol_endpoint:
+        type: "redfish_serial"
+        endpoint: "http://dev-redfish-01:8000"
+        username: ""
+        password: ""
+        config:
+          timeout_seconds: 600
+
+      # VNC endpoint (transport auto-detected from URL scheme)
+      vnc_endpoint:
+        endpoint: "dev-server-01:5901"
+
+    - id: "redfish-server-02"
+      customer_id: "system"
+      features: ["power", "systems", "chassis", "managers", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "Redfish Emulator Server 02"
+        profile: "redfish"
+        external_port: 8001
+        server_container: "server-02"
+        sushy_emulator: true
+
+      # Redfish Control API
+      control_endpoint:
+        endpoint: "http://dev-redfish-02:8000"
+        type: "redfish"
+        username: ""
+        password: ""
+        capabilities: ["power", "systems", "chassis", "managers"]
+        tls:
+          enabled: false
+          insecure_skip_verify: true
+
+      # Redfish Serial Console
+      sol_endpoint:
+        type: "redfish_serial"
+        endpoint: "http://dev-redfish-02:8000"
+        username: ""
+        password: ""
+        config:
+          timeout_seconds: 600
+
+      # VNC endpoint (transport auto-detected from URL scheme)
+      vnc_endpoint:
+        endpoint: "dev-server-02:5901"
+
+    - id: "redfish-server-03"
+      customer_id: "system"
+      features: ["power", "systems", "chassis", "managers", "vnc"]
+      metadata:
+        location: "rack-2"
+        model: "Redfish Emulator Server 03"
+        profile: "redfish"
+        external_port: 8002
+        server_container: "server-03"
+        sushy_emulator: true
+
+      # Redfish Control API
+      control_endpoint:
+        endpoint: "http://dev-redfish-03:8000"
+        type: "redfish"
+        username: ""
+        password: ""
+        capabilities: ["power", "systems", "chassis", "managers"]
+        tls:
+          enabled: false
+          insecure_skip_verify: true
+
+      # Redfish Serial Console
+      sol_endpoint:
+        type: "redfish_serial"
+        endpoint: "http://dev-redfish-03:8000"
+        username: ""
+        password: ""
+        config:
+          timeout_seconds: 600
+
+      # VNC endpoint (transport auto-detected from URL scheme)
+      vnc_endpoint:
+        endpoint: "dev-server-03:5901"

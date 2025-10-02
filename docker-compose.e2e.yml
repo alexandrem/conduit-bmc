@@ -1,0 +1,201 @@
+version: '3.9'
+
+# E2E Test Machines Environment
+# This compose file creates temporary test machines for E2E testing
+# Use "make test-e2e" to run E2E tests which orchestrates:
+# 1. Core services (must be running via "make dev-up")
+# 2. These temporary E2E test machines on different ports
+# 3. Test execution and cleanup
+
+services:
+  # ==========================================
+  # E2E Test BMC Machines (Temporary)
+  # ==========================================
+
+  # E2E test server containers (separate from dev servers)
+  e2e-server-01:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    container_name: e2e-server-01
+    hostname: e2e-server-01
+    networks:
+      bmc-network:
+        ipv4_address: 172.21.0.20  # Different IP range from dev servers
+    tty: true
+    stdin_open: true
+    environment:
+      - SERVER_ID=e2e-01
+      - DISPLAY=:1
+      - VNC_PORT=5901
+      - SOL_DEVICE=/dev/ttyS0
+    volumes:
+      - e2e-server-01-data:/var/lib/server
+    healthcheck:
+      test: ["CMD", "pgrep", "Xvfb"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  e2e-server-02:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    container_name: e2e-server-02
+    hostname: e2e-server-02
+    networks:
+      bmc-network:
+        ipv4_address: 172.21.0.21
+    tty: true
+    stdin_open: true
+    environment:
+      - SERVER_ID=e2e-02
+      - DISPLAY=:1
+      - VNC_PORT=5901
+      - SOL_DEVICE=/dev/ttyS0
+    volumes:
+      - e2e-server-02-data:/var/lib/server
+    healthcheck:
+      test: ["CMD", "pgrep", "Xvfb"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  e2e-server-03:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    container_name: e2e-server-03
+    hostname: e2e-server-03
+    networks:
+      bmc-network:
+        ipv4_address: 172.21.0.22
+    tty: true
+    stdin_open: true
+    environment:
+      - SERVER_ID=e2e-03
+      - DISPLAY=:1
+      - VNC_PORT=5901
+      - SOL_DEVICE=/dev/ttyS0
+    volumes:
+      - e2e-server-03-data:/var/lib/server
+    healthcheck:
+      test: ["CMD", "pgrep", "Xvfb"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # E2E VirtualBMC instances (different ports from dev)
+  e2e-virtualbmc-01:
+    build:
+      context: .
+      dockerfile: docker/virtualbmc.Dockerfile
+    container_name: e2e-virtualbmc-01
+    hostname: e2e-virtualbmc-01
+    networks:
+      - bmc-network
+    ports:
+      - "7230:623/udp"  # E2E IPMI ports (different from dev 6230-6232)
+    environment:
+      - VBMC_SERVER_NAME=e2e-server-01
+      - VBMC_DOCKER_CONTAINER=e2e-server-01
+      - IPMI_USERNAME=ipmiusr
+      - IPMI_PASSWORD=test
+      - IPMI_PORT=623
+      - IPMI_ADDRESS=0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - e2e-virtualbmc-01-data:/var/lib/vbmc
+    depends_on:
+      e2e-server-01:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vbmc", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  e2e-virtualbmc-02:
+    build:
+      context: .
+      dockerfile: docker/virtualbmc.Dockerfile
+    container_name: e2e-virtualbmc-02
+    hostname: e2e-virtualbmc-02
+    networks:
+      - bmc-network
+    ports:
+      - "7231:623/udp"
+    environment:
+      - VBMC_SERVER_NAME=e2e-server-02
+      - VBMC_DOCKER_CONTAINER=e2e-server-02
+      - IPMI_USERNAME=ipmiusr
+      - IPMI_PASSWORD=test
+      - IPMI_PORT=623
+      - IPMI_ADDRESS=0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - e2e-virtualbmc-02-data:/var/lib/vbmc
+    depends_on:
+      e2e-server-02:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vbmc", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  e2e-virtualbmc-03:
+    build:
+      context: .
+      dockerfile: docker/virtualbmc.Dockerfile
+    container_name: e2e-virtualbmc-03
+    hostname: e2e-virtualbmc-03
+    networks:
+      - bmc-network
+    ports:
+      - "7232:623/udp"
+    environment:
+      - VBMC_SERVER_NAME=e2e-server-03
+      - VBMC_DOCKER_CONTAINER=e2e-server-03
+      - IPMI_USERNAME=ipmiusr
+      - IPMI_PASSWORD=test
+      - IPMI_PORT=623
+      - IPMI_ADDRESS=0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - e2e-virtualbmc-03-data:/var/lib/vbmc
+    depends_on:
+      e2e-server-03:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vbmc", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  # E2E Test machine data (temporary)
+  e2e-server-01-data:
+    name: e2e-server-01-data
+  e2e-server-02-data:
+    name: e2e-server-02-data
+  e2e-server-03-data:
+    name: e2e-server-03-data
+
+  e2e-virtualbmc-01-data:
+    name: e2e-virtualbmc-01-data
+  e2e-virtualbmc-02-data:
+    name: e2e-virtualbmc-02-data
+  e2e-virtualbmc-03-data:
+    name: e2e-virtualbmc-03-data
+
+# Use the shared network from docker-compose.core.yml
+networks:
+  bmc-network:
+    external: true

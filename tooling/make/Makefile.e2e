@@ -1,0 +1,190 @@
+# ==========================================
+# E2E Testing Infrastructure
+# ==========================================
+# This makefile contains all E2E test orchestration and management:
+# - Test execution (full suite, specific suites, load tests)
+# - Test machine management (start, stop, logs)
+# - Development environment helpers
+# - Test debugging utilities
+
+.PHONY: test-e2e test-e2e-clean test-e2e-suite test-vnc test-e2e-load
+.PHONY: test-e2e-machines-up test-e2e-machines-down test-e2e-machines-logs
+.PHONY: test-e2e-dev-status test-e2e-logs test-e2e-help
+
+E2E_TEST_CONFIG := $(ROOT)/tests/e2e/configs/e2e-test-config.yaml
+
+# ==========================================
+# E2E Test Execution
+# ==========================================
+
+# Run all E2E tests with orchestrated Docker environment
+test-e2e:
+	@echo "🧪 Running E2E tests with orchestrated Docker environment..."
+	@echo "Step 1: Ensuring core development services are running..."
+	@$(MAKE) dev-up -f tooling/make/Makefile.dev || echo "Core services already running"
+	@echo "Step 2: Starting temporary E2E test machines..."
+	docker-compose -f docker-compose.e2e.yml up -d
+	@echo "Step 3: Reconfiguring local agent for E2E endpoints..."
+	docker-compose -f docker-compose.core.yml -f docker-compose.e2e-override.yml up -d local-agent
+	@echo "Step 4: Waiting for services to restart and E2E test machines to be ready..."
+	@sleep 25
+	@echo "Step 5: Running E2E test suite..."
+	cd tests && E2E_TEST_CONFIG="$(E2E_TEST_CONFIG)" go test -v ./e2e/suites/... || TEST_RESULT=$$?; \
+	echo "Step 6: Restoring local agent configuration..."; \
+	docker-compose -f docker-compose.core.yml up -d local-agent 2>/dev/null || true; \
+	echo "Step 7: Cleaning up E2E test machines..."; \
+	docker-compose -f docker-compose.e2e.yml down -v 2>/dev/null || true; \
+	exit $${TEST_RESULT:-0}
+
+# Run E2E tests with completely clean environment
+test-e2e-clean:
+	@echo "🧪 Running E2E tests with completely clean environment..."
+	@echo "Step 1: Stopping all existing environments..."
+	docker-compose -f docker-compose.e2e.yml down -v 2>/dev/null || true
+	@$(MAKE) dev-down -f tooling/make/Makefile.dev 2>/dev/null || true
+	@echo "Step 2: Starting fresh core development services..."
+	@$(MAKE) dev-up -f tooling/make/Makefile.dev
+	@echo "Step 3: Starting temporary E2E test machines..."
+	docker-compose -f docker-compose.e2e.yml up -d
+	@echo "Step 4: Waiting for all services to be ready..."
+	@sleep 25
+	@echo "Step 5: Running E2E test suite with clean state..."
+	cd tests && E2E_TEST_CONFIG="$(E2E_TEST_CONFIG)" go test -v ./e2e/suites/... || TEST_RESULT=$$?; \
+	echo "Step 6: Cleaning up E2E test machines..."; \
+	docker-compose -f docker-compose.e2e.yml down -v 2>/dev/null || true; \
+	exit $${TEST_RESULT:-0}
+
+# Run specific E2E test suite
+# Usage: make test-e2e-suite SUITE=console TEST=VNC
+# Examples:
+#   make test-e2e-suite SUITE=console
+#   make test-e2e-suite SUITE=console TEST=VNC
+#   make test-e2e-suite SUITE=power TEST=PowerOn
+test-e2e-suite:
+	@if [ -z "$(SUITE)" ]; then \
+		echo "❌ Error: SUITE parameter is required"; \
+		echo "Usage: make test-e2e-suite SUITE=<suite> [TEST=<test>]"; \
+		echo "Available suites: auth, console, power, performance"; \
+		exit 1; \
+	fi
+	@echo "🧪 Running $(SUITE) test suite..."
+	@echo "Step 1: Ensuring core development services are running..."
+	@$(MAKE) dev-up -f tooling/make/Makefile.dev || echo "Core services already running"
+	@echo "Step 2: Starting temporary E2E test machines..."
+	docker-compose -f docker-compose.e2e.yml up -d
+	@echo "Step 3: Reconfiguring local agent for E2E endpoints..."
+	docker-compose -f docker-compose.core.yml -f docker-compose.e2e-override.yml up -d local-agent
+	@echo "Step 4: Waiting for services to restart and E2E test machines to be ready..."
+	@sleep 25
+	@echo "Step 5: Running $(SUITE) test suite..."
+	@if [ -n "$(TEST)" ]; then \
+		echo "Running specific test: $(TEST)"; \
+		cd tests && E2E_TEST_CONFIG="$(E2E_TEST_CONFIG)" go test -v ./e2e/suites/$(SUITE) -run $(TEST) || TEST_RESULT=$$?; \
+	else \
+		cd tests && E2E_TEST_CONFIG="$(E2E_TEST_CONFIG)" go test -v ./e2e/suites/$(SUITE) || TEST_RESULT=$$?; \
+	fi; \
+	echo "Step 6: Restoring local agent configuration..."; \
+	docker-compose -f docker-compose.core.yml up -d local-agent 2>/dev/null || true; \
+	echo "Step 7: Cleaning up E2E test machines..."; \
+	docker-compose -f docker-compose.e2e.yml down -v 2>/dev/null || true; \
+	exit $${TEST_RESULT:-0}
+
+# ==========================================
+# E2E Test Convenience Targets
+# ==========================================
+
+# Run VNC console tests specifically (convenience target)
+test-vnc:
+	@$(MAKE) test-e2e-suite SUITE=console TEST=VNCTestSuite
+
+# Run E2E performance/load tests
+test-e2e-load:
+	@echo "⚡ Running E2E performance/load tests..."
+	@echo "Ensuring development environment is running..."
+	@$(MAKE) dev-up -f tooling/make/Makefile.dev || echo "Development environment already running"
+	@echo "Waiting for services to be ready..."
+	@sleep 10
+	cd tests && E2E_TEST_CONFIG="$(E2E_TEST_CONFIG)" go test -v ./e2e/suites/... -run ".*Load|.*Stress|.*Latency"
+
+# ==========================================
+# E2E Test Machine Management
+# ==========================================
+
+# Start E2E test machines only (for debugging)
+test-e2e-machines-up:
+	@echo "🖥️  Starting E2E test machines only..."
+	@$(MAKE) dev-up -f tooling/make/Makefile.dev || echo "Core services already running"
+	docker-compose -f docker-compose.e2e.yml up -d
+	@echo "✅ E2E test machines started"
+	@echo ""
+	@echo "Test machine endpoints:"
+	@echo "  VirtualBMC IPMI: localhost:7230-7232"
+	@echo "  Redfish API:     localhost:8000-8002"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  make test-e2e-machines-logs  # View logs"
+	@echo "  make test-e2e                # Run tests"
+	@echo "  make test-e2e-machines-down  # Stop machines"
+
+# Stop E2E test machines
+test-e2e-machines-down:
+	@echo "🛑 Stopping E2E test machines..."
+	docker-compose -f docker-compose.e2e.yml down -v
+	@echo "✅ E2E test machines stopped (core services still running)"
+
+# View E2E test machine logs
+test-e2e-machines-logs:
+	@echo "📋 E2E test machine logs:"
+	docker-compose -f docker-compose.e2e.yml logs -f --tail=20
+
+# ==========================================
+# E2E Environment Helpers
+# ==========================================
+
+# Check development environment status for E2E tests
+test-e2e-dev-status:
+	@echo "🔍 Checking development environment status for E2E tests..."
+	@$(MAKE) dev-status -f tooling/make/Makefile.dev
+
+# View development environment logs
+test-e2e-logs:
+	@echo "📋 Viewing development environment logs..."
+	@$(MAKE) dev-logs -f tooling/make/Makefile.dev
+
+# ==========================================
+# E2E Test Help
+# ==========================================
+
+test-e2e-help:
+	@echo "E2E Testing Commands"
+	@echo "==================="
+	@echo ""
+	@echo "🧪 Test Execution:"
+	@echo "  make test-e2e              - Run all E2E tests"
+	@echo "  make test-e2e-clean        - Run E2E tests with fresh environment"
+	@echo "  make test-e2e-suite        - Run specific suite: SUITE=console [TEST=VNC]"
+	@echo "  make test-vnc              - Run VNC console tests specifically"
+	@echo "  make test-e2e-load         - Run E2E performance/load tests"
+	@echo ""
+	@echo "🔧 Test Machine Management:"
+	@echo "  make test-e2e-machines-up      - Start E2E test machines only"
+	@echo "  make test-e2e-machines-down    - Stop E2E test machines"
+	@echo "  make test-e2e-machines-logs    - View E2E test machine logs"
+	@echo ""
+	@echo "🔍 Environment Helpers:"
+	@echo "  make test-e2e-dev-status   - Check development environment status"
+	@echo "  make test-e2e-logs         - View development environment logs"
+	@echo ""
+	@echo "📋 Available Test Suites:"
+	@echo "  auth         - Authentication and authorization tests"
+	@echo "  console      - Serial console and VNC tests"
+	@echo "  power        - Power management tests"
+	@echo "  performance  - Load and stress tests"
+	@echo ""
+	@echo "💡 Examples:"
+	@echo "  make test-e2e-suite SUITE=console              # Run all console tests"
+	@echo "  make test-e2e-suite SUITE=console TEST=VNC     # Run VNC tests only"
+	@echo "  make test-e2e-suite SUITE=power TEST=PowerOn   # Run PowerOn test only"
+	@echo ""
+	@echo "🚀 Quick Start:"
+	@echo "  make test-e2e-clean        # Start fresh and run all E2E tests"

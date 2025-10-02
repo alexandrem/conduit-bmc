@@ -1,0 +1,6 @@
+# Ignore compiled Go test binaries
+*.test
+
+# Temporary test artifacts
+tmp/
+!tmp/.gitkeep

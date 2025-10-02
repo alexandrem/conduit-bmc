@@ -1,0 +1,13 @@
+go 1.25.1
+
+use (
+	./cli
+	./core
+	./core/auth
+	./core/config
+	./core/streaming
+	./gateway
+	./local-agent
+	./manager
+	./tests
+)

@@ -1,0 +1,82 @@
+# BMC Manager Service Configuration
+# This file contains non-sensitive configuration options for the BMC Manager service.
+# Sensitive values should be set via environment variables.
+
+# Logging configuration
+log:
+  level: info        # trace, debug, info, warn, error, fatal, panic
+  format: json       # json or console
+  debug: false       # Override level to debug if true
+
+# Manager service configuration
+manager:
+  host: 0.0.0.0
+  port: 8080
+
+  # Rate limiting configuration
+  rate_limit:
+    enabled: true
+
+  # =============================================================================
+  # The following sections are defined but not currently used in the code
+  # They are kept for future implementation
+  # =============================================================================
+
+  # Gateway discovery configuration (not currently used)
+  # gateway_discovery:
+  #   enabled: true
+  #   update_interval: 30s
+  #   health_check_path: /health
+  #   timeout: 5s
+
+  # Server management configuration (not currently used)
+  # server_management:
+  #   auto_registration: true
+  #   heartbeat_interval: 60s
+  #   heartbeat_timeout: 300s
+  #   max_servers_per_customer: 100
+  #   enable_server_validation: true
+
+  # Customer management configuration (not currently used)
+  # customer_management:
+  #   allow_self_registration: false
+  #   email_verification_required: true
+  #   password_min_length: 8
+  #   api_key_length: 32
+  #   max_api_keys_per_customer: 5
+  #   session_inactivity_timeout: 30m
+
+  # Session management configuration (not currently used)
+  # session_management:
+  #   proxy_session_ttl: 1h
+  #   vnc_session_ttl: 4h
+  #   console_session_ttl: 2h
+  #   cleanup_interval: 5m
+  #   max_concurrent_sessions: 10
+
+# Database configuration
+database:
+  driver: sqlite3
+  # DSN MUST be set via DATABASE_URL environment variable
+  # dsn: file:./manager.db
+
+  # Connection pool settings (not currently used)
+  # max_open_conns: 25
+  # max_idle_conns: 10
+  # conn_max_lifetime: 5m
+
+# Authentication configuration
+auth:
+  # JWT secret key MUST be set via JWT_SECRET_KEY environment variable
+
+  # Token TTL settings (not currently used)
+  # token_ttl: 24h
+  # refresh_token_ttl: 168h  # 7 days
+
+# TLS configuration (optional)
+tls:
+  enabled: false
+  # cert_file and key_file should be set via environment variables if TLS is enabled
+  # cert_file: /path/to/cert.pem
+  # key_file: /path/to/key.pem
+  # ca_file: /path/to/ca.pem

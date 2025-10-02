@@ -1,0 +1,370 @@
+version: '3.9'
+
+# Persistent Development VirtualBMC Machines
+# These stay up and running for ongoing development
+# Use "make bmc-up" to start these alongside core services
+# These machines are configured for manual testing and development
+
+services:
+  # ==========================================
+  # Persistent Development IPMI Simulation
+  # ==========================================
+
+  # Fake server containers with SOL and VNC support
+  dev-server-01:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    container_name: dev-server-01
+    hostname: dev-server-01
+    networks:
+      bmc-network:
+        ipv4_address: 172.21.0.10
+    tty: true
+    stdin_open: true
+    environment:
+      - SERVER_ID=01
+      - DISPLAY=:1
+      - VNC_PORT=5901
+      - SOL_DEVICE=/dev/ttyS0
+    volumes:
+      - dev-server-01-data:/var/lib/server
+    healthcheck:
+      test: ["CMD", "pgrep", "Xvfb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  dev-server-02:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    container_name: dev-server-02
+    hostname: dev-server-02
+    networks:
+      bmc-network:
+        ipv4_address: 172.21.0.11
+    tty: true
+    stdin_open: true
+    environment:
+      - SERVER_ID=02
+      - DISPLAY=:1
+      - VNC_PORT=5901
+      - SOL_DEVICE=/dev/ttyS0
+    volumes:
+      - dev-server-02-data:/var/lib/server
+    healthcheck:
+      test: ["CMD", "pgrep", "Xvfb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  dev-server-03:
+    build:
+      context: .
+      dockerfile: docker/server.Dockerfile
+    container_name: dev-server-03
+    hostname: dev-server-03
+    networks:
+      bmc-network:
+        ipv4_address: 172.21.0.12
+    tty: true
+    stdin_open: true
+    environment:
+      - SERVER_ID=03
+      - DISPLAY=:1
+      - VNC_PORT=5901
+      - SOL_DEVICE=/dev/ttyS0
+    volumes:
+      - dev-server-03-data:/var/lib/server
+    healthcheck:
+      test: ["CMD", "pgrep", "Xvfb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # VirtualBMC IPMI simulation for each development server
+  dev-virtualbmc-01:
+    build:
+      context: .
+      dockerfile: docker/virtualbmc.Dockerfile
+    container_name: dev-virtualbmc-01
+    hostname: dev-virtualbmc-01
+    privileged: true  # Required for libvirt/QEMU in container
+    networks:
+      - bmc-network
+    ports:
+      - "6230:623/udp"  # IPMI port for dev-server-01
+    environment:
+      - VBMC_SERVER_NAME=dev-server-01
+      - VBMC_DOCKER_CONTAINER=dev-server-01
+      - IPMI_USERNAME=ipmiusr
+      - IPMI_PASSWORD=test
+      - IPMI_PORT=623
+      - IPMI_ADDRESS=0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dev-virtualbmc-01-data:/var/lib/vbmc
+    depends_on:
+      dev-server-01:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vbmc", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dev-virtualbmc-02:
+    build:
+      context: .
+      dockerfile: docker/virtualbmc.Dockerfile
+    container_name: dev-virtualbmc-02
+    hostname: dev-virtualbmc-02
+    privileged: true  # Required for libvirt/QEMU in container
+    networks:
+      - bmc-network
+    ports:
+      - "6231:623/udp"  # IPMI port for dev-server-02
+    environment:
+      - VBMC_SERVER_NAME=dev-server-02
+      - VBMC_DOCKER_CONTAINER=dev-server-02
+      - IPMI_USERNAME=ipmiusr
+      - IPMI_PASSWORD=test
+      - IPMI_PORT=623
+      - IPMI_ADDRESS=0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dev-virtualbmc-02-data:/var/lib/vbmc
+    depends_on:
+      dev-server-02:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vbmc", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dev-virtualbmc-03:
+    build:
+      context: .
+      dockerfile: docker/virtualbmc.Dockerfile
+    container_name: dev-virtualbmc-03
+    hostname: dev-virtualbmc-03
+    privileged: true  # Required for libvirt/QEMU in container
+    networks:
+      - bmc-network
+    ports:
+      - "6232:623/udp"  # IPMI port for dev-server-03
+    environment:
+      - VBMC_SERVER_NAME=dev-server-03
+      - VBMC_DOCKER_CONTAINER=dev-server-03
+      - IPMI_USERNAME=ipmiusr
+      - IPMI_PASSWORD=test
+      - IPMI_PORT=623
+      - IPMI_ADDRESS=0.0.0.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dev-virtualbmc-03-data:/var/lib/vbmc
+    depends_on:
+      dev-server-03:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vbmc", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redfish API emulator for modern BMC access
+  dev-redfish-01:
+    build:
+      context: .
+      dockerfile: docker/redfish.Dockerfile
+    container_name: dev-redfish-01
+    hostname: dev-redfish-01
+    networks:
+      - bmc-network
+    ports:
+      - "8000:8000"  # Redfish API port for dev-server-01
+    environment:
+      - SUSHY_EMULATOR_LISTEN_IP=0.0.0.0
+      - SUSHY_EMULATOR_LISTEN_PORT=8000
+      - SUSHY_EMULATOR_SSL_CERT=
+      - SUSHY_EMULATOR_SSL_KEY=
+      - SUSHY_EMULATOR_OS_CLOUD=
+      - SUSHY_EMULATOR_LIBVIRT_URI=
+      - SUSHY_EMULATOR_IGNORE_BOOT_DEVICE=True
+      - SUSHY_EMULATOR_BOOT_LOADER_MAP=
+      - SUSHY_EMULATOR_VMEDIA_VERIFY_SSL=True
+      - SUSHY_EMULATOR_AUTH_FILE=
+      - SUSHY_EMULATOR_SYSTEMS=dev-server-01:dev-server-01
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dev-redfish-01-data:/var/lib/redfish
+    depends_on:
+      dev-server-01:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/redfish/v1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dev-redfish-02:
+    build:
+      context: .
+      dockerfile: docker/redfish.Dockerfile
+    container_name: dev-redfish-02
+    hostname: dev-redfish-02
+    networks:
+      - bmc-network
+    ports:
+      - "8001:8000"  # Redfish API port for dev-server-02
+    environment:
+      - SUSHY_EMULATOR_LISTEN_IP=0.0.0.0
+      - SUSHY_EMULATOR_LISTEN_PORT=8000
+      - SUSHY_EMULATOR_SSL_CERT=
+      - SUSHY_EMULATOR_SSL_KEY=
+      - SUSHY_EMULATOR_OS_CLOUD=
+      - SUSHY_EMULATOR_LIBVIRT_URI=
+      - SUSHY_EMULATOR_IGNORE_BOOT_DEVICE=True
+      - SUSHY_EMULATOR_BOOT_LOADER_MAP=
+      - SUSHY_EMULATOR_VMEDIA_VERIFY_SSL=True
+      - SUSHY_EMULATOR_AUTH_FILE=
+      - SUSHY_EMULATOR_SYSTEMS=dev-server-02:dev-server-02
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dev-redfish-02-data:/var/lib/redfish
+    depends_on:
+      dev-server-02:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/redfish/v1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dev-redfish-03:
+    build:
+      context: .
+      dockerfile: docker/redfish.Dockerfile
+    container_name: dev-redfish-03
+    hostname: dev-redfish-03
+    networks:
+      - bmc-network
+    ports:
+      - "8002:8000"  # Redfish API port for dev-server-03
+    environment:
+      - SUSHY_EMULATOR_LISTEN_IP=0.0.0.0
+      - SUSHY_EMULATOR_LISTEN_PORT=8000
+      - SUSHY_EMULATOR_SSL_CERT=
+      - SUSHY_EMULATOR_SSL_KEY=
+      - SUSHY_EMULATOR_OS_CLOUD=
+      - SUSHY_EMULATOR_LIBVIRT_URI=
+      - SUSHY_EMULATOR_IGNORE_BOOT_DEVICE=True
+      - SUSHY_EMULATOR_BOOT_LOADER_MAP=
+      - SUSHY_EMULATOR_VMEDIA_VERIFY_SSL=True
+      - SUSHY_EMULATOR_AUTH_FILE=
+      - SUSHY_EMULATOR_SYSTEMS=dev-server-03:dev-server-03
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dev-redfish-03-data:/var/lib/redfish
+    depends_on:
+      dev-server-03:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/redfish/v1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # noVNC web interface for VNC access
+  dev-novnc:
+    build:
+      context: .
+      dockerfile: docker/novnc.Dockerfile
+    container_name: dev-novnc
+    hostname: dev-novnc
+    networks:
+      - bmc-network
+    ports:
+      - "6080:6080"  # noVNC web interface
+      - "6081:6081"  # noVNC for dev-server-02
+      - "6082:6082"  # noVNC for dev-server-03
+    environment:
+      - VNC_SERVER_01=dev-server-01:5901
+      - VNC_SERVER_02=dev-server-02:5901
+      - VNC_SERVER_03=dev-server-03:5901
+      - NOVNC_PORT_01=6080
+      - NOVNC_PORT_02=6081
+      - NOVNC_PORT_03=6082
+    depends_on:
+      - dev-server-01
+      - dev-server-02
+      - dev-server-03
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Test CLI interface for manual testing
+  dev-test-cli:
+    image: ubuntu:22.04
+    container_name: dev-test-cli
+    hostname: dev-test-cli
+    networks:
+      - bmc-network
+    volumes:
+      - ./cli/config:/app/config
+    depends_on:
+      - dev-virtualbmc-01
+      - dev-virtualbmc-02
+      - dev-virtualbmc-03
+      - dev-redfish-01
+      - dev-redfish-02
+      - dev-redfish-03
+    tty: true
+    stdin_open: true
+    command: bash -c "apt-get update && apt-get install -y ipmitool curl && bash"
+    profiles:
+      - test  # Only start when explicitly requested
+
+volumes:
+  # Development server container data
+  dev-server-01-data:
+    name: dev-server-01-data
+  dev-server-02-data:
+    name: dev-server-02-data
+  dev-server-03-data:
+    name: dev-server-03-data
+
+  # Development VirtualBMC data
+  dev-virtualbmc-01-data:
+    name: dev-virtualbmc-01-data
+  dev-virtualbmc-02-data:
+    name: dev-virtualbmc-02-data
+  dev-virtualbmc-03-data:
+    name: dev-virtualbmc-03-data
+
+  # Development Redfish emulator data
+  dev-redfish-01-data:
+    name: dev-redfish-01-data
+  dev-redfish-02-data:
+    name: dev-redfish-02-data
+  dev-redfish-03-data:
+    name: dev-redfish-03-data
+
+# Use the shared network from docker-compose.core.yml
+networks:
+  bmc-network:
+    external: true

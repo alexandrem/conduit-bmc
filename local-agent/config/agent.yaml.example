@@ -1,0 +1,163 @@
+# BMC Local Agent Configuration
+# This file contains non-sensitive configuration options for the BMC Local Agent.
+# Sensitive values like encryption keys should be set via environment variables.
+
+# Logging configuration
+log:
+  level: info        # trace, debug, info, warn, error, fatal, panic
+  format: json       # json or console
+  debug: false       # Override level to debug if true
+
+# Agent configuration
+agent:
+  # Agent identification (can be set via environment variables)
+  # id: agent-001
+  # datacenter_id: dc-local-01
+  region: default
+
+  # Gateway endpoint MUST be set via AGENT_GATEWAY_ENDPOINT environment variable
+  # gateway_endpoint: http://localhost:8081
+
+  # Local HTTP server (for health checks and metrics)
+  http_port: 8090
+
+  # BMC discovery configuration
+  bmc_discovery:
+    enabled: true
+    scan_interval: 5m
+    network_ranges:
+      - 192.168.1.0/24
+      - 10.0.0.0/24
+    ipmi_ports:
+      - 623
+    redfish_ports:
+      - 443
+      - 8000
+      - 8443
+    scan_timeout: 10s
+    max_concurrent: 50
+
+    # Discovery methods
+    enable_port_scan: true
+    enable_ipmi_detection: true
+    enable_redfish_detection: true
+
+    # Default credentials for discovery (use with caution)
+    default_credentials:
+      - username: admin
+        password: admin
+      - username: ADMIN
+        password: ADMIN
+      - username: root
+        password: calvin
+
+  # BMC operations configuration
+  # Note: Most of these settings are defined but not currently used in the code
+  bmc_operations:
+    # Timeouts
+    operation_timeout: 30s
+    power_operation_timeout: 60s
+    console_timeout: 300s
+
+    # Retries
+    max_retries: 3
+    retry_backoff: 2s
+    retry_max_backoff: 30s
+
+    # Concurrency
+    max_concurrent_operations: 10
+
+    # IPMI configuration (for future use)
+    ipmi:
+      interface: lanplus
+      cipher_suite: "3"
+      privilege_level: ADMINISTRATOR
+      session_timeout: 20s
+
+      # SOL-specific settings
+      sol_baud_rate: 115200
+      sol_authentication: true
+      sol_encryption: true
+
+    # Redfish configuration (for future use)
+    redfish:
+      http_timeout: 30s
+      insecure_skip_verify: false
+      auth_method: basic
+      session_timeout: 30m
+
+  # Security configuration
+  security:
+    # Encryption key MUST be set via AGENT_ENCRYPTION_KEY environment variable
+    enable_tls_verification: true
+
+    # Access control
+    allowed_networks:
+      - 192.168.0.0/16
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+    deny_private_networks: false
+
+    # Audit logging
+    enable_audit_logging: true
+    audit_log_path: /var/log/bmc-agent/audit.log
+
+# TLS configuration (optional)
+tls:
+  enabled: false
+  # cert_file and key_file should be set via environment variables if TLS is enabled
+  # cert_file: /path/to/cert.pem
+  # key_file: /path/to/key.pem
+  # ca_file: /path/to/ca.pem
+
+# Static hosts configuration
+# Prefer BMC discovery over static configuration
+static:
+  hosts: []
+  # Example static host configuration:
+  # hosts:
+  #   - id: server-001
+  #     customer_id: customer-1
+  #     features: [power, console, vnc]
+  #     metadata:
+  #       location: Rack 1, U10
+  #       model: Dell PowerEdge R740
+  #     control_endpoint:
+  #       endpoint: https://192.168.1.100
+  #       type: redfish
+  #       username: admin
+  #       password: password
+  #       capabilities: [power, sensors, systems, chassis]
+  #       tls:
+  #         enabled: true
+  #         insecure_skip_verify: true
+  #     sol_endpoint:
+  #       type: redfish_serial
+  #       endpoint: https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1
+  #       username: admin
+  #       password: password
+  #       config:
+  #         baud_rate: 115200
+  #         flow_control: none
+  #         timeout_seconds: 300
+  #     # VNC Endpoint Configuration
+  #     # Transport auto-detected from URL scheme:
+  #     #   - ws://... or wss://... → WebSocket transport (Redfish, OpenBMC, iDRAC, iLO)
+  #     #   - vnc://host:port or host:port → Native TCP transport (QEMU, VirtualBMC)
+  #     #
+  #     # Option 1: Native TCP VNC (QEMU, VirtualBMC, standalone KVM)
+  #     vnc_endpoint:
+  #       endpoint: 192.168.1.100:5900     # Native TCP (no scheme defaults to TCP)
+  #       # OR: endpoint: vnc://192.168.1.100:5900
+  #
+  #     # Option 2: Redfish GraphicalConsole WebSocket (Dell, HPE, Lenovo, Supermicro)
+  #     # vnc_endpoint:
+  #     #   endpoint: wss://192.168.1.100/redfish/v1/Systems/1/GraphicalConsole
+  #     #   username: admin
+  #     #   password: password
+  #
+  #     # Option 3: OpenBMC WebSocket KVM
+  #     # vnc_endpoint:
+  #     #   endpoint: wss://192.168.1.100/kvm/0
+  #     #   username: root
+  #     #   password: 0penBmc

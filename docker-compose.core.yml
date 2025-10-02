@@ -1,0 +1,138 @@
+version: '3.9'
+
+# Core BMC Services - Manager, Gateway, Local Agent only
+# This is the baseline environment that always runs
+# Use "make dev-up" to start these services
+# Combine with docker-compose.virtualbmc.yml for development BMC machines
+# Combine with docker-compose.e2e.yml for E2E test machines
+
+services:
+  # ==========================================
+  # Core BMC Management Services
+  # ==========================================
+
+  # Manager service with hot reloading
+  manager:
+    build:
+      context: .
+      dockerfile: docker/manager.Dockerfile
+      target: build
+    volumes:
+      - .:/workspace
+      - manager_tmp:/workspace/manager/tmp
+      - go_mod_cache:/go/pkg/mod
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=dev-secret-key-change-in-production
+    depends_on:
+      - db
+    networks:
+      - bmc-network
+    working_dir: /workspace/manager
+
+  # Gateway service with hot reloading
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+      target: dev
+    volumes:
+      - .:/workspace
+      - gateway_tmp:/workspace/gateway/tmp
+      - go_mod_cache:/go/pkg/mod
+    ports:
+      - "8081:8081"
+    environment:
+      - BMC_MANAGER_ENDPOINT=http://manager:8080
+      - JWT_SECRET=dev-secret-key-change-in-production
+      - GATEWAY_ID=gateway-docker-1
+      - REGION=docker-dev
+    depends_on:
+      - manager
+    networks:
+      - bmc-network
+    working_dir: /workspace/gateway
+
+  # Local Agent service with hot reloading
+  local-agent:
+    build:
+      context: .
+      dockerfile: docker/local-agent.Dockerfile
+      target: build
+    volumes:
+      - .:/workspace
+      - local_agent_tmp:/workspace/local-agent/tmp
+      - go_mod_cache:/go/pkg/mod
+    ports:
+      - "8082:8082"
+    environment:
+      BMC_REGIONAL_GATEWAY_ENDPOINT: "http://gateway:8081"
+      BMC_AGENT_ENDPOINT: "http://local-agent:8082"
+      CONFIG_FILE: "config/docker-agent.yaml"
+    depends_on:
+      - gateway
+    networks:
+      - bmc-network
+    working_dir: /workspace/local-agent
+
+  # CLI development container (for testing CLI commands)
+  cli:
+    build:
+      context: .
+      dockerfile: docker/cli.Dockerfile
+      target: build
+    volumes:
+      - .:/workspace
+      - cli_tmp:/workspace/cli/tmp
+      - go_mod_cache:/go/pkg/mod
+    environment:
+      - BMC_MANAGER_ENDPOINT=http://manager:8080
+      - BMC_GATEWAY_ENDPOINT=http://gateway:8081
+    command: >
+      sh -c "
+        echo '🚀 CLI development container ready. Use docker-compose exec cli bash to enter.' &&
+        tail -f /dev/null
+      "
+    networks:
+      - bmc-network
+    working_dir: /workspace/cli
+
+  # SQLite database (shared volume for persistence)
+  db:
+    image: alpine:3.18
+    volumes:
+      - db_data:/data
+    command: >
+      sh -c "
+        mkdir -p /data &&
+        echo 'Database volume ready' &&
+        tail -f /dev/null
+      "
+    networks:
+      - bmc-network
+
+volumes:
+  # Core service temporary volumes
+  gateway_tmp:
+    name: gateway_tmp
+  manager_tmp:
+    name: manager_tmp
+  local_agent_tmp:
+    name: local_agent_tmp
+  cli_tmp:
+    name: cli_tmp
+  go_mod_cache:
+    name: go_mod_cache
+  db_data:
+    name: db_data
+
+networks:
+  # Shared network for all BMC services and machines
+  bmc-network:
+    name: bmc-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1

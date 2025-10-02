@@ -1,0 +1,606 @@
+{{template "base.html" .}}
+
+{{define "styles"}}
+#noVNC_screen {
+    position: relative;
+    overflow: hidden;
+}
+
+#noVNC_screen canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+{{end}}
+
+{{define "content"}}
+<!-- VNC Display Area -->
+<div class="flex-1 flex flex-col bg-black/20 m-3 rounded-xl overflow-hidden backdrop-blur-md border border-white/10">
+    <!-- VNC Control Bar -->
+    <div class="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center">
+        <div class="text-sm font-medium opacity-90 flex items-center gap-2">
+            <span class="text-lg">🖥️</span>
+            VNC Console Session
+        </div>
+        <div class="flex gap-2">
+            <button onclick="switchToConsole()" class="px-3 py-2 bg-gradient-to-r from-green-500 to-teal-600 rounded-md text-sm font-medium transition-all hover:-translate-y-0.5 text-white">
+                ⌨️ Switch to Console
+            </button>
+            <button onclick="sendCtrlAltDel()" class="px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm font-medium transition-all hover:-translate-y-0.5 text-white">
+                Ctrl+Alt+Del
+            </button>
+            <button onclick="toggleFullscreen()" class="px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md text-sm font-medium transition-all hover:-translate-y-0.5 text-white">
+                Fullscreen
+            </button>
+            <button onclick="screenshot()" class="px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-md text-sm font-medium transition-all hover:-translate-y-0.5 text-white">
+                Screenshot
+            </button>
+            <button onclick="reconnectVNC()" class="px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 rounded-md text-sm font-medium transition-all hover:-translate-y-0.5 text-white">
+                Reconnect
+            </button>
+        </div>
+    </div>
+
+    <!-- noVNC Container -->
+    <div id="noVNC_container" class="flex-1 relative bg-black">
+        <div id="noVNC_screen" class="w-full h-full">
+            <!-- noVNC will create the canvas dynamically inside this div -->
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="noVNC_loading" class="absolute inset-0 bg-black/80 flex items-center justify-center">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-3"></div>
+                <div class="text-sm text-white/80">Connecting to VNC server...</div>
+            </div>
+        </div>
+
+        <!-- Connection status overlay -->
+        <div id="noVNC_status" class="absolute top-4 left-4 px-3 py-2 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-sm">
+            <span class="inline-block w-2 h-2 rounded-full mr-2" id="vnc-status-dot"></span>
+            <span id="vnc-status-text">Connecting...</span>
+        </div>
+    </div>
+</div>
+
+<!-- VNC Control Sidebar -->
+<div class="w-80 bg-black/30 backdrop-blur-md border-l border-white/10 p-5 overflow-y-auto">
+    <!-- Server Information -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Server Information</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Server ID</span>
+                <span class="font-medium">{{.ServerID}}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Session ID</span>
+                <span class="font-mono text-xs">{{.SessionID}}</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">VNC Protocol</span>
+                <span>RFB 3.8</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Compression</span>
+                <span id="vnc-compression">Auto</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server State -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90 flex items-center gap-2">
+            Server State
+            <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" id="server-state-dot"></div>
+        </h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Power State</span>
+                <span id="power-status" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-600 text-white">Unknown</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Display</span>
+                <span id="display-resolution">--</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-white/10">
+                <span class="text-white/70">Last Activity</span>
+                <span id="last-activity">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Power Operations -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Power Control</h3>
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="powerOperation('on')"
+                    class="p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="power-on-btn">
+                <div class="text-center">
+                    <div class="text-lg">⚡</div>
+                    <div>Power On</div>
+                </div>
+            </button>
+            <button onclick="powerOperation('off')"
+                    class="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="power-off-btn">
+                <div class="text-center">
+                    <div class="text-lg">⏻</div>
+                    <div>Power Off</div>
+                </div>
+            </button>
+            <button onclick="powerOperation('reset')"
+                    class="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="reset-btn">
+                <div class="text-center">
+                    <div class="text-lg">🔄</div>
+                    <div>Reset</div>
+                </div>
+            </button>
+            <button onclick="powerOperation('cycle')"
+                    class="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="cycle-btn">
+                <div class="text-center">
+                    <div class="text-lg">🔁</div>
+                    <div>Power Cycle</div>
+                </div>
+            </button>
+        </div>
+        <button onclick="refreshPowerStatus()"
+                class="w-full mt-2 p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-all">
+            <span class="inline-block mr-2">🔍</span>Refresh Status
+        </button>
+    </div>
+
+    <!-- VNC Controls -->
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">VNC Controls</h3>
+        <div class="space-y-2">
+            <button onclick="toggleViewOnly()"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all"
+                    id="view-only-btn">
+                <span class="inline-block mr-2">👁️</span>View Only: <span id="view-only-status">OFF</span>
+            </button>
+            <button onclick="toggleScaling()"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all"
+                    id="scaling-btn">
+                <span class="inline-block mr-2">📏</span>Scaling: <span id="scaling-status">Auto</span>
+            </button>
+            <button onclick="sendKey('Escape')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                Send ESC
+            </button>
+            <button onclick="sendKey('Tab')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                Send Tab
+            </button>
+            <button onclick="sendKey('F12')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                Boot Menu (F12)
+            </button>
+        </div>
+    </div>
+
+    <!-- Connection Info -->
+    <div class="mb-4">
+        <h3 class="text-sm font-semibold mb-3 text-white/90">Connection Info</h3>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Connected</span>
+                <span id="connect-time">--</span>
+            </div>
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Bytes Sent</span>
+                <span id="bytes-sent">0</span>
+            </div>
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Bytes Received</span>
+                <span id="bytes-received">0</span>
+            </div>
+            <div class="flex justify-between py-1 text-xs">
+                <span class="text-white/70">Framerate</span>
+                <span id="framerate">--</span>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+let rfb = null;
+let connectionStart = null;
+let powerOperationsInProgress = new Set();
+let viewOnly = false;
+let scaling = 'auto';
+
+function initializeVNC() {
+    const container = document.getElementById('noVNC_screen');
+    const loading = document.getElementById('noVNC_loading');
+
+    // Configure noVNC
+    const wsUrl = '{{.WebSocketURL}}';
+
+    console.log('VNC Initialization Debug:');
+    console.log('- Container element:', container);
+    console.log('- Loading element:', loading);
+    console.log('- WebSocket URL:', wsUrl);
+    console.log('- Server ID:', '{{.ServerID}}');
+
+    if (!wsUrl || wsUrl === '') {
+        console.error('WebSocket URL is empty or undefined!');
+        updateVNCStatus('Configuration Error', 'error');
+        return;
+    }
+
+    try {
+        rfb = new RFB(container, wsUrl, {
+            credentials: {
+                target: '{{.ServerID}}'
+            }
+        });
+
+        // Set up event handlers
+        rfb.addEventListener('connect', connectedToServer);
+        rfb.addEventListener('disconnect', disconnectedFromServer);
+        rfb.addEventListener('credentialsrequired', credentialsAreRequired);
+        rfb.addEventListener('securityfailure', securityFailed);
+        rfb.addEventListener('clipboard', clipboardReceive);
+        rfb.addEventListener('bell', serverBell);
+        rfb.addEventListener('desktopname', updateDesktopName);
+        rfb.addEventListener('capabilities', updateCapabilities);
+
+        // Debug: Log all RFB state changes
+        console.log('Initial RFB state:', rfb._rfb_connection_state);
+        const originalUpdateState = rfb._updateConnectionState.bind(rfb);
+        rfb._updateConnectionState = function(state) {
+            console.log('RFB state change:', state);
+            return originalUpdateState(state);
+        };
+
+        // Configure initial settings
+        rfb.viewOnly = viewOnly;
+        rfb.scaleViewport = (scaling === 'auto');
+        rfb.resizeSession = (scaling === 'remote');
+
+        updateVNCStatus('Connecting...', 'connecting');
+
+    } catch (exc) {
+        console.error('Unable to create RFB client:', exc);
+        updateVNCStatus('Failed to connect', 'error');
+        loading.style.display = 'none';
+    }
+}
+
+// noVNC Event Handlers
+function connectedToServer(e) {
+    console.log('Connected to VNC server', e);
+    console.log('RFB object:', rfb);
+    console.log('RFB canvas:', rfb._canvas);
+    console.log('Canvas dimensions:', rfb._canvas ? `${rfb._canvas.width}x${rfb._canvas.height}` : 'undefined');
+    console.log('Canvas parent:', rfb._canvas ? rfb._canvas.parentElement : 'undefined');
+    console.log('Scale viewport:', rfb.scaleViewport);
+
+    connectionStart = new Date();
+    updateVNCStatus('Connected', 'connected');
+    document.getElementById('noVNC_loading').style.display = 'none';
+
+    // Update display information
+    if (rfb && rfb._canvas) {
+        const resolution = rfb._canvas.width + 'x' + rfb._canvas.height;
+        document.getElementById('display-resolution').textContent = resolution;
+        console.log('Display resolution set to:', resolution);
+
+        // Force scale viewport to fit container
+        rfb.scaleViewport = true;
+    } else {
+        console.error('Canvas not available after connection!');
+    }
+}
+
+function disconnectedFromServer(e) {
+    console.log('Disconnected from VNC server:', e.detail.clean ? 'Clean' : 'Unclean');
+    updateVNCStatus(e.detail.clean ? 'Disconnected' : 'Connection Lost', 'error');
+    document.getElementById('noVNC_loading').style.display = 'flex';
+    document.getElementById('noVNC_loading').innerHTML = `
+        <div class="text-center">
+            <div class="text-xl mb-3">❌</div>
+            <div class="text-sm text-white/80">VNC Connection ${e.detail.clean ? 'Closed' : 'Lost'}</div>
+            <button onclick="reconnectVNC()" class="mt-3 px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-700 transition-colors">Reconnect</button>
+        </div>
+    `;
+}
+
+function credentialsAreRequired(e) {
+    console.log('Credentials required');
+    // For BMC VNC, usually no credentials are required
+    // If needed, implement credential dialog here
+}
+
+function securityFailed(e) {
+    console.error('Security negotiation failed:', e.detail);
+    updateVNCStatus('Security Failed', 'error');
+}
+
+function clipboardReceive(e) {
+    console.log('Received clipboard data:', e.detail.text);
+}
+
+function serverBell(e) {
+    console.log('Server bell');
+}
+
+function updateDesktopName(e) {
+    console.log('Desktop name:', e.detail.name);
+}
+
+function updateCapabilities(e) {
+    console.log('Server capabilities:', e.detail.capabilities);
+}
+
+// VNC Control Functions
+function updateVNCStatus(text, type) {
+    const statusText = document.getElementById('vnc-status-text');
+    const statusDot = document.getElementById('vnc-status-dot');
+
+    statusText.textContent = text;
+    statusDot.className = 'inline-block w-2 h-2 rounded-full mr-2';
+
+    switch (type) {
+        case 'connected':
+            statusDot.classList.add('bg-green-400');
+            break;
+        case 'error':
+            statusDot.classList.add('bg-red-400');
+            break;
+        case 'connecting':
+        default:
+            statusDot.classList.add('bg-yellow-400', 'animate-pulse');
+    }
+}
+
+function reconnectVNC() {
+    if (rfb) {
+        rfb.disconnect();
+    }
+    updateVNCStatus('Reconnecting...', 'connecting');
+    document.getElementById('noVNC_loading').style.display = 'flex';
+    document.getElementById('noVNC_loading').innerHTML = `
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-3"></div>
+            <div class="text-sm text-white/80">Reconnecting to VNC server...</div>
+        </div>
+    `;
+    setTimeout(initializeVNC, 2000);
+}
+
+function sendCtrlAltDel() {
+    if (rfb) {
+        rfb.sendCtrlAltDel();
+        console.log('Sent Ctrl+Alt+Del');
+    }
+}
+
+function sendKey(keySym) {
+    if (rfb) {
+        // Map common keys to RFB key symbols
+        const keyMap = {
+            'Escape': 0xff1b,
+            'Tab': 0xff09,
+            'F12': 0xffcd
+        };
+
+        if (keyMap[keySym]) {
+            rfb.sendKey(keyMap[keySym], true);
+            rfb.sendKey(keyMap[keySym], false);
+            console.log('Sent key:', keySym);
+        }
+    }
+}
+
+function toggleViewOnly() {
+    viewOnly = !viewOnly;
+    if (rfb) {
+        rfb.viewOnly = viewOnly;
+    }
+    document.getElementById('view-only-status').textContent = viewOnly ? 'ON' : 'OFF';
+    const btn = document.getElementById('view-only-btn');
+    if (viewOnly) {
+        btn.classList.add('bg-blue-600/20', 'border-blue-400');
+        btn.classList.remove('bg-white/10', 'border-white/20');
+    } else {
+        btn.classList.remove('bg-blue-600/20', 'border-blue-400');
+        btn.classList.add('bg-white/10', 'border-white/20');
+    }
+}
+
+function toggleScaling() {
+    const scalingModes = ['auto', 'remote', 'local'];
+    const currentIndex = scalingModes.indexOf(scaling);
+    scaling = scalingModes[(currentIndex + 1) % scalingModes.length];
+
+    if (rfb) {
+        rfb.scaleViewport = (scaling === 'auto');
+        rfb.resizeSession = (scaling === 'remote');
+    }
+
+    document.getElementById('scaling-status').textContent = scaling.charAt(0).toUpperCase() + scaling.slice(1);
+}
+
+function screenshot() {
+    if (rfb && rfb._canvas) {
+        const canvas = rfb._canvas;
+        const link = document.createElement('a');
+        link.download = `vnc-screenshot-${new Date().toISOString().slice(0,19)}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        console.log('Screenshot saved');
+    }
+}
+
+function toggleFullscreen() {
+    const container = document.getElementById('noVNC_container');
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        container.requestFullscreen();
+    }
+}
+
+function switchToConsole() {
+    // Replace /vnc/ with /console/ in the current URL
+    const currentUrl = window.location.pathname;
+    const consoleUrl = currentUrl.replace('/vnc/', '/console/');
+    window.location.href = consoleUrl;
+}
+
+// Power Operations (same as console)
+async function powerOperation(operation) {
+    if (powerOperationsInProgress.has(operation)) {
+        return;
+    }
+
+    const serverID = '{{.ServerID}}';
+    const button = document.getElementById(`${operation === 'on' ? 'power-on' : operation === 'off' ? 'power-off' : operation}-btn`);
+
+    if (button) {
+        button.disabled = true;
+        button.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    powerOperationsInProgress.add(operation);
+    console.log(`Executing power ${operation} operation...`);
+
+    try {
+        const response = await fetch(`/api/servers/${serverID}/power/${operation}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getAuthToken()
+            }
+        });
+
+        if (response.ok) {
+            console.log(`Power ${operation} operation completed successfully`);
+            setTimeout(() => refreshPowerStatus(), 2000);
+        } else {
+            const error = await response.text();
+            console.error(`Power ${operation} operation failed: ${error}`);
+        }
+    } catch (error) {
+        console.error(`Power ${operation} operation error: ${error.message}`);
+    } finally {
+        powerOperationsInProgress.delete(operation);
+        if (button) {
+            button.disabled = false;
+            button.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+}
+
+async function refreshPowerStatus() {
+    const serverID = '{{.ServerID}}';
+    const statusElement = document.getElementById('power-status');
+    const serverStateDot = document.getElementById('server-state-dot');
+
+    try {
+        const response = await fetch(`/api/servers/${serverID}/power/status`, {
+            headers: {
+                'Authorization': 'Bearer ' + getAuthToken()
+            }
+        });
+
+        if (response.ok) {
+            const status = await response.text();
+
+            if (statusElement) {
+                statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                statusElement.className = 'px-2 py-1 text-xs font-medium rounded-full';
+
+                if (status === 'on') {
+                    statusElement.classList.add('bg-green-600', 'text-white');
+                } else if (status === 'off') {
+                    statusElement.classList.add('bg-red-600', 'text-white');
+                } else {
+                    statusElement.classList.add('bg-gray-600', 'text-white');
+                }
+            }
+
+            if (serverStateDot) {
+                serverStateDot.className = 'w-2 h-2 rounded-full';
+                if (status === 'on') {
+                    serverStateDot.classList.add('bg-green-400');
+                } else if (status === 'off') {
+                    serverStateDot.classList.add('bg-red-400');
+                } else {
+                    serverStateDot.classList.add('bg-gray-400');
+                }
+            }
+
+            document.getElementById('last-activity').textContent = new Date().toLocaleTimeString();
+        }
+    } catch (error) {
+        console.error(`Error getting power status: ${error.message}`);
+    }
+}
+
+function getAuthToken() {
+    // For development/testing, use a placeholder
+    // In production, this should be properly managed
+    return 'placeholder-token';
+}
+
+function updateConnectionInfo() {
+    if (connectionStart && rfb) {
+        const duration = Math.floor((new Date() - connectionStart) / 1000);
+        const mins = Math.floor(duration / 60);
+        const secs = duration % 60;
+        const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+        document.getElementById('connect-time').textContent = timeStr;
+
+        // Update stats if available
+        if (rfb._sock && rfb._sock._websocket) {
+            const ws = rfb._sock._websocket;
+            document.getElementById('bytes-sent').textContent = ws.bufferedAmount || '0';
+        }
+    }
+
+    document.getElementById('last-activity').textContent = new Date().toLocaleTimeString();
+}
+
+// Initialize power status check
+refreshPowerStatus();
+
+// Update connection info every second
+setInterval(updateConnectionInfo, 1000);
+
+// Refresh power status every 30 seconds
+setInterval(refreshPowerStatus, 30000);
+
+// Initialize VNC when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, checking for RFB constructor...');
+
+    function checkAndInitialize() {
+        if (typeof RFB !== 'undefined') {
+            console.log('RFB constructor found, initializing VNC...');
+            initializeVNC();
+        } else {
+            console.log('RFB constructor not yet available, waiting...');
+            setTimeout(checkAndInitialize, 100);
+        }
+    }
+
+    // Check immediately
+    checkAndInitialize();
+
+    // Fallback timeout
+    setTimeout(function() {
+        if (typeof RFB === 'undefined') {
+            console.error('RFB constructor not found after timeout! noVNC library failed to load.');
+            updateVNCStatus('Library Error', 'error');
+        }
+    }, 5000);
+});
+{{end}}

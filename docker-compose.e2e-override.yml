@@ -1,0 +1,13 @@
+# Override for E2E testing
+# This file overrides the local agent configuration to use E2E test endpoints
+# Usage: docker-compose -f docker-compose.core.yml -f docker-compose.e2e-override.yml up -d local-agent
+
+version: '3.9'
+
+services:
+  # Override local agent to use E2E configuration
+  local-agent:
+    environment:
+      BMC_REGIONAL_GATEWAY_ENDPOINT: "http://gateway:8081"
+      BMC_AGENT_ENDPOINT: "http://local-agent:8082"
+      CONFIG_FILE: "config/e2e-agent.yaml"  # Use E2E agent configuration
