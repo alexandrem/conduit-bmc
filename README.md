@@ -55,7 +55,9 @@ The system is split into four services:
 | **Local Agent** | BMC discovery, IPMI/Redfish operations, outbound tunnels | gRPC -> Gateway         |
 | **CLI**         | User automation and scripting surface                    | gRPC -> Gateway/Manager |
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and deeper design notes.
+For more details:
+- See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for diagrams and data flows
+- See [docs/DESIGN.md](docs/DESIGN.md) for deeper design considerations
 
 ## 🔒 Security Highlights
 
