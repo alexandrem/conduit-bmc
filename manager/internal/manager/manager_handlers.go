@@ -7,8 +7,8 @@ import (
 	"time"
 
 	managerv1 "manager/gen/manager/v1"
+	"manager/internal/database"
 	"manager/pkg/auth"
-	"manager/pkg/database"
 	"manager/pkg/models"
 
 	"connectrpc.com/connect"
@@ -20,12 +20,12 @@ import (
 )
 
 type BMCManagerServiceHandler struct {
-	db         *database.DB
+	db         *database.BunDB
 	jwtManager *auth.JWTManager
 	startTime  time.Time
 }
 
-func NewBMCManagerServiceHandler(db *database.DB, jwtManager *auth.JWTManager) *BMCManagerServiceHandler {
+func NewBMCManagerServiceHandler(db *database.BunDB, jwtManager *auth.JWTManager) *BMCManagerServiceHandler {
 	return &BMCManagerServiceHandler{
 		db:         db,
 		jwtManager: jwtManager,
@@ -33,7 +33,7 @@ func NewBMCManagerServiceHandler(db *database.DB, jwtManager *auth.JWTManager) *
 	}
 }
 
-// Authentication interceptor for Connect
+// AuthInterceptor is authentication interceptor for Connect
 func (h *BMCManagerServiceHandler) AuthInterceptor() connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
@@ -132,9 +132,9 @@ func (h *BMCManagerServiceHandler) GetServerToken(
 	// TODO: Implement: 1) Query ServerCustomerMapping to verify customer has access to server
 	// TODO: Implement: 2) Only allow access if mapping exists or customer is admin
 	// TODO: Implement: 3) Add proper error handling for permission denied cases
-	server, err := h.db.GetServerByID(req.Msg.ServerId)
+	server, err := h.db.Servers.Get(ctx, req.Msg.ServerId)
 	if err != nil {
-		if err == database.ErrServerNotFound {
+		if err.Error() == "server not found" {
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 		}
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get server: %w", err))
@@ -262,7 +262,7 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		Bool("has_sol", server.SOLEndpoint != nil).
 		Bool("has_vnc", server.VNCEndpoint != nil).
 		Msg("Creating server record")
-	err := h.db.CreateServer(server)
+	err := h.db.Servers.Create(ctx, server)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create server record: %w", err))
 	}
@@ -280,7 +280,7 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		UpdatedAt:         time.Now(),
 	}
 
-	err = h.db.CreateServerLocation(location)
+	err = h.db.Locations.Create(ctx, location)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to register server location: %w", err))
 	}
@@ -304,7 +304,7 @@ func (h *BMCManagerServiceHandler) GetServerLocation(
 	}
 
 	// Get server location from database
-	location, err := h.db.GetServerLocation(req.Msg.ServerId)
+	location, err := h.db.Locations.Get(ctx, req.Msg.ServerId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %w", err))
 	}
@@ -313,7 +313,7 @@ func (h *BMCManagerServiceHandler) GetServerLocation(
 	// For now, allowing all authenticated customers to access all servers
 
 	// Get gateway information
-	gateway, err := h.db.GetRegionalGateway(location.RegionalGatewayID)
+	gateway, err := h.db.Gateways.Get(ctx, location.RegionalGatewayID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get gateway info: %w", err))
 	}
@@ -345,7 +345,7 @@ func (h *BMCManagerServiceHandler) RegisterGateway(
 	ctx context.Context,
 	req *connect.Request[managerv1.RegisterGatewayRequest],
 ) (*connect.Response[managerv1.RegisterGatewayResponse], error) {
-	// Create gateway record
+	// Create or update gateway record (using upsert for re-registration support)
 	gateway := &models.RegionalGateway{
 		ID:            req.Msg.GatewayId,
 		Region:        req.Msg.Region,
@@ -356,7 +356,7 @@ func (h *BMCManagerServiceHandler) RegisterGateway(
 		CreatedAt:     time.Now(),
 	}
 
-	err := h.db.CreateRegionalGateway(gateway)
+	err := h.db.Gateways.Upsert(ctx, gateway)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to register gateway: %w", err))
 	}
@@ -374,9 +374,20 @@ func (h *BMCManagerServiceHandler) ListGateways(
 	req *connect.Request[managerv1.ListGatewaysRequest],
 ) (*connect.Response[managerv1.ListGatewaysResponse], error) {
 	// Get gateways from database
-	gateways, err := h.db.ListRegionalGateways(req.Msg.Region)
+	gateways, err := h.db.Gateways.List(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list gateways: %w", err))
+	}
+
+	// Filter by region if specified
+	if req.Msg.Region != "" {
+		filtered := make([]*models.RegionalGateway, 0)
+		for _, g := range gateways {
+			if g.Region == req.Msg.Region {
+				filtered = append(filtered, g)
+			}
+		}
+		gateways = filtered
 	}
 
 	// Get customer ID from context for delegated token generation
@@ -426,15 +437,64 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 	// In production, this should require admin authentication
 
 	// Get all gateways from database
-	gateways, err := h.db.ListRegionalGateways("")
+	gateways, err := h.db.Gateways.List(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list gateways: %w", err))
 	}
 
 	// Get all servers with BMC endpoints from database
-	allServers, err := h.db.ListAllServersWithBMCEndpoints()
+	locations, err := h.db.Locations.List(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list locations: %w", err))
+	}
+
+	servers, err := h.db.Servers.ListAll(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list servers: %w", err))
+	}
+
+	// Create a map of servers by ID for quick lookup
+	serverMap := make(map[string]*models.Server)
+	for _, s := range servers {
+		serverMap[s.ID] = s
+	}
+
+	// Merge location and server data
+	type serverWithBMC struct {
+		ServerID          string
+		CustomerID        string
+		DatacenterID      string
+		RegionalGatewayID string
+		BMCType           models.BMCType
+		BMCEndpoint       string
+		Features          []string
+		CreatedAt         time.Time
+		UpdatedAt         time.Time
+	}
+
+	allServers := make([]serverWithBMC, 0, len(locations))
+	for _, loc := range locations {
+		server, exists := serverMap[loc.ServerID]
+
+		bmcEndpoint := ""
+		bmcType := loc.BMCType
+
+		if exists && server.ControlEndpoint != nil {
+			bmcEndpoint = server.ControlEndpoint.Endpoint
+			bmcType = server.ControlEndpoint.Type
+		}
+
+		allServers = append(allServers, serverWithBMC{
+			ServerID:          loc.ServerID,
+			CustomerID:        loc.CustomerID,
+			DatacenterID:      loc.DatacenterID,
+			RegionalGatewayID: loc.RegionalGatewayID,
+			BMCType:           bmcType,
+			BMCEndpoint:       bmcEndpoint,
+			Features:          loc.Features,
+			CreatedAt:         loc.CreatedAt,
+			UpdatedAt:         loc.UpdatedAt,
+		})
 	}
 
 	// Debug: log what we retrieved
@@ -582,9 +642,9 @@ func (h *BMCManagerServiceHandler) GetServer(
 	// TEMPORARY IMPLEMENTATION: Get server by ID (allowing all customers access to all servers)
 	// TODO: Replace with proper server-customer mapping check using ServerCustomerMapping table
 	// TODO: Implement proper ownership validation for GetServer operation
-	server, err := h.db.GetServerByID(req.Msg.ServerId)
+	server, err := h.db.Servers.Get(ctx, req.Msg.ServerId)
 	if err != nil {
-		if err == database.ErrServerNotFound {
+		if err.Error() == "server not found" {
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 		}
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get server: %w", err))
@@ -682,7 +742,7 @@ func (h *BMCManagerServiceHandler) ListServers(
 
 	// For now, show all servers to any authenticated customer
 	// TODO: Replace with proper server-customer mapping logic
-	servers, err := h.db.GetAllServers()
+	servers, err := h.db.Servers.ListAll(ctx)
 	nextPageToken := "" // Disable pagination for simplicity
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to list servers: %w", err))
@@ -790,7 +850,7 @@ func (h *BMCManagerServiceHandler) ReportAvailableEndpoints(
 
 		// Check if there's an existing server location for this BMC endpoint
 		// We need to find any server that matches this BMC endpoint and update it
-		if err := h.updateServerWithBMCEndpoint(endpoint, req.Msg.GatewayId); err != nil {
+		if err := h.updateServerWithBMCEndpoint(ctx, endpoint, req.Msg.GatewayId); err != nil {
 			log.Warn().Err(err).Str("bmc_endpoint", endpoint.BmcEndpoint).Msg("Failed to update server with BMC endpoint")
 			// Continue processing other endpoints even if one fails
 		}
@@ -806,7 +866,7 @@ func (h *BMCManagerServiceHandler) ReportAvailableEndpoints(
 
 // updateServerWithBMCEndpoint creates or updates server records with BMC endpoint information
 // from gateway endpoint reports
-func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(endpoint *managerv1.BMCEndpointAvailability, gatewayID string) error {
+func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Context, endpoint *managerv1.BMCEndpointAvailability, gatewayID string) error {
 	// Convert BMC type from protobuf to models
 	var bmcType models.BMCType
 	switch endpoint.BmcType {
@@ -884,8 +944,22 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(endpoint *manager
 		}
 	}
 
-	if err := h.db.CreateServer(server); err != nil {
-		return fmt.Errorf("failed to create/update server record: %w", err)
+	// Check if server already exists
+	existing, err := h.db.Servers.Get(ctx, serverID)
+	if err != nil && err.Error() != "server not found" {
+		return fmt.Errorf("failed to check existing server: %w", err)
+	}
+
+	if existing != nil {
+		// Server exists, update it
+		if err := h.db.Servers.Update(ctx, server); err != nil {
+			return fmt.Errorf("failed to update server record: %w", err)
+		}
+	} else {
+		// Server doesn't exist, create it
+		if err := h.db.Servers.Create(ctx, server); err != nil {
+			return fmt.Errorf("failed to create server record: %w", err)
+		}
 	}
 
 	// Also create/update server location mapping
@@ -900,7 +974,8 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(endpoint *manager
 		UpdatedAt:         time.Now(),
 	}
 
-	if err := h.db.CreateServerLocation(location); err != nil {
+	// Use Upsert for location since it has that method
+	if err := h.db.Locations.Upsert(ctx, location); err != nil {
 		return fmt.Errorf("failed to create/update server location: %w", err)
 	}
 

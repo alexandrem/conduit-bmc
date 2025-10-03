@@ -100,7 +100,7 @@ func TestRegisterServer_WithEmailCustomerID(t *testing.T) {
 	assert.True(t, resp.Msg.Success)
 
 	// Verify the server was created with the email-based customer ID
-	server, err := handler.db.GetServerByID("server-01")
+	server, err := handler.db.Servers.Get(context.Background(), "server-01")
 	require.NoError(t, err)
 	assert.Equal(t, customerEmail, server.CustomerID)
 	assert.Equal(t, "http://localhost:9001", server.ControlEndpoint.Endpoint)
@@ -167,11 +167,11 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 	}
 
 	// Create servers in database
-	err := handler.db.CreateServer(server1)
+	err := handler.db.Servers.Create(context.Background(), server1)
 	require.NoError(t, err)
-	err = handler.db.CreateServer(server2)
+	err = handler.db.Servers.Create(context.Background(), server2)
 	require.NoError(t, err)
-	err = handler.db.CreateServer(server3)
+	err = handler.db.Servers.Create(context.Background(), server3)
 	require.NoError(t, err)
 
 	// Test listing servers for Alice
@@ -305,9 +305,9 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	err := handler.db.CreateServer(server1)
+	err := handler.db.Servers.Create(context.Background(), server1)
 	require.NoError(t, err)
-	err = handler.db.CreateServer(server2)
+	err = handler.db.Servers.Create(context.Background(), server2)
 	require.NoError(t, err)
 
 	// Test Alice accessing her own server

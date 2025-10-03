@@ -10,10 +10,10 @@ import (
 
 	baseconf "core/config"
 	"manager/gen/manager/v1/managerv1connect"
+	"manager/internal/database"
 	"manager/internal/manager"
 	"manager/pkg/auth"
 	"manager/pkg/config"
-	"manager/pkg/database"
 
 	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
@@ -47,12 +47,12 @@ func main() {
 		Bool("debug", cfg.Log.Debug).
 		Msg("Log level configured")
 
-	// Initialize database
-	db, err := database.New(cfg.Database.DSN)
+	// Initialize database with debug option from config
+	db, err := database.New(cfg.Database.DSN, database.WithDebug(cfg.Log.Debug))
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize database")
 	}
-	defer func(db *database.DB) {
+	defer func(db *database.BunDB) {
 		err := db.Close()
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to close database connection")

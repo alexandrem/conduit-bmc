@@ -8,7 +8,7 @@ import (
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/pkg/auth"
-	"manager/pkg/database"
+	"manager/internal/database"
 	"manager/pkg/models"
 
 	"connectrpc.com/connect"
@@ -44,7 +44,7 @@ func setupTestGateway(t *testing.T, handler *BMCManagerServiceHandler) *models.R
 	}
 
 	// Register the gateway
-	err := handler.db.CreateRegionalGateway(gateway)
+	err := handler.db.Gateways.Create(context.Background(), gateway)
 	require.NoError(t, err)
 
 	return gateway
@@ -224,9 +224,9 @@ func TestListGateways_FiltersByRegion(t *testing.T) {
 		CreatedAt:     time.Now(),
 	}
 
-	err := handler.db.CreateRegionalGateway(gateway1)
+	err := handler.db.Gateways.Create(context.Background(), gateway1)
 	require.NoError(t, err)
-	err = handler.db.CreateRegionalGateway(gateway2)
+	err = handler.db.Gateways.Create(context.Background(), gateway2)
 	require.NoError(t, err)
 
 	customer := setupTestCustomer(t, "test-customer-1")
@@ -358,7 +358,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 
 			// Retrieve the server and verify endpoints
 			serverID := models.GenerateServerIDFromBMCEndpoint(bmcEndpoint.DatacenterId, bmcEndpoint.BmcEndpoint)
-			server, err := handler.db.GetServerByID(serverID)
+			server, err := handler.db.Servers.Get(context.Background(), serverID)
 			require.NoError(t, err)
 			require.NotNil(t, server)
 
@@ -523,7 +523,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			assert.True(t, resp.Msg.Success)
 
 			// Verify the server was created with correct endpoints
-			server, err := handler.db.GetServerByID(serverID)
+			server, err := handler.db.Servers.Get(context.Background(), serverID)
 			require.NoError(t, err)
 			require.NotNil(t, server)
 
@@ -601,11 +601,11 @@ func TestDatabaseRoundTrip_PreservesSOLAndVNCEndpoints(t *testing.T) {
 	}
 
 	// Create the server in database
-	err := handler.db.CreateServer(server)
+	err := handler.db.Servers.Create(context.Background(), server)
 	require.NoError(t, err)
 
 	// Retrieve the server
-	retrieved, err := handler.db.GetServerByID(server.ID)
+	retrieved, err := handler.db.Servers.Get(context.Background(), server.ID)
 	require.NoError(t, err)
 	require.NotNil(t, retrieved)
 

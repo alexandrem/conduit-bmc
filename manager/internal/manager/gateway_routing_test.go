@@ -42,9 +42,9 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 		CreatedAt:     time.Now(),
 	}
 
-	err := handler.db.CreateRegionalGateway(gatewayUSEast)
+	err := handler.db.Gateways.Create(context.Background(), gatewayUSEast)
 	require.NoError(t, err)
-	err = handler.db.CreateRegionalGateway(gatewayEUWest)
+	err = handler.db.Gateways.Create(context.Background(), gatewayEUWest)
 	require.NoError(t, err)
 
 	// Report endpoints from different datacenters
@@ -153,7 +153,7 @@ func TestGetServerLocation_MultipleDatacentersPerGateway(t *testing.T) {
 		CreatedAt:     time.Now(),
 	}
 
-	err := handler.db.CreateRegionalGateway(gateway)
+	err := handler.db.Gateways.Create(context.Background(), gateway)
 	require.NoError(t, err)
 
 	// Register servers in different datacenters
@@ -426,7 +426,7 @@ func TestGetServerLocation_GatewayEndpointFormat(t *testing.T) {
 				CreatedAt:     time.Now(),
 			}
 
-			err := handler.db.CreateRegionalGateway(gateway)
+			err := handler.db.Gateways.Create(context.Background(), gateway)
 			require.NoError(t, err)
 
 			endpoint := &managerv1.BMCEndpointAvailability{

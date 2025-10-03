@@ -9,7 +9,7 @@ import (
 
 	managerv1 "manager/gen/manager/v1"
 	"manager/pkg/auth"
-	"manager/pkg/database"
+	"manager/internal/database"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
