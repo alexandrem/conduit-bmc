@@ -29,28 +29,28 @@ Customer → API Gateway → Manager (AuthN/AuthZ) → Gateway
 ### How the Abstraction Works
 
 1. **Protocol translation**
-   - Unified REST/gRPC API.
-   - Translates to IPMI, Redfish, VNC, Serial Console.
-   - Hides vendor quirks from users.
+   - Unified REST/gRPC API
+   - Translates to IPMI, Redfish, VNC, Serial Console
+   - Hides vendor quirks from users
 
 2. **Operation whitelisting**
-   - Only explicitly allowed operations are exposed.
-   - Dangerous operations (firmware, network, user management) are blocked.
-   - New ops require a security review.
+   - Only explicitly allowed operations are exposed
+   - Dangerous operations (firmware, network, user management) are blocked
+   - New ops require a security review
 
 3. **Separation of concerns**
-   - **Manager:** authentication, RBAC, server mapping.
-   - **Gateway:** routing, token validation, web interface proxying.
-   - **Local agent:** executes commands inside provider network.
-   - BMCs are never internet-exposed.
+   - **Manager:** authentication, RBAC, server mapping
+   - **Gateway:** routing, token validation, web interface proxying
+   - **Local agent:** executes commands inside provider network
+   - BMCs are never internet-exposed
 
 ### Security Benefits
 
-- **Attack-surface reduction** — only safe operations exposed.
-- **Input validation** — type/range checks and injection prevention.
-- **Comprehensive audit** — user, server, operation, timestamp, result.
-- **Consistent security model** — single JWT/RBAC across vendors.
-- **Defense in depth** — TLS, layered auth, private-network execution.
+- **Attack-surface reduction** — only safe operations exposed
+- **Input validation** — type/range checks and injection prevention
+- **Comprehensive audit** — user, server, operation, timestamp, result
+- **Consistent security model** — single JWT/RBAC across vendors
+- **Defense in depth** — TLS, layered auth, private-network execution
 
 ---
 
