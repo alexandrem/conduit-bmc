@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"core/types"
 	"local-agent/pkg/config"
 	"local-agent/pkg/ipmi"
 	"local-agent/pkg/redfish"
@@ -75,8 +76,8 @@ func TestService_LoadStaticServers(t *testing.T) {
 		t.Fatal("Expected ControlEndpoint to be set")
 	}
 
-	if servers[0].ControlEndpoint.Type != "ipmi" {
-		t.Errorf("Expected type 'ipmi', got '%s'", servers[0].ControlEndpoint.Type)
+	if servers[0].ControlEndpoint.Type != types.BMCTypeIPMI {
+		t.Errorf("Expected type '%s', got '%s'", types.BMCTypeIPMI, servers[0].ControlEndpoint.Type)
 	}
 
 	if servers[0].ControlEndpoint.Endpoint != "192.168.1.100:623" {
@@ -88,8 +89,8 @@ func TestService_LoadStaticServers(t *testing.T) {
 		t.Errorf("Expected ID 'test-server-2', got '%s'", servers[1].ID)
 	}
 
-	if servers[1].ControlEndpoint.Type != "redfish" {
-		t.Errorf("Expected type 'redfish', got '%s'", servers[1].ControlEndpoint.Type)
+	if servers[1].ControlEndpoint.Type != types.BMCTypeRedfish {
+		t.Errorf("Expected type '%s', got '%s'", types.BMCTypeRedfish, servers[1].ControlEndpoint.Type)
 	}
 }
 
@@ -287,12 +288,12 @@ func TestBMCControlEndpoint_Validation(t *testing.T) {
 func TestSOLEndpoint_Types(t *testing.T) {
 	tests := []struct {
 		name     string
-		solType  string
+		solType  types.SOLType
 		expected bool
 	}{
-		{"IPMI SOL", "ipmi", true},
-		{"Redfish Serial", "redfish_serial", true},
-		{"Invalid", "unknown", false},
+		{"IPMI SOL", types.SOLTypeIPMI, true},
+		{"Redfish Serial", types.SOLTypeRedfishSerial, true},
+		{"Invalid", types.SOLType("unknown"), false},
 	}
 
 	for _, tt := range tests {
@@ -303,7 +304,7 @@ func TestSOLEndpoint_Types(t *testing.T) {
 			}
 
 			// Check if type is one of the expected values
-			isValid := sol.Type == "ipmi" || sol.Type == "redfish_serial"
+			isValid := sol.Type == types.SOLTypeIPMI || sol.Type == types.SOLTypeRedfishSerial
 
 			if isValid != tt.expected {
 				t.Errorf("Expected valid=%v for type '%s'", tt.expected, tt.solType)
@@ -315,13 +316,12 @@ func TestSOLEndpoint_Types(t *testing.T) {
 func TestVNCEndpoint_Types(t *testing.T) {
 	tests := []struct {
 		name    string
-		vncType string
+		vncType types.VNCType
 		valid   bool
 	}{
-		{"BMC Native", "bmc_native", true},
-		{"NoVNC Proxy", "novnc_proxy", true},
-		{"External KVM", "external_kvm", true},
-		{"Invalid", "invalid_type", false},
+		{"Native", types.VNCTypeNative, true},
+		{"WebSocket", types.VNCTypeWebSocket, true},
+		{"Invalid", types.VNCType("invalid_type"), false},
 	}
 
 	for _, tt := range tests {
@@ -332,10 +332,9 @@ func TestVNCEndpoint_Types(t *testing.T) {
 			}
 
 			// Check if type is one of the valid values
-			validTypes := map[string]bool{
-				"bmc_native":   true,
-				"novnc_proxy":  true,
-				"external_kvm": true,
+			validTypes := map[types.VNCType]bool{
+				types.VNCTypeNative:    true,
+				types.VNCTypeWebSocket: true,
 			}
 
 			isValid := validTypes[vnc.Type]

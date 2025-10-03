@@ -56,14 +56,12 @@ static:
       # IPMI Control API
       control_endpoint:
         endpoint: "dev-virtualbmc-01:623"
-        type: "ipmi"
         username: "ipmiusr"
         password: "test"
         capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
-        type: "ipmi"
         endpoint: "dev-virtualbmc-01:623"
         username: "ipmiusr"
         password: "test"
@@ -88,14 +86,12 @@ static:
       # IPMI Control API
       control_endpoint:
         endpoint: "dev-virtualbmc-02:623"
-        type: "ipmi"
         username: "ipmiusr"
         password: "test"
         capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
-        type: "ipmi"
         endpoint: "dev-virtualbmc-02:623"
         username: "ipmiusr"
         password: "test"
@@ -120,14 +116,12 @@ static:
       # IPMI Control API
       control_endpoint:
         endpoint: "dev-virtualbmc-03:623"
-        type: "ipmi"
         username: "ipmiusr"
         password: "test"
         capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
-        type: "ipmi"
         endpoint: "dev-virtualbmc-03:623"
         username: "ipmiusr"
         password: "test"
@@ -152,7 +146,6 @@ static:
       # IPMI Control API
       control_endpoint:
         endpoint: "dev-virtualbmc-04:623" # this is fake
-        type: "ipmi"
         username: "ipmiusr"
         password: "test"
         capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
@@ -179,7 +172,6 @@ static:
       # Redfish Control API
       control_endpoint:
         endpoint: "http://dev-redfish-01:8000"
-        type: "redfish"
         username: ""
         password: ""
         capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
@@ -214,7 +206,6 @@ static:
       # Redfish Control API
       control_endpoint:
         endpoint: "http://dev-redfish-02:8000"
-        type: "redfish"
         username: ""
         password: ""
         capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
@@ -249,7 +240,6 @@ static:
       # Redfish Control API
       control_endpoint:
         endpoint: "http://dev-redfish-03:8000"
-        type: "redfish"
         username: ""
         password: ""
         capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
@@ -259,7 +249,6 @@ static:
 
       # Redfish Serial Console
       sol_endpoint:
-        type: "redfish_serial"
         endpoint: "http://dev-redfish-03:8000"
         username: ""
         password: ""

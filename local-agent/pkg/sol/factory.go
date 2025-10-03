@@ -2,16 +2,18 @@ package sol
 
 import (
 	"fmt"
+
+	"core/types"
 )
 
 // NewClient creates a Client based on the BMC type using unified implementation
-func NewClient(bmcType Type) (Client, error) {
+func NewClient(bmcType types.SOLType) (Client, error) {
 	var transport Transport
 
 	switch bmcType {
-	case TypeIPMI:
+	case types.SOLTypeIPMI:
 		transport = NewIPMITransport()
-	case TypeRedfishSerial:
+	case types.SOLTypeRedfishSerial:
 		transport = NewRedfishTransport()
 	case TypeMock:
 		transport = NewMockTransport()
@@ -29,16 +31,16 @@ func NewClientWithTransport(transport Transport) Client {
 }
 
 // GetSupportedSOLTypes returns all supported SOL types
-func GetSupportedSOLTypes() []Type {
-	return []Type{
-		TypeIPMI,
-		TypeRedfishSerial,
+func GetSupportedSOLTypes() []types.SOLType {
+	return []types.SOLType{
+		types.SOLTypeIPMI,
+		types.SOLTypeRedfishSerial,
 		TypeMock,
 	}
 }
 
 // IsValidSOLType checks if the given SOL type is supported
-func IsValidSOLType(solType Type) bool {
+func IsValidSOLType(solType types.SOLType) bool {
 	for _, supported := range GetSupportedSOLTypes() {
 		if supported == solType {
 			return true

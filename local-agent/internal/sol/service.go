@@ -55,21 +55,11 @@ func (s *Service) HandleConnectionForServer(w http.ResponseWriter, r *http.Reque
 	log.Info().
 		Str("server_id", server.ID).
 		Str("endpoint", server.SOLEndpoint.Endpoint).
-		Str("type", server.SOLEndpoint.Type).
+		Str("type", server.SOLEndpoint.Type.String()).
 		Msg("Setting up SOL connection")
 
 	// Create SOL client based on type
-	var solType solpkg.Type
-	switch server.SOLEndpoint.Type {
-	case "ipmi":
-		solType = solpkg.TypeIPMI
-	case "redfish_serial":
-		solType = solpkg.TypeRedfishSerial
-	default:
-		return fmt.Errorf("unsupported SOL type: %s", server.SOLEndpoint.Type)
-	}
-
-	solClient, err := solpkg.NewClient(solType)
+	solClient, err := solpkg.NewClient(server.SOLEndpoint.Type)
 	if err != nil {
 		return fmt.Errorf("failed to create SOL client: %w", err)
 	}

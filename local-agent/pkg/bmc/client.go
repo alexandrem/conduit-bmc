@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"core/types"
 	"local-agent/internal/discovery"
 	"local-agent/pkg/ipmi"
 	"local-agent/pkg/redfish"
@@ -34,14 +35,14 @@ func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (s
 	password := server.ControlEndpoint.Password
 
 	switch server.ControlEndpoint.Type {
-	case "ipmi":
+	case types.BMCTypeIPMI:
 		state, err := c.ipmiClient.GetPowerState(ctx, endpoint, username, password)
 		if err != nil {
 			return "", fmt.Errorf("IPMI GetPowerState failed: %w", err)
 		}
 		return string(state), nil
 
-	case "redfish":
+	case types.BMCTypeRedfish:
 		state, err := c.redfishClient.GetPowerState(ctx, endpoint, username, password)
 		if err != nil {
 			return "", fmt.Errorf("Redfish GetPowerState failed: %w", err)
@@ -64,13 +65,13 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 	password := server.ControlEndpoint.Password
 
 	switch server.ControlEndpoint.Type {
-	case "ipmi":
+	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.PowerOn(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI PowerOn failed: %w", err)
 		}
 		return nil
 
-	case "redfish":
+	case types.BMCTypeRedfish:
 		if err := c.redfishClient.PowerOn(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("Redfish PowerOn failed: %w", err)
 		}
@@ -92,13 +93,13 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 	password := server.ControlEndpoint.Password
 
 	switch server.ControlEndpoint.Type {
-	case "ipmi":
+	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.PowerOff(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI PowerOff failed: %w", err)
 		}
 		return nil
 
-	case "redfish":
+	case types.BMCTypeRedfish:
 		if err := c.redfishClient.PowerOff(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("Redfish PowerOff failed: %w", err)
 		}
@@ -120,13 +121,13 @@ func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error
 	password := server.ControlEndpoint.Password
 
 	switch server.ControlEndpoint.Type {
-	case "ipmi":
+	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.PowerCycle(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI PowerCycle failed: %w", err)
 		}
 		return nil
 
-	case "redfish":
+	case types.BMCTypeRedfish:
 		if err := c.redfishClient.PowerCycle(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("Redfish PowerCycle failed: %w", err)
 		}
@@ -148,13 +149,13 @@ func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
 	password := server.ControlEndpoint.Password
 
 	switch server.ControlEndpoint.Type {
-	case "ipmi":
+	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.Reset(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI Reset failed: %w", err)
 		}
 		return nil
 
-	case "redfish":
+	case types.BMCTypeRedfish:
 		if err := c.redfishClient.Reset(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("Redfish Reset failed: %w", err)
 		}

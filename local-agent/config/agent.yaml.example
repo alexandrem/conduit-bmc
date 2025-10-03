@@ -114,25 +114,28 @@ tls:
 # Prefer BMC discovery over static configuration
 static:
   hosts: []
-  # Example static host configuration:
+  # Example static host configurations:
+  #
+  # Example 1: Redfish-based server (Dell, HPE, Lenovo, Supermicro)
+  # Types are auto-inferred from endpoint URLs - no explicit 'type' fields needed!
   # hosts:
-  #   - id: server-001
+  #   - id: redfish-server-001
   #     customer_id: customer-1
   #     features: [power, console, vnc]
   #     metadata:
   #       location: Rack 1, U10
   #       model: Dell PowerEdge R740
+  #     # Control Endpoint (type auto-inferred as 'redfish' from https://)
   #     control_endpoint:
   #       endpoint: https://192.168.1.100
-  #       type: redfish
   #       username: admin
   #       password: password
   #       capabilities: [power, sensors, systems, chassis]
   #       tls:
   #         enabled: true
   #         insecure_skip_verify: true
+  #     # SOL Endpoint (type auto-inferred as 'redfish_serial' from https://)
   #     sol_endpoint:
-  #       type: redfish_serial
   #       endpoint: https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1
   #       username: admin
   #       password: password
@@ -140,24 +143,36 @@ static:
   #         baud_rate: 115200
   #         flow_control: none
   #         timeout_seconds: 300
-  #     # VNC Endpoint Configuration
-  #     # Transport auto-detected from URL scheme:
-  #     #   - ws://... or wss://... → WebSocket transport (Redfish, OpenBMC, iDRAC, iLO)
-  #     #   - vnc://host:port or host:port → Native TCP transport (QEMU, VirtualBMC)
-  #     #
-  #     # Option 1: Native TCP VNC (QEMU, VirtualBMC, standalone KVM)
+  #     # VNC Endpoint (type auto-inferred as 'websocket' from wss://)
   #     vnc_endpoint:
-  #       endpoint: 192.168.1.100:5900     # Native TCP (no scheme defaults to TCP)
-  #       # OR: endpoint: vnc://192.168.1.100:5900
+  #       endpoint: wss://192.168.1.100/redfish/v1/Systems/1/GraphicalConsole
+  #       username: admin
+  #       password: password
   #
-  #     # Option 2: Redfish GraphicalConsole WebSocket (Dell, HPE, Lenovo, Supermicro)
-  #     # vnc_endpoint:
-  #     #   endpoint: wss://192.168.1.100/redfish/v1/Systems/1/GraphicalConsole
-  #     #   username: admin
-  #     #   password: password
-  #
-  #     # Option 3: OpenBMC WebSocket KVM
-  #     # vnc_endpoint:
-  #     #   endpoint: wss://192.168.1.100/kvm/0
-  #     #   username: root
-  #     #   password: 0penBmc
+  #   # Example 2: IPMI-based server (traditional BMCs)
+  #   # Types are auto-inferred - IPMI endpoints use host:port format
+  #   - id: ipmi-server-002
+  #     customer_id: customer-1
+  #     features: [power, console]
+  #     metadata:
+  #       location: Rack 2, U5
+  #       model: Supermicro X10DRi
+  #     # Control Endpoint (type auto-inferred as 'ipmi' from host:port)
+  #     control_endpoint:
+  #       endpoint: 192.168.1.101:623
+  #       username: ADMIN
+  #       password: ADMIN
+  #       capabilities: [power, sensors]
+  #     # SOL Endpoint (type auto-inferred as 'ipmi' from host:port)
+  #     sol_endpoint:
+  #       endpoint: 192.168.1.101:623
+  #       username: ADMIN
+  #       password: ADMIN
+  #       config:
+  #         baud_rate: 115200
+  #         flow_control: none
+  #         timeout_seconds: 300
+  #     # VNC Endpoint (type auto-inferred as 'native' from vnc:// or host:port)
+  #     vnc_endpoint:
+  #       endpoint: 192.168.1.101:5900
+  #       # OR: endpoint: vnc://192.168.1.101:5900

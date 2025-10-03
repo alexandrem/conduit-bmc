@@ -2,6 +2,8 @@ package sol
 
 import (
 	"context"
+
+	"core/types"
 )
 
 // Session represents an active Serial-over-LAN console session
@@ -79,11 +81,7 @@ type TransportStatus struct {
 	Message   string `json:"message"`
 }
 
-// Type represents the type of SOL implementation
-type Type string
-
+// Mock SOL type for development/testing
 const (
-	TypeIPMI          Type = "ipmi"
-	TypeRedfishSerial Type = "redfish_serial"
-	TypeMock          Type = "mock_sol" // Mock SOL for development/testing
+	TypeMock types.SOLType = "mock_sol"
 )

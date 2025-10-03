@@ -6,8 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"core/config"
 	"github.com/rs/zerolog"
+
+	"core/config"
+	"core/types"
 )
 
 // Config contains all configuration for the local-agent service
@@ -281,26 +283,71 @@ type BMCHost struct {
 
 type BMCControlEndpoint struct {
 	Endpoint     string     `yaml:"endpoint"`
-	Type         string     `yaml:"type"`
+	Type         string     `yaml:"type,omitempty"` // Optional: inferred from endpoint if not specified
 	Username     string     `yaml:"username"`
 	Password     string     `yaml:"password"`
 	TLS          *TLSConfig `yaml:"tls"`
 	Capabilities []string   `yaml:"capabilities"`
 }
 
+// InferType infers the BMC type from the endpoint URL
+// Returns: types.BMCTypeRedfish for https:// endpoints, types.BMCTypeIPMI for others
+func (b *BMCControlEndpoint) InferType() types.BMCType {
+	if b.Type != "" {
+		return types.BMCType(b.Type)
+	}
+
+	endpoint := b.Endpoint
+	if strings.HasPrefix(endpoint, "https://") || strings.HasPrefix(endpoint, "http://") {
+		return types.BMCTypeRedfish
+	}
+	// ipmi://, host:port, or no scheme defaults to ipmi
+	return types.BMCTypeIPMI
+}
+
 type SOLEndpoint struct {
-	Type     string     `yaml:"type"`
+	Type     string     `yaml:"type,omitempty"` // Optional: inferred from endpoint if not specified
 	Endpoint string     `yaml:"endpoint"`
 	Username string     `yaml:"username"`
 	Password string     `yaml:"password"`
 	Config   *SOLConfig `yaml:"config"`
 }
 
+// InferType infers the SOL type from the endpoint URL
+// Returns: types.SOLTypeRedfishSerial for https:// endpoints, types.SOLTypeIPMI for ipmi:// or host:port
+func (s *SOLEndpoint) InferType() types.SOLType {
+	if s.Type != "" {
+		return types.SOLType(s.Type)
+	}
+
+	endpoint := s.Endpoint
+	if strings.HasPrefix(endpoint, "https://") || strings.HasPrefix(endpoint, "http://") {
+		return types.SOLTypeRedfishSerial
+	}
+	// ipmi://, host:port, or no scheme defaults to ipmi
+	return types.SOLTypeIPMI
+}
+
 type VNCEndpoint struct {
-	Type     string `yaml:"type"`     // "bmc_native", "novnc_proxy", "external_kvm"
-	Endpoint string `yaml:"endpoint"` // Full connection URL (e.g., "ws://novnc:6080/websockify")
+	Type     string `yaml:"type,omitempty"` // Optional: inferred from endpoint scheme if not specified
+	Endpoint string `yaml:"endpoint"`       // URL with scheme (ws://, wss://, vnc://) or host:port
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+}
+
+// InferType infers the VNC transport type from the endpoint URL scheme
+// Returns: types.VNCTypeNative for vnc:// or host:port, types.VNCTypeWebSocket for ws:// or wss://
+func (v *VNCEndpoint) InferType() types.VNCType {
+	if v.Type != "" {
+		return types.VNCType(v.Type)
+	}
+
+	endpoint := v.Endpoint
+	if strings.HasPrefix(endpoint, "ws://") || strings.HasPrefix(endpoint, "wss://") {
+		return types.VNCTypeWebSocket
+	}
+	// vnc://, host:port, or no scheme defaults to native
+	return types.VNCTypeNative
 }
 
 type TLSConfig struct {

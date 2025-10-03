@@ -204,24 +204,47 @@ BMC_DISCOVERY_MAX_CONCURRENT=50
 ```
 
 ### Static Configuration (Legacy)
-For environments where discovery is not possible, you can configure static hosts in the YAML file:
+For environments where discovery is not possible, you can configure static hosts in the YAML file.
+
+**Note**: Endpoint types are automatically inferred from URLs - no need to specify `type` fields!
+- `https://` or `http://` → Redfish
+- `ws://` or `wss://` → WebSocket VNC
+- `vnc://` or `host:port` → IPMI or native VNC
 
 ```yaml
 static:
   hosts:
-    - id: server-001
+    # Redfish-based server (Dell, HPE, Lenovo, Supermicro)
+    # All types auto-inferred from endpoint URLs!
+    - id: redfish-server-001
       customer_id: customer-1
       control_endpoint:
-        endpoint: https://192.168.1.100
-        type: redfish
+        endpoint: https://192.168.1.100  # → redfish
         username: admin
         password: password
       sol_endpoint:
-        type: redfish_serial
-        endpoint: https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1
+        endpoint: https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1  # → redfish_serial
+        username: admin
+        password: password
       vnc_endpoint:
-        type: novnc_proxy
-        endpoint: vnc://192.168.1.100:5900
+        endpoint: wss://192.168.1.100/redfish/v1/Systems/1/GraphicalConsole  # → websocket
+        username: admin
+        password: password
+
+    # IPMI-based server (traditional BMCs)
+    # All types auto-inferred from host:port format!
+    - id: ipmi-server-002
+      customer_id: customer-1
+      control_endpoint:
+        endpoint: 192.168.1.101:623  # → ipmi
+        username: ADMIN
+        password: ADMIN
+      sol_endpoint:
+        endpoint: 192.168.1.101:623  # → ipmi
+        username: ADMIN
+        password: ADMIN
+      vnc_endpoint:
+        endpoint: 192.168.1.101:5900  # → native
 ```
 
 ## IPMI Configuration

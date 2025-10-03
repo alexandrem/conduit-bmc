@@ -17,6 +17,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"core/identity"
+	"core/types"
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 	"local-agent/internal/discovery"
@@ -85,11 +86,11 @@ func (a *LocalAgent) validateDependencies() error {
 	// Also check static hosts
 	hasStaticIPMI := false
 	for _, host := range a.config.Static.Hosts {
-		if host.ControlEndpoint != nil && host.ControlEndpoint.Type == "ipmi" {
+		if host.ControlEndpoint != nil && host.ControlEndpoint.InferType() == types.BMCTypeIPMI {
 			hasStaticIPMI = true
 			break
 		}
-		if host.SOLEndpoint != nil && host.SOLEndpoint.Type == "ipmi" {
+		if host.SOLEndpoint != nil && host.SOLEndpoint.InferType() == types.SOLTypeIPMI {
 			hasStaticIPMI = true
 			break
 		}
@@ -366,9 +367,9 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 		if server.SOLEndpoint != nil {
 			var solType gatewayv1.SOLType
 			switch server.SOLEndpoint.Type {
-			case "ipmi":
+			case types.SOLTypeIPMI:
 				solType = gatewayv1.SOLType_SOL_TYPE_IPMI
-			case "redfish_serial":
+			case types.SOLTypeRedfishSerial:
 				solType = gatewayv1.SOLType_SOL_TYPE_REDFISH_SERIAL
 			default:
 				solType = gatewayv1.SOLType_SOL_TYPE_UNSPECIFIED
@@ -390,9 +391,9 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 		if server.VNCEndpoint != nil {
 			var vncType gatewayv1.VNCType
 			switch server.VNCEndpoint.Type {
-			case "native":
+			case types.VNCTypeNative:
 				vncType = gatewayv1.VNCType_VNC_TYPE_NATIVE
-			case "websocket":
+			case types.VNCTypeWebSocket:
 				vncType = gatewayv1.VNCType_VNC_TYPE_WEBSOCKET
 			default:
 				vncType = gatewayv1.VNCType_VNC_TYPE_UNSPECIFIED
@@ -475,9 +476,9 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 		if server.SOLEndpoint != nil {
 			var solType gatewayv1.SOLType
 			switch server.SOLEndpoint.Type {
-			case "ipmi":
+			case types.SOLTypeIPMI:
 				solType = gatewayv1.SOLType_SOL_TYPE_IPMI
-			case "redfish_serial":
+			case types.SOLTypeRedfishSerial:
 				solType = gatewayv1.SOLType_SOL_TYPE_REDFISH_SERIAL
 			default:
 				solType = gatewayv1.SOLType_SOL_TYPE_UNSPECIFIED
@@ -495,9 +496,9 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 		if server.VNCEndpoint != nil {
 			var vncType gatewayv1.VNCType
 			switch server.VNCEndpoint.Type {
-			case "native":
+			case types.VNCTypeNative:
 				vncType = gatewayv1.VNCType_VNC_TYPE_NATIVE
-			case "websocket":
+			case types.VNCTypeWebSocket:
 				vncType = gatewayv1.VNCType_VNC_TYPE_WEBSOCKET
 			default:
 				vncType = gatewayv1.VNCType_VNC_TYPE_UNSPECIFIED
@@ -738,7 +739,7 @@ func (a *LocalAgent) handleSOLWebSocket(w http.ResponseWriter, r *http.Request) 
 	log.Debug().
 		Str("server_id", serverID).
 		Str("endpoint", server.SOLEndpoint.Endpoint).
-		Str("type", server.SOLEndpoint.Type).
+		Str("type", server.SOLEndpoint.Type.String()).
 		Msg("Found SOL endpoint")
 
 	// Delegate to SOL service with SOL endpoint information

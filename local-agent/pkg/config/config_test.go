@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"core/types"
 )
 
 func TestAgentConfigLoad(t *testing.T) {
@@ -781,6 +783,257 @@ agent:
 				t.Errorf("Expected VNC address '%s', got '%s'", tt.expected, address)
 			}
 		})
+	}
+}
+
+func TestBMCControlEndpointInferType(t *testing.T) {
+	tests := []struct {
+		name         string
+		endpoint     string
+		explicitType string
+		expected     types.BMCType
+	}{
+		{
+			name:         "HTTPS endpoint infers redfish",
+			endpoint:     "https://192.168.1.100",
+			explicitType: "",
+			expected:     types.BMCTypeRedfish,
+		},
+		{
+			name:         "HTTP endpoint infers redfish",
+			endpoint:     "http://192.168.1.100",
+			explicitType: "",
+			expected:     types.BMCTypeRedfish,
+		},
+		{
+			name:         "IPMI scheme infers ipmi",
+			endpoint:     "ipmi://192.168.1.100",
+			explicitType: "",
+			expected:     types.BMCTypeIPMI,
+		},
+		{
+			name:         "Host:port infers ipmi",
+			endpoint:     "192.168.1.100:623",
+			explicitType: "",
+			expected:     types.BMCTypeIPMI,
+		},
+		{
+			name:         "Explicit type overrides inference",
+			endpoint:     "https://192.168.1.100",
+			explicitType: types.BMCTypeIPMI.String(),
+			expected:     types.BMCTypeIPMI,
+		},
+		{
+			name:         "No scheme defaults to ipmi",
+			endpoint:     "192.168.1.100",
+			explicitType: "",
+			expected:     types.BMCTypeIPMI,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bmc := &BMCControlEndpoint{
+				Type:     tt.explicitType,
+				Endpoint: tt.endpoint,
+			}
+
+			result := bmc.InferType()
+			if result != tt.expected {
+				t.Errorf("Expected type '%s', got '%s'", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestSOLEndpointInferType(t *testing.T) {
+	tests := []struct {
+		name         string
+		endpoint     string
+		explicitType string
+		expected     types.SOLType
+	}{
+		{
+			name:         "HTTPS endpoint infers redfish_serial",
+			endpoint:     "https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1",
+			explicitType: "",
+			expected:     types.SOLTypeRedfishSerial,
+		},
+		{
+			name:         "HTTP endpoint infers redfish_serial",
+			endpoint:     "http://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1",
+			explicitType: "",
+			expected:     types.SOLTypeRedfishSerial,
+		},
+		{
+			name:         "IPMI scheme infers ipmi",
+			endpoint:     "ipmi://192.168.1.100",
+			explicitType: "",
+			expected:     types.SOLTypeIPMI,
+		},
+		{
+			name:         "Host:port infers ipmi",
+			endpoint:     "192.168.1.100:623",
+			explicitType: "",
+			expected:     types.SOLTypeIPMI,
+		},
+		{
+			name:         "Explicit type overrides inference",
+			endpoint:     "https://192.168.1.100/sol",
+			explicitType: types.SOLTypeIPMI.String(),
+			expected:     types.SOLTypeIPMI,
+		},
+		{
+			name:         "No scheme defaults to ipmi",
+			endpoint:     "192.168.1.100",
+			explicitType: "",
+			expected:     types.SOLTypeIPMI,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sol := &SOLEndpoint{
+				Type:     tt.explicitType,
+				Endpoint: tt.endpoint,
+			}
+
+			result := sol.InferType()
+			if result != tt.expected {
+				t.Errorf("Expected type '%s', got '%s'", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestVNCEndpointInferType(t *testing.T) {
+	tests := []struct {
+		name         string
+		endpoint     string
+		explicitType string
+		expected     types.VNCType
+	}{
+		{
+			name:         "WS scheme infers websocket",
+			endpoint:     "ws://192.168.1.100/kvm/0",
+			explicitType: "",
+			expected:     types.VNCTypeWebSocket,
+		},
+		{
+			name:         "WSS scheme infers websocket",
+			endpoint:     "wss://192.168.1.100/redfish/v1/Systems/1/GraphicalConsole",
+			explicitType: "",
+			expected:     types.VNCTypeWebSocket,
+		},
+		{
+			name:         "VNC scheme infers native",
+			endpoint:     "vnc://192.168.1.100:5900",
+			explicitType: "",
+			expected:     types.VNCTypeNative,
+		},
+		{
+			name:         "Host:port infers native",
+			endpoint:     "192.168.1.100:5900",
+			explicitType: "",
+			expected:     types.VNCTypeNative,
+		},
+		{
+			name:         "Explicit type overrides inference",
+			endpoint:     "ws://192.168.1.100/vnc",
+			explicitType: types.VNCTypeNative.String(),
+			expected:     types.VNCTypeNative,
+		},
+		{
+			name:         "No scheme defaults to native",
+			endpoint:     "192.168.1.100",
+			explicitType: "",
+			expected:     types.VNCTypeNative,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			vnc := &VNCEndpoint{
+				Type:     tt.explicitType,
+				Endpoint: tt.endpoint,
+			}
+
+			result := vnc.InferType()
+			if result != tt.expected {
+				t.Errorf("Expected type '%s', got '%s'", tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestStaticHostTypeInference(t *testing.T) {
+	// Set required environment variables
+	os.Setenv("AGENT_GATEWAY_ENDPOINT", "http://localhost:8081")
+	os.Setenv("AGENT_DATACENTER_ID", "dc-test")
+	defer os.Unsetenv("AGENT_GATEWAY_ENDPOINT")
+	defer os.Unsetenv("AGENT_DATACENTER_ID")
+
+	tempDir := t.TempDir()
+	configFile := filepath.Join(tempDir, "agent.yaml")
+
+	// Config without explicit type fields
+	configContent := `
+static:
+  hosts:
+    - id: test-server-redfish
+      control_endpoint:
+        endpoint: https://192.168.1.100
+        type: redfish
+      sol_endpoint:
+        endpoint: https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1
+        username: admin
+        password: password
+      vnc_endpoint:
+        endpoint: wss://192.168.1.100/redfish/v1/Systems/1/GraphicalConsole
+        username: admin
+        password: password
+    - id: test-server-ipmi
+      control_endpoint:
+        endpoint: 192.168.1.101
+        type: ipmi
+      sol_endpoint:
+        endpoint: 192.168.1.101:623
+        username: admin
+        password: password
+      vnc_endpoint:
+        endpoint: vnc://192.168.1.101:5900
+`
+
+	err := os.WriteFile(configFile, []byte(configContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write config file: %v", err)
+	}
+
+	cfg, err := Load(configFile, "")
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	if len(cfg.Static.Hosts) != 2 {
+		t.Fatalf("Expected 2 static hosts, got %d", len(cfg.Static.Hosts))
+	}
+
+	// Test Redfish server
+	redfishHost := cfg.Static.Hosts[0]
+	if redfishHost.SOLEndpoint.InferType() != types.SOLTypeRedfishSerial {
+		t.Errorf("Expected SOL type '%s' for HTTPS endpoint, got '%s'", types.SOLTypeRedfishSerial, redfishHost.SOLEndpoint.InferType())
+	}
+	if redfishHost.VNCEndpoint.InferType() != types.VNCTypeWebSocket {
+		t.Errorf("Expected VNC type '%s' for WSS endpoint, got '%s'", types.VNCTypeWebSocket, redfishHost.VNCEndpoint.InferType())
+	}
+
+	// Test IPMI server
+	ipmiHost := cfg.Static.Hosts[1]
+	if ipmiHost.SOLEndpoint.InferType() != types.SOLTypeIPMI {
+		t.Errorf("Expected SOL type '%s' for host:port endpoint, got '%s'", types.SOLTypeIPMI, ipmiHost.SOLEndpoint.InferType())
+	}
+	if ipmiHost.VNCEndpoint.InferType() != types.VNCTypeNative {
+		t.Errorf("Expected VNC type '%s' for vnc:// endpoint, got '%s'", types.VNCTypeNative, ipmiHost.VNCEndpoint.InferType())
 	}
 }
 

@@ -143,11 +143,11 @@ func (a *LocalAgent) StreamConsoleData(
 
 	log.Debug().
 		Str("endpoint", server.SOLEndpoint.Endpoint).
-		Str("type", server.SOLEndpoint.Type).
+		Str("type", server.SOLEndpoint.Type.String()).
 		Msg("Connecting to SOL endpoint")
 
 	// Create SOL client using the factory based on BMC type
-	solClient, err := sol.NewClient(sol.Type(server.SOLEndpoint.Type))
+	solClient, err := sol.NewClient(server.SOLEndpoint.Type)
 	if err != nil {
 		return fmt.Errorf("failed to create SOL client: %w", err)
 	}

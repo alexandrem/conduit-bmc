@@ -28,27 +28,27 @@ type Server struct {
 
 // BMCControlEndpoint represents BMC control API
 type BMCControlEndpoint struct {
-	Endpoint     string   `json:"endpoint"`
-	Type         string   `json:"type"` // "ipmi" or "redfish"
-	Username     string   `json:"username"`
-	Password     string   `json:"password"`
-	Capabilities []string `json:"capabilities"`
+	Endpoint     string        `json:"endpoint"`
+	Type         types.BMCType `json:"type"` // ipmi or redfish
+	Username     string        `json:"username"`
+	Password     string        `json:"password"`
+	Capabilities []string      `json:"capabilities"`
 }
 
 // SOLEndpoint represents Serial-over-LAN access
 type SOLEndpoint struct {
-	Type     string `json:"type"` // "ipmi" or "redfish_serial"
-	Endpoint string `json:"endpoint"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Type     types.SOLType `json:"type"` // ipmi or redfish_serial
+	Endpoint string        `json:"endpoint"`
+	Username string        `json:"username"`
+	Password string        `json:"password"`
 }
 
 // VNCEndpoint represents VNC/KVM access
 type VNCEndpoint struct {
-	Type     string `json:"type"`     // "bmc_native", "novnc_proxy", "external_kvm"
-	Endpoint string `json:"endpoint"` // Full connection URL (e.g., "ws://novnc:6080/websockify")
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Type     types.VNCType `json:"type"`     // native or websocket
+	Endpoint string        `json:"endpoint"` // Full connection URL (e.g., "ws://novnc:6080/websockify")
+	Username string        `json:"username"`
+	Password string        `json:"password"`
 }
 
 // Service handles BMC discovery in the local datacenter
@@ -117,7 +117,7 @@ func (s *Service) loadStaticServers() []*Server {
 		if host.ControlEndpoint != nil {
 			server.ControlEndpoint = &BMCControlEndpoint{
 				Endpoint:     host.ControlEndpoint.Endpoint,
-				Type:         host.ControlEndpoint.Type,
+				Type:         host.ControlEndpoint.InferType(), // Infer from endpoint if not specified
 				Username:     host.ControlEndpoint.Username,
 				Password:     host.ControlEndpoint.Password,
 				Capabilities: host.ControlEndpoint.Capabilities,
@@ -127,7 +127,7 @@ func (s *Service) loadStaticServers() []*Server {
 		// Convert SOL endpoint
 		if host.SOLEndpoint != nil {
 			server.SOLEndpoint = &SOLEndpoint{
-				Type:     host.SOLEndpoint.Type,
+				Type:     host.SOLEndpoint.InferType(), // Infer from endpoint if not specified
 				Endpoint: host.SOLEndpoint.Endpoint,
 				Username: host.SOLEndpoint.Username,
 				Password: host.SOLEndpoint.Password,
@@ -137,7 +137,7 @@ func (s *Service) loadStaticServers() []*Server {
 		// Convert VNC endpoint
 		if host.VNCEndpoint != nil {
 			server.VNCEndpoint = &VNCEndpoint{
-				Type:     host.VNCEndpoint.Type,
+				Type:     host.VNCEndpoint.InferType(), // Infer from endpoint scheme if not specified
 				Endpoint: host.VNCEndpoint.Endpoint,
 				Username: host.VNCEndpoint.Username,
 				Password: host.VNCEndpoint.Password,
