@@ -167,7 +167,7 @@ static:
     # ==========================================
     - id: "redfish-server-01"
       customer_id: "system"
-      features: ["power", "console", "vnc", "sensors"]
+      features: ["power", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "Redfish Emulator Server 01"
@@ -202,7 +202,7 @@ static:
 
     - id: "redfish-server-02"
       customer_id: "system"
-      features: ["power", "console", "vnc", "sensors"]
+      features: ["power", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "Redfish Emulator Server 02"
@@ -237,7 +237,7 @@ static:
 
     - id: "redfish-server-03"
       customer_id: "system"
-      features: ["power", "console", "vnc", "sensors"]
+      features: ["power", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "Redfish Emulator Server 03"
