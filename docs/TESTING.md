@@ -111,14 +111,9 @@ cd tests && E2E_TEST_CONFIG=configs/default.yaml go test ./e2e/suites/power -run
 
 ### Backend Selection
 
-By default, `make test-e2e` runs against the VirtualBMC backend. Advanced
-scenarios can opt-in to alternative backends using build tags:
+By default, `make test-e2e` runs against the containerized VirtualBMC backend.
 
-```go
-//go:build e2e && backend_synthetic
-
-// go test -tags "e2e backend_synthetic" ./tests/e2e/suites/auth
-```
+> NOTE: This will be replaced by containerized OpenBMC.
 
 ## Adding New Tests
 
@@ -133,8 +128,7 @@ scenarios can opt-in to alternative backends using build tags:
 1. Identify the appropriate tier based on scope and dependencies
 2. Create test in `tests/<tier>/suites/<domain>/`
 3. Use existing framework and fixtures where possible
-4. Add build tags for backend requirements
-5. Update documentation and CI configuration
+4. Update documentation and CI configuration
 
 ## Configuration
 
