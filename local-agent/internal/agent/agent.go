@@ -308,15 +308,19 @@ func (a *LocalAgent) discoverAndRegister(ctx context.Context) error {
 		}
 	}
 
-	// Only register if not already registered
+	// Always register to keep server information up-to-date
+	// This ensures database has latest endpoint information (SOL/VNC)
+	logMsg := "Re-registering with gateway to update server information"
 	if !a.registered {
-		log.Info().Msg("Agent not registered, attempting registration with gateway")
-		if err := a.registerWithGateway(ctx, servers); err != nil {
-			return fmt.Errorf("gateway registration failed: %w", err)
-		}
-		a.registered = true
-		log.Info().Msg("Successfully registered with gateway")
+		logMsg = "Agent not registered, attempting initial registration with gateway"
 	}
+	log.Info().Msg(logMsg)
+
+	if err := a.registerWithGateway(ctx, servers); err != nil {
+		return fmt.Errorf("gateway registration failed: %w", err)
+	}
+	a.registered = true
+	log.Debug().Msg("Successfully registered/updated with gateway")
 
 	return nil
 }

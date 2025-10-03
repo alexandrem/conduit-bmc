@@ -15,6 +15,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"core/types"
 )
 
 type BMCManagerServiceHandler struct {
@@ -211,9 +213,54 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		UpdatedAt: time.Now(),
 	}
 
+	// Populate SOL/Console endpoint if feature is present
+	log.Debug().
+		Str("server_id", req.Msg.ServerId).
+		Strs("features", req.Msg.Features).
+		Msg("Processing features for endpoint population")
+
+	for _, feature := range req.Msg.Features {
+		if feature == types.FeatureConsole.String() {
+			// Determine SOL type based on BMC type
+			solType := models.SOLTypeIPMI
+			if bmcType == models.BMCTypeRedfish {
+				solType = models.SOLTypeRedfishSerial
+			}
+			server.SOLEndpoint = &models.SOLEndpoint{
+				Type:     solType,
+				Endpoint: req.Msg.BmcEndpoint,
+				Username: "", // Will be filled later
+				Password: "", // Will be filled later
+			}
+			log.Debug().
+				Str("server_id", req.Msg.ServerId).
+				Str("sol_type", string(solType)).
+				Msg("Created SOL endpoint")
+			break
+		}
+	}
+
+	// Populate VNC endpoint if feature is present
+	for _, feature := range req.Msg.Features {
+		if feature == types.FeatureVNC.String() {
+			server.VNCEndpoint = &models.VNCEndpoint{
+				Type:     models.VNCTypeNative, // Default to native VNC
+				Endpoint: req.Msg.BmcEndpoint,
+				Username: "", // Will be filled later
+				Password: "", // Will be filled later
+			}
+			log.Debug().
+				Str("server_id", req.Msg.ServerId).
+				Msg("Created VNC endpoint")
+			break
+		}
+	}
+
 	log.Info().
 		Str("server_id", server.ID).
 		Str("bmc_endpoint", server.ControlEndpoint.Endpoint).
+		Bool("has_sol", server.SOLEndpoint != nil).
+		Bool("has_vnc", server.VNCEndpoint != nil).
 		Msg("Creating server record")
 	err := h.db.CreateServer(server)
 	if err != nil {
@@ -792,6 +839,49 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(endpoint *manager
 		Status:          endpoint.Status,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
+	}
+
+	// Populate SOL/Console endpoint if feature is present
+	log.Debug().
+		Str("server_id", serverID).
+		Strs("features", endpoint.Features).
+		Msg("Processing features for endpoint population (from gateway)")
+
+	for _, feature := range endpoint.Features {
+		if feature == types.FeatureConsole.String() {
+			// Determine SOL type based on BMC type
+			solType := models.SOLTypeIPMI
+			if bmcType == models.BMCTypeRedfish {
+				solType = models.SOLTypeRedfishSerial
+			}
+			server.SOLEndpoint = &models.SOLEndpoint{
+				Type:     solType,
+				Endpoint: endpoint.BmcEndpoint,
+				Username: endpoint.Username,
+				Password: "", // Will be filled later
+			}
+			log.Debug().
+				Str("server_id", serverID).
+				Str("sol_type", string(solType)).
+				Msg("Created SOL endpoint (from gateway)")
+			break
+		}
+	}
+
+	// Populate VNC endpoint if feature is present
+	for _, feature := range endpoint.Features {
+		if feature == types.FeatureVNC.String() {
+			server.VNCEndpoint = &models.VNCEndpoint{
+				Type:     models.VNCTypeNative, // Default to native VNC
+				Endpoint: endpoint.BmcEndpoint,
+				Username: endpoint.Username,
+				Password: "", // Will be filled later
+			}
+			log.Debug().
+				Str("server_id", serverID).
+				Msg("Created VNC endpoint (from gateway)")
+			break
+		}
 	}
 
 	if err := h.db.CreateServer(server); err != nil {

@@ -2,10 +2,12 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"manager/pkg/models"
 	_ "modernc.org/sqlite"
 )
@@ -60,6 +62,10 @@ func (db *DB) migrate() error {
 		capabilities TEXT,
 		features TEXT NOT NULL,
 		status TEXT NOT NULL DEFAULT 'active',
+		sol_endpoint TEXT,
+		vnc_endpoint TEXT,
+		control_endpoint TEXT,
+		metadata TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (customer_id) REFERENCES customers (id),
@@ -177,11 +183,12 @@ type legacyServerRow struct {
 
 func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 	var row legacyServerRow
+	var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON sql.NullString
 
 	err := db.conn.QueryRow(
-		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, created_at, updated_at FROM servers WHERE id = ?",
+		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at FROM servers WHERE id = ?",
 		serverID,
-	).Scan(&row.ID, &row.CustomerID, &row.DatacenterID, &row.BMCType, &row.BMCEndpoint, &row.Username, &row.Capabilities, &row.Features, &row.Status, &row.CreatedAt, &row.UpdatedAt)
+	).Scan(&row.ID, &row.CustomerID, &row.DatacenterID, &row.BMCType, &row.BMCEndpoint, &row.Username, &row.Capabilities, &row.Features, &row.Status, &solEndpointJSON, &vncEndpointJSON, &controlEndpointJSON, &metadataJSON, &row.CreatedAt, &row.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -202,8 +209,33 @@ func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 		Metadata:     make(map[string]string),
 	}
 
-	// Convert legacy BMC fields to control endpoint
-	if row.BMCEndpoint != "" {
+	// Deserialize SOL endpoint if present
+	if solEndpointJSON.Valid && solEndpointJSON.String != "" {
+		server.SOLEndpoint = &models.SOLEndpoint{}
+		if err := json.Unmarshal([]byte(solEndpointJSON.String), server.SOLEndpoint); err != nil {
+			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal SOL endpoint")
+		}
+	}
+
+	// Deserialize VNC endpoint if present
+	if vncEndpointJSON.Valid && vncEndpointJSON.String != "" {
+		server.VNCEndpoint = &models.VNCEndpoint{}
+		if err := json.Unmarshal([]byte(vncEndpointJSON.String), server.VNCEndpoint); err != nil {
+			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal VNC endpoint")
+		}
+	}
+
+	// Deserialize control endpoint if present (prefer JSON over legacy fields)
+	if controlEndpointJSON.Valid && controlEndpointJSON.String != "" {
+		server.ControlEndpoint = &models.BMCControlEndpoint{}
+		if err := json.Unmarshal([]byte(controlEndpointJSON.String), server.ControlEndpoint); err != nil {
+			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal control endpoint")
+			server.ControlEndpoint = nil // Fall back to legacy parsing below
+		}
+	}
+
+	// Convert legacy BMC fields to control endpoint (fallback if JSON not available)
+	if server.ControlEndpoint == nil && row.BMCEndpoint != "" {
 		bmcType := models.BMCTypeIPMI // Default
 		if row.BMCType == "redfish" {
 			bmcType = models.BMCTypeRedfish
@@ -221,6 +253,13 @@ func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 			Username:     row.Username,
 			Password:     "", // Password not stored per security requirement
 			Capabilities: capabilities,
+		}
+	}
+
+	// Deserialize metadata if present
+	if metadataJSON.Valid && metadataJSON.String != "" {
+		if err := json.Unmarshal([]byte(metadataJSON.String), &server.Metadata); err != nil {
+			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal metadata")
 		}
 	}
 
@@ -277,7 +316,7 @@ func (db *DB) UpdateProxySessionStatus(sessionID, status string) error {
 
 func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 	rows, err := db.conn.Query(
-		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, created_at, updated_at FROM servers WHERE customer_id = ?",
+		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at FROM servers WHERE customer_id = ?",
 		customerID,
 	)
 	if err != nil {
@@ -288,8 +327,9 @@ func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 	var servers []models.Server
 	for rows.Next() {
 		var row legacyServerRow
+		var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON sql.NullString
 
-		err := rows.Scan(&row.ID, &row.CustomerID, &row.DatacenterID, &row.BMCType, &row.BMCEndpoint, &row.Username, &row.Capabilities, &row.Features, &row.Status, &row.CreatedAt, &row.UpdatedAt)
+		err := rows.Scan(&row.ID, &row.CustomerID, &row.DatacenterID, &row.BMCType, &row.BMCEndpoint, &row.Username, &row.Capabilities, &row.Features, &row.Status, &solEndpointJSON, &vncEndpointJSON, &controlEndpointJSON, &metadataJSON, &row.CreatedAt, &row.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -306,8 +346,33 @@ func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 			Metadata:     make(map[string]string),
 		}
 
-		// Convert legacy BMC fields to control endpoint
-		if row.BMCEndpoint != "" {
+		// Deserialize SOL endpoint if present
+		if solEndpointJSON.Valid && solEndpointJSON.String != "" {
+			server.SOLEndpoint = &models.SOLEndpoint{}
+			if err := json.Unmarshal([]byte(solEndpointJSON.String), server.SOLEndpoint); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal SOL endpoint")
+			}
+		}
+
+		// Deserialize VNC endpoint if present
+		if vncEndpointJSON.Valid && vncEndpointJSON.String != "" {
+			server.VNCEndpoint = &models.VNCEndpoint{}
+			if err := json.Unmarshal([]byte(vncEndpointJSON.String), server.VNCEndpoint); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal VNC endpoint")
+			}
+		}
+
+		// Deserialize control endpoint if present (prefer JSON over legacy fields)
+		if controlEndpointJSON.Valid && controlEndpointJSON.String != "" {
+			server.ControlEndpoint = &models.BMCControlEndpoint{}
+			if err := json.Unmarshal([]byte(controlEndpointJSON.String), server.ControlEndpoint); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal control endpoint")
+				server.ControlEndpoint = nil // Fall back to legacy parsing below
+			}
+		}
+
+		// Convert legacy BMC fields to control endpoint (fallback if JSON not available)
+		if server.ControlEndpoint == nil && row.BMCEndpoint != "" {
 			bmcType := models.BMCTypeIPMI // Default
 			if row.BMCType == "redfish" {
 				bmcType = models.BMCTypeRedfish
@@ -318,6 +383,13 @@ func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 				Type:     bmcType,
 				Username: "", // Will be filled by agent registration
 				Password: "", // Will be filled by agent registration
+			}
+		}
+
+		// Deserialize metadata if present
+		if metadataJSON.Valid && metadataJSON.String != "" {
+			if err := json.Unmarshal([]byte(metadataJSON.String), &server.Metadata); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal metadata")
 			}
 		}
 
@@ -657,10 +729,42 @@ func (db *DB) CreateServer(server *models.Server) error {
 		}
 	}
 
+	// Serialize endpoints and metadata to JSON
+	var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON []byte
+	var err error
+
+	if server.SOLEndpoint != nil {
+		solEndpointJSON, err = json.Marshal(server.SOLEndpoint)
+		if err != nil {
+			return fmt.Errorf("failed to marshal SOL endpoint: %w", err)
+		}
+	}
+
+	if server.VNCEndpoint != nil {
+		vncEndpointJSON, err = json.Marshal(server.VNCEndpoint)
+		if err != nil {
+			return fmt.Errorf("failed to marshal VNC endpoint: %w", err)
+		}
+	}
+
+	if server.ControlEndpoint != nil {
+		controlEndpointJSON, err = json.Marshal(server.ControlEndpoint)
+		if err != nil {
+			return fmt.Errorf("failed to marshal control endpoint: %w", err)
+		}
+	}
+
+	if server.Metadata != nil && len(server.Metadata) > 0 {
+		metadataJSON, err = json.Marshal(server.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+	}
+
 	// Use INSERT ... ON CONFLICT for better upsert control
-	_, err := db.conn.Exec(`
-		INSERT INTO servers (id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	_, err = db.conn.Exec(`
+		INSERT INTO servers (id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			customer_id = excluded.customer_id,
 			datacenter_id = excluded.datacenter_id,
@@ -670,8 +774,12 @@ func (db *DB) CreateServer(server *models.Server) error {
 			capabilities = excluded.capabilities,
 			features = excluded.features,
 			status = excluded.status,
+			sol_endpoint = excluded.sol_endpoint,
+			vnc_endpoint = excluded.vnc_endpoint,
+			control_endpoint = excluded.control_endpoint,
+			metadata = excluded.metadata,
 			updated_at = excluded.updated_at
-	`, server.ID, server.CustomerID, server.DatacenterID, bmcType, bmcEndpoint, username, capabilities, featuresStr, server.Status, server.CreatedAt, server.UpdatedAt)
+	`, server.ID, server.CustomerID, server.DatacenterID, bmcType, bmcEndpoint, username, capabilities, featuresStr, server.Status, solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON, server.CreatedAt, server.UpdatedAt)
 
 	return err
 }
@@ -828,7 +936,7 @@ func (db *DB) GetServersForCustomer(customerID string) ([]models.Server, error) 
 // GetAllServers returns all servers in the system (for temporary use)
 func (db *DB) GetAllServers() ([]models.Server, error) {
 	rows, err := db.conn.Query(`
-		SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, features, status, created_at, updated_at
+		SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at
 		FROM servers
 	`)
 	if err != nil {
@@ -839,6 +947,8 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 	var servers []models.Server
 	for rows.Next() {
 		var row legacyServerRow
+		var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON sql.NullString
+
 		err := rows.Scan(
 			&row.ID,
 			&row.CustomerID,
@@ -847,6 +957,10 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 			&row.BMCEndpoint,
 			&row.Features,
 			&row.Status,
+			&solEndpointJSON,
+			&vncEndpointJSON,
+			&controlEndpointJSON,
+			&metadataJSON,
 			&row.CreatedAt,
 			&row.UpdatedAt,
 		)
@@ -866,8 +980,33 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 			Metadata:     make(map[string]string),
 		}
 
-		// Convert legacy BMC fields to control endpoint
-		if row.BMCEndpoint != "" {
+		// Deserialize SOL endpoint if present
+		if solEndpointJSON.Valid && solEndpointJSON.String != "" {
+			server.SOLEndpoint = &models.SOLEndpoint{}
+			if err := json.Unmarshal([]byte(solEndpointJSON.String), server.SOLEndpoint); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal SOL endpoint")
+			}
+		}
+
+		// Deserialize VNC endpoint if present
+		if vncEndpointJSON.Valid && vncEndpointJSON.String != "" {
+			server.VNCEndpoint = &models.VNCEndpoint{}
+			if err := json.Unmarshal([]byte(vncEndpointJSON.String), server.VNCEndpoint); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal VNC endpoint")
+			}
+		}
+
+		// Deserialize control endpoint if present (prefer JSON over legacy fields)
+		if controlEndpointJSON.Valid && controlEndpointJSON.String != "" {
+			server.ControlEndpoint = &models.BMCControlEndpoint{}
+			if err := json.Unmarshal([]byte(controlEndpointJSON.String), server.ControlEndpoint); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal control endpoint")
+				server.ControlEndpoint = nil // Fall back to legacy parsing below
+			}
+		}
+
+		// Convert legacy BMC fields to control endpoint (fallback if JSON not available)
+		if server.ControlEndpoint == nil && row.BMCEndpoint != "" {
 			bmcType := models.BMCTypeIPMI // Default
 			if row.BMCType == "redfish" {
 				bmcType = models.BMCTypeRedfish
@@ -878,6 +1017,13 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 				Type:     bmcType,
 				Username: "", // Will be filled by agent registration
 				Password: "", // Will be filled by agent registration
+			}
+		}
+
+		// Deserialize metadata if present
+		if metadataJSON.Valid && metadataJSON.String != "" {
+			if err := json.Unmarshal([]byte(metadataJSON.String), &server.Metadata); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal metadata")
 			}
 		}
 
