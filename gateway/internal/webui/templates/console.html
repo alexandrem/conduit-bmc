@@ -20,6 +20,10 @@
                     class="px-3 py-1 text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-600 rounded-md transition-all hover:-translate-y-px">
                 Fullscreen
             </button>
+            <button onclick="cancelAutoReconnect()" id="cancel-reconnect-btn"
+                    class="px-3 py-1 text-xs font-medium bg-gradient-to-r from-orange-500 to-red-500 rounded-md transition-all hover:-translate-y-px hidden">
+                Cancel Auto-Reconnect
+            </button>
             <button onclick="reconnect()"
                     class="px-3 py-1 text-xs font-medium bg-gradient-to-r from-red-500 to-orange-500 rounded-md transition-all hover:-translate-y-px">
                 Reconnect
@@ -199,6 +203,49 @@ let messageCounter = 0;
 let connectionStart = null;
 let powerOperationsInProgress = new Set();
 let authToken = null;
+
+// Initialize reconnection manager
+let reconnectManager = new ReconnectionManager({
+    onReconnect: () => {
+        initializeWebSocket();
+    },
+    onStateChange: (state) => {
+        handleReconnectionStateChange(state);
+    },
+    maxAttempts: 10,
+    initialDelay: 1000,
+    maxDelay: 30000
+});
+
+function handleReconnectionStateChange(state) {
+    const cancelBtn = document.getElementById('cancel-reconnect-btn');
+
+    switch(state.state) {
+        case 'reconnecting':
+            const delaySeconds = Math.ceil(state.delay / 1000);
+            logToTerminal(`Auto-reconnecting in ${delaySeconds}s (attempt ${state.attempts}/${state.maxAttempts})`, 'info');
+            updateStatus(`Reconnecting (${state.attempts}/${state.maxAttempts})`, 'connecting');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
+            break;
+
+        case 'failed':
+            logToTerminal(state.reason || 'Max reconnection attempts reached. Click "Reconnect" to try again.', 'error');
+            updateStatus('Disconnected', 'error');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+            break;
+
+        case 'cancelled':
+            logToTerminal('Auto-reconnection cancelled. Click "Reconnect" to reconnect manually.', 'warning');
+            updateStatus('Disconnected', 'error');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+            break;
+
+        case 'connected':
+            updateStatus('Connected', 'connected');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+            break;
+    }
+}
 
 // Initialize XTerm terminal
 function initializeTerminal() {
@@ -399,8 +446,10 @@ function initializeWebSocket() {
 
     ws.onopen = function(event) {
         logToTerminal('WebSocket connection established', 'success');
-        updateStatus('Connected', 'connected');
         connectionStart = new Date();
+
+        // Notify reconnection manager of successful connection
+        reconnectManager.onConnected();
     };
 
     ws.onmessage = function(event) {
@@ -415,8 +464,11 @@ function initializeWebSocket() {
     };
 
     ws.onclose = function(event) {
-        logToTerminal('WebSocket connection closed: ' + event.code, 'warning');
-        updateStatus('Disconnected', 'error');
+        const reason = event.reason || (event.wasClean ? 'Connection closed' : 'Connection lost');
+        logToTerminal(`WebSocket connection closed: ${reason} (code: ${event.code})`, 'warning');
+
+        // Notify reconnection manager of disconnection
+        reconnectManager.onDisconnected(reason);
     };
 
     ws.onerror = function(error) {
@@ -546,17 +598,34 @@ function toggleFullscreen() {
     }
 }
 
+function cancelAutoReconnect() {
+    console.log('Auto-reconnection cancelled by user');
+    reconnectManager.cancel();
+}
+
 function reconnect() {
+    console.log('Manual reconnection triggered');
+
+    // Close existing connection if any
     if (ws && ws.readyState !== WebSocket.CLOSED) {
         ws.close();
     }
+
+    // Clear terminal
     if (term) {
         term.clear();
     }
+
+    // Reset counters
     messageCounter = 0;
     connectionStart = null;
+
+    // Reset and restart reconnection process
+    reconnectManager.reset();
+
     updateStatus('Connecting...', '');
     logToTerminal('Reconnecting to gateway...', 'info');
+
     setTimeout(() => {
         initializeTerminal();
         initializeWebSocket();

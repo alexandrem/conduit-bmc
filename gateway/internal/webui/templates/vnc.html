@@ -214,6 +214,58 @@ let powerOperationsInProgress = new Set();
 let viewOnly = false;
 let scaling = 'auto';
 
+// Initialize reconnection manager
+let reconnectManager = new ReconnectionManager({
+    onReconnect: () => {
+        initializeVNC();
+    },
+    onStateChange: (state) => {
+        handleReconnectionStateChange(state);
+    },
+    maxAttempts: 10,
+    initialDelay: 1000,
+    maxDelay: 30000
+});
+
+function handleReconnectionStateChange(state) {
+    const loading = document.getElementById('noVNC_loading');
+
+    switch(state.state) {
+        case 'reconnecting':
+            const delaySeconds = Math.ceil(state.delay / 1000);
+            updateVNCStatus(`Reconnecting in ${delaySeconds}s (${state.attempts}/${state.maxAttempts})`, 'connecting');
+            loading.style.display = 'flex';
+            loading.innerHTML = `
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-3"></div>
+                    <div class="text-sm text-white/80">${state.reason || 'Connection lost'}</div>
+                    <div class="text-sm text-white/60 mt-2">Reconnecting in ${delaySeconds}s (attempt ${state.attempts}/${state.maxAttempts})</div>
+                    <button onclick="reconnectManager.cancel()" class="mt-3 px-4 py-2 bg-red-600 rounded-md text-sm hover:bg-red-700 transition-colors">Cancel</button>
+                    <button onclick="reconnectManager.reconnectNow()" class="mt-3 ml-2 px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-700 transition-colors">Reconnect Now</button>
+                </div>
+            `;
+            break;
+
+        case 'failed':
+        case 'cancelled':
+            const message = state.reason || (state.state === 'cancelled' ? 'Reconnection cancelled' : 'Connection failed');
+            updateVNCStatus(message, 'error');
+            loading.style.display = 'flex';
+            loading.innerHTML = `
+                <div class="text-center">
+                    <div class="text-xl mb-3">❌</div>
+                    <div class="text-sm text-white/80">${message}</div>
+                    <button onclick="reconnectVNC()" class="mt-3 px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-700 transition-colors">Reconnect</button>
+                </div>
+            `;
+            break;
+
+        case 'connected':
+            loading.style.display = 'none';
+            break;
+    }
+}
+
 function initializeVNC() {
     const container = document.getElementById('noVNC_screen');
     const loading = document.getElementById('noVNC_loading');
@@ -281,9 +333,11 @@ function connectedToServer(e) {
     console.log('Canvas parent:', rfb._canvas ? rfb._canvas.parentElement : 'undefined');
     console.log('Scale viewport:', rfb.scaleViewport);
 
+    // Notify reconnection manager of successful connection
+    reconnectManager.onConnected();
+
     connectionStart = new Date();
     updateVNCStatus('Connected', 'connected');
-    document.getElementById('noVNC_loading').style.display = 'none';
 
     // Update display information
     if (rfb && rfb._canvas) {
@@ -300,15 +354,11 @@ function connectedToServer(e) {
 
 function disconnectedFromServer(e) {
     console.log('Disconnected from VNC server:', e.detail.clean ? 'Clean' : 'Unclean');
-    updateVNCStatus(e.detail.clean ? 'Disconnected' : 'Connection Lost', 'error');
-    document.getElementById('noVNC_loading').style.display = 'flex';
-    document.getElementById('noVNC_loading').innerHTML = `
-        <div class="text-center">
-            <div class="text-xl mb-3">❌</div>
-            <div class="text-sm text-white/80">VNC Connection ${e.detail.clean ? 'Closed' : 'Lost'}</div>
-            <button onclick="reconnectVNC()" class="mt-3 px-4 py-2 bg-blue-600 rounded-md text-sm hover:bg-blue-700 transition-colors">Reconnect</button>
-        </div>
-    `;
+    const reason = e.detail.clean ? 'Connection closed' : 'Connection lost';
+    updateVNCStatus(reason, 'error');
+
+    // Notify reconnection manager of disconnection
+    reconnectManager.onDisconnected(reason);
 }
 
 function credentialsAreRequired(e) {
@@ -360,17 +410,26 @@ function updateVNCStatus(text, type) {
 }
 
 function reconnectVNC() {
+    console.log('Manual VNC reconnection triggered');
+
+    // Disconnect existing connection if any
     if (rfb) {
         rfb.disconnect();
     }
+
+    // Reset and restart reconnection process
+    reconnectManager.reset();
+
     updateVNCStatus('Reconnecting...', 'connecting');
-    document.getElementById('noVNC_loading').style.display = 'flex';
-    document.getElementById('noVNC_loading').innerHTML = `
+    const loading = document.getElementById('noVNC_loading');
+    loading.style.display = 'flex';
+    loading.innerHTML = `
         <div class="text-center">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-3"></div>
             <div class="text-sm text-white/80">Reconnecting to VNC server...</div>
         </div>
     `;
+
     setTimeout(initializeVNC, 2000);
 }
 

@@ -70,6 +70,165 @@
             }
         }
 
+        /**
+         * ReconnectionManager - Manages automatic reconnection with exponential backoff
+         *
+         * Usage:
+         *   const reconnectManager = new ReconnectionManager({
+         *     onReconnect: () => { initializeConnection(); },
+         *     onStateChange: (state) => { updateUI(state); },
+         *     maxAttempts: 10,
+         *     initialDelay: 1000,
+         *     maxDelay: 30000
+         *   });
+         *
+         *   // On connection success:
+         *   reconnectManager.onConnected();
+         *
+         *   // On connection failure:
+         *   reconnectManager.onDisconnected();
+         *
+         *   // To cancel auto-reconnection:
+         *   reconnectManager.cancel();
+         *
+         *   // To manually trigger reconnection:
+         *   reconnectManager.reconnectNow();
+         */
+        class ReconnectionManager {
+            constructor(options = {}) {
+                this.onReconnect = options.onReconnect || (() => {});
+                this.onStateChange = options.onStateChange || (() => {});
+                this.maxAttempts = options.maxAttempts || 10;
+                this.initialDelay = options.initialDelay || 1000;
+                this.maxDelay = options.maxDelay || 30000;
+
+                this.enabled = true;
+                this.attempts = 0;
+                this.timeout = null;
+                this.state = 'idle'; // idle, reconnecting, connected
+            }
+
+            /**
+             * Calculate delay with exponential backoff
+             */
+            _calculateDelay() {
+                return Math.min(
+                    this.initialDelay * Math.pow(2, this.attempts),
+                    this.maxDelay
+                );
+            }
+
+            /**
+             * Update internal state and notify listeners
+             */
+            _setState(newState, details = {}) {
+                this.state = newState;
+                this.onStateChange({
+                    state: newState,
+                    attempts: this.attempts,
+                    maxAttempts: this.maxAttempts,
+                    enabled: this.enabled,
+                    ...details
+                });
+            }
+
+            /**
+             * Called when connection is successfully established
+             */
+            onConnected() {
+                console.log('ReconnectionManager: Connection established');
+                this.attempts = 0;
+                this.enabled = true;
+                if (this.timeout) {
+                    clearTimeout(this.timeout);
+                    this.timeout = null;
+                }
+                this._setState('connected');
+            }
+
+            /**
+             * Called when connection is lost
+             */
+            onDisconnected(reason = 'Connection lost') {
+                console.log('ReconnectionManager: Connection lost -', reason);
+
+                if (!this.enabled || this.attempts >= this.maxAttempts) {
+                    const message = this.attempts >= this.maxAttempts
+                        ? 'Max reconnection attempts reached'
+                        : 'Auto-reconnection disabled';
+                    console.log('ReconnectionManager:', message);
+                    this._setState('failed', { reason: message });
+                    return;
+                }
+
+                const delay = this._calculateDelay();
+                this.attempts++;
+
+                console.log(`ReconnectionManager: Scheduling reconnection ${this.attempts}/${this.maxAttempts} in ${delay}ms`);
+
+                this._setState('reconnecting', {
+                    delay: delay,
+                    reason: reason
+                });
+
+                this.timeout = setTimeout(() => {
+                    console.log('ReconnectionManager: Executing reconnection attempt', this.attempts);
+                    this.onReconnect();
+                }, delay);
+            }
+
+            /**
+             * Cancel automatic reconnection
+             */
+            cancel() {
+                console.log('ReconnectionManager: Auto-reconnection cancelled');
+                this.enabled = false;
+                if (this.timeout) {
+                    clearTimeout(this.timeout);
+                    this.timeout = null;
+                }
+                this._setState('cancelled');
+            }
+
+            /**
+             * Manually trigger immediate reconnection
+             */
+            reconnectNow() {
+                console.log('ReconnectionManager: Manual reconnection triggered');
+                if (this.timeout) {
+                    clearTimeout(this.timeout);
+                    this.timeout = null;
+                }
+                this.onReconnect();
+            }
+
+            /**
+             * Reset and restart reconnection process
+             */
+            reset() {
+                console.log('ReconnectionManager: Reset');
+                this.enabled = true;
+                this.attempts = 0;
+                if (this.timeout) {
+                    clearTimeout(this.timeout);
+                    this.timeout = null;
+                }
+                this._setState('idle');
+            }
+
+            /**
+             * Get current reconnection state
+             */
+            getState() {
+                return {
+                    state: this.state,
+                    attempts: this.attempts,
+                    maxAttempts: this.maxAttempts,
+                    enabled: this.enabled
+                };
+            }
+        }
+
         {{block "scripts" .}}{{end}}
     </script>
 </body>
