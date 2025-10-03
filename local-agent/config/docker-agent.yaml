@@ -181,7 +181,6 @@ static:
 
       # Redfish Serial Console
       sol_endpoint:
-        type: "redfish_serial"
         endpoint: "http://dev-redfish-01:8000"
         username: ""
         password: ""
@@ -215,7 +214,6 @@ static:
 
       # Redfish Serial Console
       sol_endpoint:
-        type: "redfish_serial"
         endpoint: "http://dev-redfish-02:8000"
         username: ""
         password: ""
