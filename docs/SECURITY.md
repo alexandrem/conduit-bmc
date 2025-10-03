@@ -107,7 +107,7 @@ bmc server boot-device
 bmc server logs --system
 ```
 
-**For providers**
+**For providers (not yet implemented)**
 ```console
 bmc admin firmware-update
 bmc admin network-config
