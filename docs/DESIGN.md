@@ -7,8 +7,8 @@ Management Controller) access solution** for a hosting provider. The system
 allows customers to access their server's management interface (IPMI or Redfish)
 without exposing raw BMC ports publicly.
 
-It combines a **local agent per datacenter**, a **central gateway**, and a
-**customer CLI tool**.
+It combines a **local agent per datacenter**, **regional gateways**, a
+central **manager**, and a **command-line tool**.
 
 ### Control Plane vs Data Plane Separation
 
