@@ -50,24 +50,26 @@
 ## Flows
 
 1. Console / Command Flow
-   - CLI clients connect to Regional Gateway via gRPC for management operations
-   - For web console access, Gateway serves HTML/WebSocket interfaces (VNC viewer, serial console)
-   - Gateway proxies requests to the correct Local Agent in appropriate datacenter
+   - CLI clients authenticate with Manager to obtain tokens
+   - Manager provides Gateway endpoint information for the appropriate datacenter based on requested server operation
+   - CLI coordinates with Gateway for server operations and web UI access
+   - For web console access, CLI launches browser to Gateway's web interface
+   - Gateway validates authentication tokens from Manager
+   - Gateway routes requests to the correct Local Agent based on datacenter in server ID
+   - Agents maintain persistent outbound connections to Gateway for NAT/firewall traversal
    - Agent communicates with BMC using:
      - **Power operations**: IPMI/Redfish REST APIs
-     - **Serial console**: IPMI SOL or Redfish serial console (WebSocket)
+     - **Serial console**: IPMI SOL or Redfish serial console streaming
      - **Graphical console**: Native VNC TCP (QEMU, VirtualBMC) or WebSocket VNC (Redfish GraphicalConsole, OpenBMC, Dell, Supermicro, Lenovo)
        - Note: This is BMC-integrated remote console, not external KVM-over-IP hardware
    - VNC transport auto-detected from endpoint URL scheme
    - Multiplexed heartbeat and control messages keep sessions alive and monitored
-2. Telemetry / Monitoring Flow
-   - Local Agents periodically collect BMC metrics (temperatures, fan speeds, power status, event logs).
-   - Metrics are sent to Regional Gateway → BMC Manager or SHMP collector.
-   - Central platform aggregates across all regions for dashboards, alerts, and predictive failure detection.
-3. Authentication & Authorization
-   - BMC Manager issues delegated tokens for client access.
-   - Tokens are validated at Regional Gateway before allowing any proxy or telemetry requests.
-   - Refresh flow ensures long-lived sessions remain active safely.
+2. Authentication & Authorization
+   - Manager handles user authentication and issues JWT tokens
+   - Manager enforces RBAC and server ownership verification
+   - Gateway validates authentication tokens from Manager before session setup
+   - Manager maps customer server IDs to actual BMC endpoints
+   - Refresh flow ensures long-lived sessions remain active safely
 
 ## Topology
 
