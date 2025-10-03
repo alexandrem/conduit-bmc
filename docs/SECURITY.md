@@ -8,11 +8,11 @@ This system uses an **abstraction layer** between customers and BMC hardware rat
 
 **Direct BMC Access (Avoided):**
 ```
-Customer → VPN/Proxy → BMC (IPMI/Redfish)
-                        ↓
-            Full protocol exposure
-            Vendor-specific vulnerabilities
-            All operations available
+Customer → VPN/NAT → BMC (IPMI/Redfish)
+                           ↓
+                Full protocol exposure
+                Vendor-specific vulnerabilities
+                All operations available
 ```
 
 **Abstraction Layer (Our Approach):**
