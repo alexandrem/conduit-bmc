@@ -85,7 +85,7 @@ func TestRegisterServer_WithEmailCustomerID(t *testing.T) {
 		ServerId:          "server-01",
 		DatacenterId:      "dc-test-01",
 		RegionalGatewayId: "test-gateway-1",
-		BmcType:           managerv1.BMCType_BMC_TYPE_REDFISH,
+		BmcType:           managerv1.BMCType_BMC_REDFISH,
 		BmcEndpoint:       "http://localhost:9001",
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
@@ -380,7 +380,7 @@ func TestEmailBasedCustomerID_EndToEndFlow(t *testing.T) {
 		ServerId:          "test-server-01",
 		DatacenterId:      "dc-test-01",
 		RegionalGatewayId: "test-gateway-1",
-		BmcType:           managerv1.BMCType_BMC_TYPE_REDFISH,
+		BmcType:           managerv1.BMCType_BMC_REDFISH,
 		BmcEndpoint:       "http://localhost:9001",
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,

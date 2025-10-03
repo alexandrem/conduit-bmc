@@ -343,11 +343,11 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 			var bmcType gatewayv1.BMCType
 			switch server.ControlEndpoint.Type {
 			case "ipmi":
-				bmcType = gatewayv1.BMCType_BMC_TYPE_IPMI
+				bmcType = gatewayv1.BMCType_BMC_IPMI
 			case "redfish":
-				bmcType = gatewayv1.BMCType_BMC_TYPE_REDFISH
+				bmcType = gatewayv1.BMCType_BMC_REDFISH
 			default:
-				bmcType = gatewayv1.BMCType_BMC_TYPE_UNSPECIFIED
+				bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
 			}
 
 			bmcEndpoint.ControlEndpoint = &gatewayv1.BMCControlEndpoint{
@@ -368,11 +368,11 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 			var solType gatewayv1.SOLType
 			switch server.SOLEndpoint.Type {
 			case types.SOLTypeIPMI:
-				solType = gatewayv1.SOLType_SOL_TYPE_IPMI
+				solType = gatewayv1.SOLType_SOL_IPMI
 			case types.SOLTypeRedfishSerial:
-				solType = gatewayv1.SOLType_SOL_TYPE_REDFISH_SERIAL
+				solType = gatewayv1.SOLType_SOL_REDFISH_SERIAL
 			default:
-				solType = gatewayv1.SOLType_SOL_TYPE_UNSPECIFIED
+				solType = gatewayv1.SOLType_SOL_UNSPECIFIED
 			}
 
 			bmcEndpoint.SolEndpoint = &gatewayv1.SOLEndpoint{
@@ -392,11 +392,11 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 			var vncType gatewayv1.VNCType
 			switch server.VNCEndpoint.Type {
 			case types.VNCTypeNative:
-				vncType = gatewayv1.VNCType_VNC_TYPE_NATIVE
+				vncType = gatewayv1.VNCType_VNC_NATIVE
 			case types.VNCTypeWebSocket:
-				vncType = gatewayv1.VNCType_VNC_TYPE_WEBSOCKET
+				vncType = gatewayv1.VNCType_VNC_WEBSOCKET
 			default:
-				vncType = gatewayv1.VNCType_VNC_TYPE_UNSPECIFIED
+				vncType = gatewayv1.VNCType_VNC_UNSPECIFIED
 			}
 
 			bmcEndpoint.VncEndpoint = &gatewayv1.VNCEndpoint{
@@ -456,11 +456,11 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 			var bmcType gatewayv1.BMCType
 			switch server.ControlEndpoint.Type {
 			case "ipmi":
-				bmcType = gatewayv1.BMCType_BMC_TYPE_IPMI
+				bmcType = gatewayv1.BMCType_BMC_IPMI
 			case "redfish":
-				bmcType = gatewayv1.BMCType_BMC_TYPE_REDFISH
+				bmcType = gatewayv1.BMCType_BMC_REDFISH
 			default:
-				bmcType = gatewayv1.BMCType_BMC_TYPE_UNSPECIFIED
+				bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
 			}
 
 			bmcEndpoint.ControlEndpoint = &gatewayv1.BMCControlEndpoint{
@@ -477,11 +477,11 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 			var solType gatewayv1.SOLType
 			switch server.SOLEndpoint.Type {
 			case types.SOLTypeIPMI:
-				solType = gatewayv1.SOLType_SOL_TYPE_IPMI
+				solType = gatewayv1.SOLType_SOL_IPMI
 			case types.SOLTypeRedfishSerial:
-				solType = gatewayv1.SOLType_SOL_TYPE_REDFISH_SERIAL
+				solType = gatewayv1.SOLType_SOL_REDFISH_SERIAL
 			default:
-				solType = gatewayv1.SOLType_SOL_TYPE_UNSPECIFIED
+				solType = gatewayv1.SOLType_SOL_UNSPECIFIED
 			}
 
 			bmcEndpoint.SolEndpoint = &gatewayv1.SOLEndpoint{
@@ -497,11 +497,11 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 			var vncType gatewayv1.VNCType
 			switch server.VNCEndpoint.Type {
 			case types.VNCTypeNative:
-				vncType = gatewayv1.VNCType_VNC_TYPE_NATIVE
+				vncType = gatewayv1.VNCType_VNC_NATIVE
 			case types.VNCTypeWebSocket:
-				vncType = gatewayv1.VNCType_VNC_TYPE_WEBSOCKET
+				vncType = gatewayv1.VNCType_VNC_WEBSOCKET
 			default:
-				vncType = gatewayv1.VNCType_VNC_TYPE_UNSPECIFIED
+				vncType = gatewayv1.VNCType_VNC_UNSPECIFIED
 			}
 
 			bmcEndpoint.VncEndpoint = &gatewayv1.VNCEndpoint{

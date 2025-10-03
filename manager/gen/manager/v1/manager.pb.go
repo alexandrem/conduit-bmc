@@ -26,22 +26,22 @@ const (
 type BMCType int32
 
 const (
-	BMCType_BMC_TYPE_UNSPECIFIED BMCType = 0 // Unknown or not specified BMC type
-	BMCType_BMC_TYPE_IPMI        BMCType = 1 // Traditional IPMI interface (typically port 623/UDP)
-	BMCType_BMC_TYPE_REDFISH     BMCType = 2 // Modern Redfish REST API interface (typically HTTPS/443)
+	BMCType_BMC_UNSPECIFIED BMCType = 0 // Unknown or not specified BMC type
+	BMCType_BMC_IPMI        BMCType = 1 // Traditional IPMI interface (typically port 623/UDP)
+	BMCType_BMC_REDFISH     BMCType = 2 // Modern Redfish REST API interface (typically HTTPS/443)
 )
 
 // Enum value maps for BMCType.
 var (
 	BMCType_name = map[int32]string{
-		0: "BMC_TYPE_UNSPECIFIED",
-		1: "BMC_TYPE_IPMI",
-		2: "BMC_TYPE_REDFISH",
+		0: "BMC_UNSPECIFIED",
+		1: "BMC_IPMI",
+		2: "BMC_REDFISH",
 	}
 	BMCType_value = map[string]int32{
-		"BMC_TYPE_UNSPECIFIED": 0,
-		"BMC_TYPE_IPMI":        1,
-		"BMC_TYPE_REDFISH":     2,
+		"BMC_UNSPECIFIED": 0,
+		"BMC_IPMI":        1,
+		"BMC_REDFISH":     2,
 	}
 )
 
@@ -75,22 +75,22 @@ func (BMCType) EnumDescriptor() ([]byte, []int) {
 type SOLType int32
 
 const (
-	SOLType_SOL_TYPE_UNSPECIFIED    SOLType = 0
-	SOLType_SOL_TYPE_IPMI           SOLType = 1 // IPMI Serial-over-LAN
-	SOLType_SOL_TYPE_REDFISH_SERIAL SOLType = 2 // Redfish serial console
+	SOLType_SOL_UNSPECIFIED    SOLType = 0
+	SOLType_SOL_IPMI           SOLType = 1 // IPMI Serial-over-LAN
+	SOLType_SOL_REDFISH_SERIAL SOLType = 2 // Redfish serial console
 )
 
 // Enum value maps for SOLType.
 var (
 	SOLType_name = map[int32]string{
-		0: "SOL_TYPE_UNSPECIFIED",
-		1: "SOL_TYPE_IPMI",
-		2: "SOL_TYPE_REDFISH_SERIAL",
+		0: "SOL_UNSPECIFIED",
+		1: "SOL_IPMI",
+		2: "SOL_REDFISH_SERIAL",
 	}
 	SOLType_value = map[string]int32{
-		"SOL_TYPE_UNSPECIFIED":    0,
-		"SOL_TYPE_IPMI":           1,
-		"SOL_TYPE_REDFISH_SERIAL": 2,
+		"SOL_UNSPECIFIED":    0,
+		"SOL_IPMI":           1,
+		"SOL_REDFISH_SERIAL": 2,
 	}
 )
 
@@ -124,22 +124,22 @@ func (SOLType) EnumDescriptor() ([]byte, []int) {
 type VNCType int32
 
 const (
-	VNCType_VNC_TYPE_UNSPECIFIED VNCType = 0
-	VNCType_VNC_TYPE_NATIVE      VNCType = 1 // Native VNC TCP (port 5900)
-	VNCType_VNC_TYPE_WEBSOCKET   VNCType = 2 // WebSocket-wrapped VNC/RFB
+	VNCType_VNC_UNSPECIFIED VNCType = 0
+	VNCType_VNC_NATIVE      VNCType = 1 // Native VNC TCP (port 5900)
+	VNCType_VNC_WEBSOCKET   VNCType = 2 // WebSocket-wrapped VNC/RFB
 )
 
 // Enum value maps for VNCType.
 var (
 	VNCType_name = map[int32]string{
-		0: "VNC_TYPE_UNSPECIFIED",
-		1: "VNC_TYPE_NATIVE",
-		2: "VNC_TYPE_WEBSOCKET",
+		0: "VNC_UNSPECIFIED",
+		1: "VNC_NATIVE",
+		2: "VNC_WEBSOCKET",
 	}
 	VNCType_value = map[string]int32{
-		"VNC_TYPE_UNSPECIFIED": 0,
-		"VNC_TYPE_NATIVE":      1,
-		"VNC_TYPE_WEBSOCKET":   2,
+		"VNC_UNSPECIFIED": 0,
+		"VNC_NATIVE":      1,
+		"VNC_WEBSOCKET":   2,
 	}
 )
 
@@ -572,7 +572,7 @@ func (x *RegisterServerRequest) GetBmcType() BMCType {
 	if x != nil {
 		return x.BmcType
 	}
-	return BMCType_BMC_TYPE_UNSPECIFIED
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *RegisterServerRequest) GetFeatures() []string {
@@ -754,7 +754,7 @@ func (x *GetServerLocationResponse) GetBmcType() BMCType {
 	if x != nil {
 		return x.BmcType
 	}
-	return BMCType_BMC_TYPE_UNSPECIFIED
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *GetServerLocationResponse) GetFeatures() []string {
@@ -1215,7 +1215,7 @@ func (x *ServerLocation) GetBmcType() BMCType {
 	if x != nil {
 		return x.BmcType
 	}
-	return BMCType_BMC_TYPE_UNSPECIFIED
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *ServerLocation) GetFeatures() []string {
@@ -1609,7 +1609,7 @@ func (x *SystemStatusServerEntry) GetBmcType() BMCType {
 	if x != nil {
 		return x.BmcType
 	}
-	return BMCType_BMC_TYPE_UNSPECIFIED
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *SystemStatusServerEntry) GetFeatures() []string {
@@ -2017,7 +2017,7 @@ func (x *BMCControlEndpoint) GetType() BMCType {
 	if x != nil {
 		return x.Type
 	}
-	return BMCType_BMC_TYPE_UNSPECIFIED
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *BMCControlEndpoint) GetUsername() string {
@@ -2094,7 +2094,7 @@ func (x *SOLEndpoint) GetType() SOLType {
 	if x != nil {
 		return x.Type
 	}
-	return SOLType_SOL_TYPE_UNSPECIFIED
+	return SOLType_SOL_UNSPECIFIED
 }
 
 func (x *SOLEndpoint) GetEndpoint() string {
@@ -2171,7 +2171,7 @@ func (x *VNCEndpoint) GetType() VNCType {
 	if x != nil {
 		return x.Type
 	}
-	return VNCType_VNC_TYPE_UNSPECIFIED
+	return VNCType_VNC_UNSPECIFIED
 }
 
 func (x *VNCEndpoint) GetEndpoint() string {
@@ -2522,7 +2522,7 @@ func (x *BMCEndpointAvailability) GetBmcType() BMCType {
 	if x != nil {
 		return x.BmcType
 	}
-	return BMCType_BMC_TYPE_UNSPECIFIED
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *BMCEndpointAvailability) GetFeatures() []string {
@@ -2818,19 +2818,20 @@ const file_manager_v1_manager_proto_rawDesc = "" +
 	"\fcapabilities\x18\t \x03(\tR\fcapabilities\"V\n" +
 	" ReportAvailableEndpointsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage*L\n" +
-	"\aBMCType\x12\x18\n" +
-	"\x14BMC_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
-	"\rBMC_TYPE_IPMI\x10\x01\x12\x14\n" +
-	"\x10BMC_TYPE_REDFISH\x10\x02*S\n" +
-	"\aSOLType\x12\x18\n" +
-	"\x14SOL_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
-	"\rSOL_TYPE_IPMI\x10\x01\x12\x1b\n" +
-	"\x17SOL_TYPE_REDFISH_SERIAL\x10\x02*P\n" +
-	"\aVNCType\x12\x18\n" +
-	"\x14VNC_TYPE_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fVNC_TYPE_NATIVE\x10\x01\x12\x16\n" +
-	"\x12VNC_TYPE_WEBSOCKET\x10\x022\xe9\a\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage*=\n" +
+	"\aBMCType\x12\x13\n" +
+	"\x0fBMC_UNSPECIFIED\x10\x00\x12\f\n" +
+	"\bBMC_IPMI\x10\x01\x12\x0f\n" +
+	"\vBMC_REDFISH\x10\x02*D\n" +
+	"\aSOLType\x12\x13\n" +
+	"\x0fSOL_UNSPECIFIED\x10\x00\x12\f\n" +
+	"\bSOL_IPMI\x10\x01\x12\x16\n" +
+	"\x12SOL_REDFISH_SERIAL\x10\x02*A\n" +
+	"\aVNCType\x12\x13\n" +
+	"\x0fVNC_UNSPECIFIED\x10\x00\x12\x0e\n" +
+	"\n" +
+	"VNC_NATIVE\x10\x01\x12\x11\n" +
+	"\rVNC_WEBSOCKET\x10\x022\xe9\a\n" +
 	"\x11BMCManagerService\x12Q\n" +
 	"\fAuthenticate\x12\x1f.manager.v1.AuthenticateRequest\x1a .manager.v1.AuthenticateResponse\x12Q\n" +
 	"\fRefreshToken\x12\x1f.manager.v1.RefreshTokenRequest\x1a .manager.v1.RefreshTokenResponse\x12W\n" +

@@ -4,12 +4,62 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
 	"cli/pkg/client"
 )
+
+// formatBMCType converts protobuf enum string to human-readable format
+func formatBMCType(protoType string) string {
+	switch protoType {
+	case "BMC_IPMI":
+		return "ipmi"
+	case "BMC_REDFISH":
+		return "redfish"
+	default:
+		// Handle lowercase already formatted values
+		lower := strings.ToLower(protoType)
+		if lower == "ipmi" || lower == "redfish" {
+			return lower
+		}
+		return protoType
+	}
+}
+
+// formatSOLType converts protobuf enum string to human-readable format
+func formatSOLType(protoType string) string {
+	switch protoType {
+	case "SOL_IPMI":
+		return "ipmi"
+	case "SOL_REDFISH_SERIAL":
+		return "redfish_serial"
+	default:
+		lower := strings.ToLower(protoType)
+		if lower == "ipmi" || lower == "redfish_serial" {
+			return lower
+		}
+		return protoType
+	}
+}
+
+// formatVNCType converts protobuf enum string to human-readable format
+func formatVNCType(protoType string) string {
+	switch protoType {
+	case "VNC_NATIVE":
+		return "native"
+	case "VNC_WEBSOCKET":
+		return "websocket"
+	default:
+		lower := strings.ToLower(protoType)
+		if lower == "native" || lower == "websocket" {
+			return lower
+		}
+		return protoType
+	}
+}
 
 var showCmd = &cobra.Command{
 	Use:   "show <server-id>",
@@ -36,7 +86,7 @@ var showCmd = &cobra.Command{
 		// Display control endpoint information
 		if server.ControlEndpoint != nil {
 			fmt.Fprintf(w, "\nBMC Control API:\n")
-			fmt.Fprintf(w, "  Type:\t%s\n", server.ControlEndpoint.Type)
+			fmt.Fprintf(w, "  Type:\t%s\n", formatBMCType(server.ControlEndpoint.Type))
 			fmt.Fprintf(w, "  Endpoint:\t%s\n", server.ControlEndpoint.Endpoint)
 			fmt.Fprintf(w, "  Username:\t%s\n", server.ControlEndpoint.Username)
 			fmt.Fprintf(w, "  Capabilities:\t%v\n", server.ControlEndpoint.Capabilities)
@@ -48,7 +98,7 @@ var showCmd = &cobra.Command{
 		// Display SOL endpoint information
 		if server.SOLEndpoint != nil {
 			fmt.Fprintf(w, "\nSerial Console (SOL):\n")
-			fmt.Fprintf(w, "  Type:\t%s\n", server.SOLEndpoint.Type)
+			fmt.Fprintf(w, "  Type:\t%s\n", formatSOLType(server.SOLEndpoint.Type))
 			fmt.Fprintf(w, "  Endpoint:\t%s\n", server.SOLEndpoint.Endpoint)
 			fmt.Fprintf(w, "  Username:\t%s\n", server.SOLEndpoint.Username)
 			if server.SOLEndpoint.Config != nil {
@@ -60,7 +110,7 @@ var showCmd = &cobra.Command{
 		// Display VNC endpoint information
 		if server.VNCEndpoint != nil {
 			fmt.Fprintf(w, "\nVNC Console:\n")
-			fmt.Fprintf(w, "  Type:\t%s\n", server.VNCEndpoint.Type)
+			fmt.Fprintf(w, "  Type:\t%s\n", formatVNCType(server.VNCEndpoint.Type))
 			fmt.Fprintf(w, "  Endpoint:\t%s\n", server.VNCEndpoint.Endpoint)
 			fmt.Fprintf(w, "  Username:\t%s\n", server.VNCEndpoint.Username)
 			if server.VNCEndpoint.Config != nil {
@@ -110,7 +160,7 @@ var listCmd = &cobra.Command{
 			// Determine BMC type from control endpoint
 			bmcType := "N/A"
 			if server.ControlEndpoint != nil {
-				bmcType = server.ControlEndpoint.Type
+				bmcType = formatBMCType(server.ControlEndpoint.Type)
 			}
 
 			// Check console availability (SOL)

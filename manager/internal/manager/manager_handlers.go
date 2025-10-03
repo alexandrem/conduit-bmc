@@ -187,9 +187,9 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	// Convert BMC type from protobuf to models
 	var bmcType models.BMCType
 	switch req.Msg.BmcType {
-	case managerv1.BMCType_BMC_TYPE_IPMI:
+	case managerv1.BMCType_BMC_IPMI:
 		bmcType = models.BMCTypeIPMI
-	case managerv1.BMCType_BMC_TYPE_REDFISH:
+	case managerv1.BMCType_BMC_REDFISH:
 		bmcType = models.BMCTypeRedfish
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid BMC type"))
@@ -322,11 +322,11 @@ func (h *BMCManagerServiceHandler) GetServerLocation(
 	var bmcType managerv1.BMCType
 	switch location.BMCType {
 	case models.BMCTypeIPMI:
-		bmcType = managerv1.BMCType_BMC_TYPE_IPMI
+		bmcType = managerv1.BMCType_BMC_IPMI
 	case models.BMCTypeRedfish:
-		bmcType = managerv1.BMCType_BMC_TYPE_REDFISH
+		bmcType = managerv1.BMCType_BMC_REDFISH
 	default:
-		bmcType = managerv1.BMCType_BMC_TYPE_UNSPECIFIED
+		bmcType = managerv1.BMCType_BMC_UNSPECIFIED
 	}
 
 	response := &managerv1.GetServerLocationResponse{
@@ -590,11 +590,11 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 func convertBMCTypeToProto(bmcType models.BMCType) managerv1.BMCType {
 	switch bmcType {
 	case models.BMCTypeIPMI:
-		return managerv1.BMCType_BMC_TYPE_IPMI
+		return managerv1.BMCType_BMC_IPMI
 	case models.BMCTypeRedfish:
-		return managerv1.BMCType_BMC_TYPE_REDFISH
+		return managerv1.BMCType_BMC_REDFISH
 	default:
-		return managerv1.BMCType_BMC_TYPE_UNSPECIFIED
+		return managerv1.BMCType_BMC_UNSPECIFIED
 	}
 }
 
@@ -602,11 +602,11 @@ func convertBMCTypeToProto(bmcType models.BMCType) managerv1.BMCType {
 func convertSOLTypeToProto(solType models.SOLType) managerv1.SOLType {
 	switch solType {
 	case models.SOLTypeIPMI:
-		return managerv1.SOLType_SOL_TYPE_IPMI
+		return managerv1.SOLType_SOL_IPMI
 	case models.SOLTypeRedfishSerial:
-		return managerv1.SOLType_SOL_TYPE_REDFISH_SERIAL
+		return managerv1.SOLType_SOL_REDFISH_SERIAL
 	default:
-		return managerv1.SOLType_SOL_TYPE_UNSPECIFIED
+		return managerv1.SOLType_SOL_UNSPECIFIED
 	}
 }
 
@@ -614,11 +614,11 @@ func convertSOLTypeToProto(solType models.SOLType) managerv1.SOLType {
 func convertVNCTypeToProto(vncType models.VNCType) managerv1.VNCType {
 	switch vncType {
 	case models.VNCTypeNative:
-		return managerv1.VNCType_VNC_TYPE_NATIVE
+		return managerv1.VNCType_VNC_NATIVE
 	case models.VNCTypeWebSocket:
-		return managerv1.VNCType_VNC_TYPE_WEBSOCKET
+		return managerv1.VNCType_VNC_WEBSOCKET
 	default:
-		return managerv1.VNCType_VNC_TYPE_UNSPECIFIED
+		return managerv1.VNCType_VNC_UNSPECIFIED
 	}
 }
 
@@ -870,9 +870,9 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 	// Convert BMC type from protobuf to models
 	var bmcType models.BMCType
 	switch endpoint.BmcType {
-	case managerv1.BMCType_BMC_TYPE_IPMI:
+	case managerv1.BMCType_BMC_IPMI:
 		bmcType = models.BMCTypeIPMI
-	case managerv1.BMCType_BMC_TYPE_REDFISH:
+	case managerv1.BMCType_BMC_REDFISH:
 		bmcType = models.BMCTypeRedfish
 	default:
 		bmcType = models.BMCTypeIPMI // Default fallback

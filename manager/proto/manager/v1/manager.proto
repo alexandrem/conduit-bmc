@@ -172,9 +172,9 @@ message ListGatewaysResponse {
 
 // BMCType specifies the type of BMC interface available on a server
 enum BMCType {
-  BMC_TYPE_UNSPECIFIED = 0;  // Unknown or not specified BMC type
-  BMC_TYPE_IPMI = 1;          // Traditional IPMI interface (typically port 623/UDP)
-  BMC_TYPE_REDFISH = 2;       // Modern Redfish REST API interface (typically HTTPS/443)
+  BMC_UNSPECIFIED = 0;  // Unknown or not specified BMC type
+  BMC_IPMI = 1;         // Traditional IPMI interface (typically port 623/UDP)
+  BMC_REDFISH = 2;      // Modern Redfish REST API interface (typically HTTPS/443)
 }
 
 // Customer represents a customer/tenant in the system
@@ -328,15 +328,15 @@ message VNCEndpoint {
 }
 
 enum SOLType {
-  SOL_TYPE_UNSPECIFIED = 0;
-  SOL_TYPE_IPMI = 1;                       // IPMI Serial-over-LAN
-  SOL_TYPE_REDFISH_SERIAL = 2;             // Redfish serial console
+  SOL_UNSPECIFIED = 0;
+  SOL_IPMI = 1;            // IPMI Serial-over-LAN
+  SOL_REDFISH_SERIAL = 2;  // Redfish serial console
 }
 
 enum VNCType {
-  VNC_TYPE_UNSPECIFIED = 0;
-  VNC_TYPE_NATIVE = 1;                     // Native VNC TCP (port 5900)
-  VNC_TYPE_WEBSOCKET = 2;                  // WebSocket-wrapped VNC/RFB
+  VNC_UNSPECIFIED = 0;
+  VNC_NATIVE = 1;     // Native VNC TCP (port 5900)
+  VNC_WEBSOCKET = 2;  // WebSocket-wrapped VNC/RFB
 }
 
 message TLSConfig {

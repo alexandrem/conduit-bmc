@@ -7,8 +7,8 @@ import (
 
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
-	"manager/pkg/auth"
 	"manager/internal/database"
+	"manager/pkg/auth"
 	"manager/pkg/models"
 
 	"connectrpc.com/connect"
@@ -269,7 +269,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 	}{
 		{
 			name:    "IPMI with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_TYPE_IPMI,
+			bmcType: managerv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureSensors,
@@ -283,7 +283,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "Redfish with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_TYPE_REDFISH,
+			bmcType: managerv1.BMCType_BMC_REDFISH,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -296,7 +296,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI with only power features",
-			bmcType: managerv1.BMCType_BMC_TYPE_IPMI,
+			bmcType: managerv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureSensors,
@@ -306,7 +306,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI with only console",
-			bmcType: managerv1.BMCType_BMC_TYPE_IPMI,
+			bmcType: managerv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -317,7 +317,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI with only VNC",
-			bmcType: managerv1.BMCType_BMC_TYPE_IPMI,
+			bmcType: managerv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureVNC,
@@ -400,7 +400,7 @@ func TestListServers_ReturnsSOLAndVNCEndpoints(t *testing.T) {
 		BmcEndpoint:  "192.168.1.100:623",
 		AgentId:      "test-agent-1",
 		DatacenterId: "dc-test-01",
-		BmcType:      managerv1.BMCType_BMC_TYPE_IPMI,
+		BmcType:      managerv1.BMCType_BMC_IPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -436,13 +436,13 @@ func TestListServers_ReturnsSOLAndVNCEndpoints(t *testing.T) {
 
 	// Verify SOL endpoint is returned
 	require.NotNil(t, server.SolEndpoint, "SOL endpoint should be included in response")
-	assert.Equal(t, managerv1.SOLType_SOL_TYPE_IPMI, server.SolEndpoint.Type)
+	assert.Equal(t, managerv1.SOLType_SOL_IPMI, server.SolEndpoint.Type)
 	assert.Equal(t, bmcEndpoint.BmcEndpoint, server.SolEndpoint.Endpoint)
 	assert.Equal(t, bmcEndpoint.Username, server.SolEndpoint.Username)
 
 	// Verify VNC endpoint is returned
 	require.NotNil(t, server.VncEndpoint, "VNC endpoint should be included in response")
-	assert.Equal(t, managerv1.VNCType_VNC_TYPE_NATIVE, server.VncEndpoint.Type)
+	assert.Equal(t, managerv1.VNCType_VNC_NATIVE, server.VncEndpoint.Type)
 	assert.Equal(t, bmcEndpoint.BmcEndpoint, server.VncEndpoint.Endpoint)
 	assert.Equal(t, bmcEndpoint.Username, server.VncEndpoint.Username)
 }
@@ -466,7 +466,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 	}{
 		{
 			name:    "IPMI with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_TYPE_IPMI,
+			bmcType: managerv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -479,7 +479,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "Redfish with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_TYPE_REDFISH,
+			bmcType: managerv1.BMCType_BMC_REDFISH,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -492,7 +492,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI without console features",
-			bmcType: managerv1.BMCType_BMC_TYPE_IPMI,
+			bmcType: managerv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureSensors,
