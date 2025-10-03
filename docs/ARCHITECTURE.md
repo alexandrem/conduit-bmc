@@ -10,7 +10,7 @@
         | (WebSocket View) |        |   (console/proxy)    |
         +---------+--------+        +----------+-----------+
                   |                            |
-        WebSocket ↔                  gRPC/HTTPS/WebSocket ↔
+             WebSocket ↔                  gRPC/HTTPS ↔
                   |                            |
                   +--------------+-------------+
                                  |
