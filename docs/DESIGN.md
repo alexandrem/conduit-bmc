@@ -23,11 +23,11 @@ The system separates **control plane** (management operations) from
 The system is composed of three main components:
 
 1. **Local Agent** – Runs inside the OOB network in each datacenter, registers
-   available BMCs with a Regional Gateway.
+   available BMCs with a Regional Gateway
 2. **Regional Gateway** – Serves web console interfaces, routes traffic between
-   customers and local agents, and validates delegated tokens from BMC Manager.
+   customers and local agents, and validates delegated tokens from BMC Manager
 3. **BMC Manager** – Central coordination service, responsible for
-   authentication, authorization, and token delegation.
+   authentication, authorization, and token delegation
 
 Customers interact with the system through:
 
@@ -41,12 +41,12 @@ Customers interact with the system through:
 
 - Runs **inside the out-of-band (OOB) management network** of a datacenter.
 - Discovers and registers the BMCs it can reach with its assigned **Regional
-  Gateway**.
+  Gateway**
 - Maintains an **outbound connection** to the Regional Gateway (
-  firewall/NAT-friendly).
+  firewall/NAT-friendly)
 - Provides the actual connectivity to BMCs (IPMI, Redfish, or virtual console).
 - **Never exposes the OOB network directly** to customers — only relays via the
-  gateway.
+  gateway
 
 ### Regional Gateway
 
@@ -82,14 +82,14 @@ Customers interact with the system through:
 
 ## Token Delegation & Refresh
 
-- Clients authenticate with the **BMC Manager** (OIDC or IAM).
-- BMC Manager issues a **delegated token** for a specific server.
-- Delegated token is presented to the **Regional Gateway** to authorize access.
+- Clients authenticate with the **BMC Manager** (OIDC or IAM)
+- BMC Manager issues a **delegated token** for a specific server
+- Delegated token is presented to the **Regional Gateway** to authorize access
 - To prevent token expiry mid-session, clients periodically **refresh tokens**
-  using a DHCP-like lease refresh model.
+  using a DHCP-like lease refresh model
 - Refresh can occur:
-	- Over gRPC for CLI and terminal console sessions.
-	- Over WebSocket for VNC console viewer sessions.
+	- Over gRPC for CLI and terminal console sessions
+	- Over WebSocket for VNC console viewer sessions
 
 ## API Architecture
 
@@ -179,17 +179,17 @@ system:
 ## CLI Commands
 
 - `server show <server_id>`
-  Show server and BMC information (detected automatically: IPMI or Redfish).
+  Show server and BMC information (detected automatically: IPMI or Redfish)
 
 - `server power <op> <server_id>`
-  Control server power operations.
+  Control server power operations
 
 - `server console <server_id>`
-  Open Gateway's web-based serial console in browser.
+  Open Gateway's web-based serial console in browser
 
 - `server console <server_id> --terminal`
-  Open a terminal-based serial console directly in the CLI (IPMI SOL).
+  Open a terminal-based serial console directly in the CLI (IPMI SOL)
 
 - `server vnc <server_id>`
   Open Gateway's web-based graphical console viewer (BMC virtual console/remote
-  KVM access).
+  KVM access)
