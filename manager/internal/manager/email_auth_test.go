@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/pkg/models"
 
@@ -86,7 +87,11 @@ func TestRegisterServer_WithEmailCustomerID(t *testing.T) {
 		RegionalGatewayId: "test-gateway-1",
 		BmcType:           managerv1.BMCType_BMC_TYPE_REDFISH,
 		BmcEndpoint:       "http://localhost:9001",
-		Features:          []string{"power", "console", "vnc"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+			types.FeatureVNC,
+		}),
 	})
 
 	resp, err := handler.RegisterServer(ctx, req)
@@ -118,7 +123,10 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:  []string{"power", "console"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+		}),
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -132,7 +140,10 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 			Endpoint: "http://localhost:9002",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:  []string{"power", "console"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+		}),
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -146,7 +157,10 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 			Endpoint: "http://localhost:9003",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:  []string{"power", "console"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+		}),
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -265,7 +279,10 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:  []string{"power", "console"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+		}),
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -279,7 +296,10 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 			Endpoint: "http://localhost:9002",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:  []string{"power", "console"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+		}),
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -362,7 +382,11 @@ func TestEmailBasedCustomerID_EndToEndFlow(t *testing.T) {
 		RegionalGatewayId: "test-gateway-1",
 		BmcType:           managerv1.BMCType_BMC_TYPE_REDFISH,
 		BmcEndpoint:       "http://localhost:9001",
-		Features:          []string{"power", "console", "vnc"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+			types.FeatureVNC,
+		}),
 	})
 
 	registerResp, err := handler.RegisterServer(ctx, registerReq)

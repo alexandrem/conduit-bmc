@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"core/types"
 	"manager/pkg/models"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,11 @@ func TestServerContextService_CreateServerContext(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:     []string{"power", "console", "kvm"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+			types.FeatureVNC,
+		}),
 		DatacenterID: "dc-local-01",
 	}
 
@@ -33,7 +38,11 @@ func TestServerContextService_CreateServerContext(t *testing.T) {
 	assert.Equal(t, "customer-123", context.CustomerID)
 	assert.Equal(t, "http://localhost:9001", context.BMCEndpoint)
 	assert.Equal(t, "redfish", context.BMCType)
-	assert.Equal(t, []string{"power", "console", "kvm"}, context.Features)
+	assert.Equal(t, types.FeaturesToStrings([]types.Feature{
+		types.FeaturePower,
+		types.FeatureConsole,
+		types.FeatureVNC,
+	}), context.Features)
 	assert.Equal(t, "dc-local-01", context.DatacenterID)
 	assert.Equal(t, permissions, context.Permissions)
 	assert.True(t, time.Now().After(context.IssuedAt))
@@ -45,11 +54,14 @@ func TestServerContextService_EncryptDecryptRoundTrip(t *testing.T) {
 	service := NewServerContextService("test-encryption-key-for-validation")
 
 	originalContext := &ServerContext{
-		ServerID:     "server-001",
-		CustomerID:   "customer-123",
-		BMCEndpoint:  "http://localhost:9001",
-		BMCType:      "redfish",
-		Features:     []string{"power", "console"},
+		ServerID:    "server-001",
+		CustomerID:  "customer-123",
+		BMCEndpoint: "http://localhost:9001",
+		BMCType:     "redfish",
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+		}),
 		DatacenterID: "dc-local-01",
 		Permissions:  []string{"power:read", "power:write"},
 		IssuedAt:     time.Now(),
@@ -81,11 +93,13 @@ func TestServerContextService_DecryptExpiredContext(t *testing.T) {
 	service := NewServerContextService("test-encryption-key")
 
 	expiredContext := &ServerContext{
-		ServerID:     "server-001",
-		CustomerID:   "customer-123",
-		BMCEndpoint:  "http://localhost:9001",
-		BMCType:      "redfish",
-		Features:     []string{"power"},
+		ServerID:    "server-001",
+		CustomerID:  "customer-123",
+		BMCEndpoint: "http://localhost:9001",
+		BMCType:     "redfish",
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 		Permissions:  []string{"power:read"},
 		IssuedAt:     time.Now().Add(-2 * time.Hour),
@@ -106,11 +120,13 @@ func TestServerContextService_DecryptWithWrongKey(t *testing.T) {
 	service2 := NewServerContextService("wrong-key")
 
 	context := &ServerContext{
-		ServerID:     "server-001",
-		CustomerID:   "customer-123",
-		BMCEndpoint:  "http://localhost:9001",
-		BMCType:      "redfish",
-		Features:     []string{"power"},
+		ServerID:    "server-001",
+		CustomerID:  "customer-123",
+		BMCEndpoint: "http://localhost:9001",
+		BMCType:     "redfish",
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 		Permissions:  []string{"power:read"},
 		IssuedAt:     time.Now(),
@@ -131,11 +147,13 @@ func TestServerContextService_EncryptionProducesUniqueResults(t *testing.T) {
 	service := NewServerContextService("test-encryption-key")
 
 	context := &ServerContext{
-		ServerID:     "server-001",
-		CustomerID:   "customer-123",
-		BMCEndpoint:  "http://localhost:9001",
-		BMCType:      "redfish",
-		Features:     []string{"power"},
+		ServerID:    "server-001",
+		CustomerID:  "customer-123",
+		BMCEndpoint: "http://localhost:9001",
+		BMCType:     "redfish",
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 		Permissions:  []string{"power:read"},
 		IssuedAt:     time.Now(),

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"core/types"
 	"manager/pkg/models"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,11 @@ func TestJWTManager_GenerateServerToken(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:     []string{"power", "console", "kvm"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+			types.FeatureConsole,
+			types.FeatureVNC,
+		}),
 		DatacenterID: "dc-local-01",
 	}
 
@@ -55,7 +60,11 @@ func TestJWTManager_GenerateServerToken(t *testing.T) {
 	assert.Equal(t, "customer-123", serverContext.CustomerID)
 	assert.Equal(t, "http://localhost:9001", serverContext.BMCEndpoint)
 	assert.Equal(t, "redfish", serverContext.BMCType)
-	assert.Equal(t, []string{"power", "console", "kvm"}, serverContext.Features)
+	assert.Equal(t, types.FeaturesToStrings([]types.Feature{
+		types.FeaturePower,
+		types.FeatureConsole,
+		types.FeatureVNC,
+	}), serverContext.Features)
 	assert.Equal(t, "dc-local-01", serverContext.DatacenterID)
 	assert.Equal(t, permissions, serverContext.Permissions)
 	assert.True(t, time.Now().After(serverContext.IssuedAt))
@@ -108,7 +117,9 @@ func TestJWTManager_ValidateServerToken_WrongSigningKey(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeIPMI,
 		},
-		Features:     []string{"power"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 	}
 
@@ -137,7 +148,9 @@ func TestJWTManager_ValidateServerToken_CustomerMismatch(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeIPMI,
 		},
-		Features:     []string{"power"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 	}
 
@@ -152,11 +165,13 @@ func TestJWTManager_ValidateServerToken_CustomerMismatch(t *testing.T) {
 
 	// Create server context with mismatched customer ID
 	mismatchedContext := &ServerContext{
-		ServerID:     "server-001",
-		CustomerID:   "different-customer",
-		BMCEndpoint:  "http://localhost:9001",
-		BMCType:      "ipmi",
-		Features:     []string{"power"},
+		ServerID:    "server-001",
+		CustomerID:  "different-customer",
+		BMCEndpoint: "http://localhost:9001",
+		BMCType:     "ipmi",
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 		Permissions:  []string{"power:read"},
 		IssuedAt:     time.Now(),
@@ -188,7 +203,9 @@ func TestJWTManager_EmptySecretKey(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeIPMI,
 		},
-		Features:     []string{"power"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 	}
 
@@ -212,7 +229,9 @@ func TestJWTManager_ServerTokenExpirationMatches(t *testing.T) {
 			Endpoint: "http://localhost:9001",
 			Type:     models.BMCTypeRedfish,
 		},
-		Features:     []string{"power"},
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 	}
 
@@ -244,7 +263,9 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 				Endpoint: "http://localhost:9001",
 				Type:     models.BMCTypeRedfish,
 			},
-			Features:     []string{"power"},
+			Features: types.FeaturesToStrings([]types.Feature{
+				types.FeaturePower,
+			}),
 			DatacenterID: "dc-local-01",
 		},
 		{
@@ -254,7 +275,10 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 				Endpoint: "http://localhost:9002",
 				Type:     models.BMCTypeIPMI,
 			},
-			Features:     []string{"power", "console"},
+			Features: types.FeaturesToStrings([]types.Feature{
+				types.FeaturePower,
+				types.FeatureConsole,
+			}),
 			DatacenterID: "dc-local-02",
 		},
 	}
@@ -293,11 +317,13 @@ func TestJWTManager_GetServerContextService(t *testing.T) {
 
 	// Test that the service works correctly
 	context := &ServerContext{
-		ServerID:     "server-001",
-		CustomerID:   "customer-123",
-		BMCEndpoint:  "http://localhost:9001",
-		BMCType:      "redfish",
-		Features:     []string{"power"},
+		ServerID:    "server-001",
+		CustomerID:  "customer-123",
+		BMCEndpoint: "http://localhost:9001",
+		BMCType:     "redfish",
+		Features: types.FeaturesToStrings([]types.Feature{
+			types.FeaturePower,
+		}),
 		DatacenterID: "dc-local-01",
 		Permissions:  []string{"power:read"},
 		IssuedAt:     time.Now(),

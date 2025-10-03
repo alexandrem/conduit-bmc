@@ -45,7 +45,7 @@ static:
     # ==========================================
     - id: "ipmi-server-01"
       customer_id: "system"
-      features: ["power", "sensors", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "VirtualBMC Server 01"
@@ -59,7 +59,7 @@ static:
         type: "ipmi"
         username: "ipmiusr"
         password: "test"
-        capabilities: ["power", "sensors", "sel", "fru"]
+        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -77,7 +77,7 @@ static:
 
     - id: "ipmi-server-02"
       customer_id: "system"
-      features: ["power", "sensors", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "VirtualBMC Server 02"
@@ -91,7 +91,7 @@ static:
         type: "ipmi"
         username: "ipmiusr"
         password: "test"
-        capabilities: ["power", "sensors", "sel", "fru"]
+        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -109,7 +109,7 @@ static:
 
     - id: "ipmi-server-03"
       customer_id: "system"
-      features: ["power", "sensors", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "VirtualBMC Server 03"
@@ -123,7 +123,7 @@ static:
         type: "ipmi"
         username: "ipmiusr"
         password: "test"
-        capabilities: ["power", "sensors", "sel", "fru"]
+        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -141,7 +141,7 @@ static:
 
     - id: "ipmi-server-01-ws"
       customer_id: "system"
-      features: ["power", "sensors", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "VirtualBMC Server 01"
@@ -155,7 +155,7 @@ static:
         type: "ipmi"
         username: "ipmiusr"
         password: "test"
-        capabilities: ["power", "sensors", "sel", "fru"]
+        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # VNC via noVNC proxy
       vnc_endpoint:
@@ -167,7 +167,7 @@ static:
     # ==========================================
     - id: "redfish-server-01"
       customer_id: "system"
-      features: ["power", "systems", "chassis", "managers", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "Redfish Emulator Server 01"
@@ -182,7 +182,7 @@ static:
         type: "redfish"
         username: ""
         password: ""
-        capabilities: ["power", "systems", "chassis", "managers"]
+        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
         tls:
           enabled: false
           insecure_skip_verify: true
@@ -202,7 +202,7 @@ static:
 
     - id: "redfish-server-02"
       customer_id: "system"
-      features: ["power", "systems", "chassis", "managers", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "Redfish Emulator Server 02"
@@ -217,7 +217,7 @@ static:
         type: "redfish"
         username: ""
         password: ""
-        capabilities: ["power", "systems", "chassis", "managers"]
+        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
         tls:
           enabled: false
           insecure_skip_verify: true
@@ -237,7 +237,7 @@ static:
 
     - id: "redfish-server-03"
       customer_id: "system"
-      features: ["power", "systems", "chassis", "managers", "vnc"]
+      features: ["power", "console", "vnc", "sensors"]
       metadata:
         location: "rack-2"
         model: "Redfish Emulator Server 03"
@@ -252,7 +252,7 @@ static:
         type: "redfish"
         username: ""
         password: ""
-        capabilities: ["power", "systems", "chassis", "managers"]
+        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
         tls:
           enabled: false
           insecure_skip_verify: true

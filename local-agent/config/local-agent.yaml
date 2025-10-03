@@ -30,7 +30,7 @@ static:
         type: "redfish"
         username: "admin"
         password: "password"
-        capabilities: ["power", "systems", "chassis", "managers"]
+        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
         tls:
           enabled: false
           insecure_skip_verify: true
@@ -62,7 +62,7 @@ static:
         type: "redfish"
         username: "admin"
         password: "password"
-        capabilities: ["power", "systems", "chassis", "managers"]
+        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
         tls:
           enabled: false
           insecure_skip_verify: true
@@ -94,7 +94,7 @@ static:
         type: "redfish"
         username: "admin"
         password: "password"
-        capabilities: ["power", "systems", "chassis", "managers"]
+        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
         tls:
           enabled: false
           insecure_skip_verify: true

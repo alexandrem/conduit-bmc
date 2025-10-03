@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+
+	"core/types"
 	"local-agent/pkg/config"
 	"local-agent/pkg/ipmi"
 	"local-agent/pkg/redfish"
@@ -253,9 +255,14 @@ func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*Server, e
 					Type:         "ipmi",
 					Username:     "admin",    // Default credentials
 					Password:     "password", // Default credentials
-					Capabilities: []string{"power", "sensors", "sel", "fru"},
+					Capabilities: types.CapabilitiesToStrings(types.IPMICapabilities()),
 				},
-				Features: []string{"power", "sensors"},
+				Features: types.FeaturesToStrings([]types.Feature{
+					types.FeaturePower,
+					types.FeatureConsole,
+					types.FeatureVNC,
+					types.FeatureSensors,
+				}),
 				Status:   "active",
 				Metadata: make(map[string]string),
 			}
@@ -301,9 +308,14 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 						Type:         "redfish",
 						Username:     "admin",    // Default credentials
 						Password:     "password", // Default credentials
-						Capabilities: []string{"power", "sensors", "systems", "chassis"},
+						Capabilities: types.CapabilitiesToStrings(types.RedfishCapabilities()),
 					},
-					Features: []string{"power", "sensors"},
+					Features: types.FeaturesToStrings([]types.Feature{
+						types.FeaturePower,
+						types.FeatureConsole,
+						types.FeatureVNC,
+						types.FeatureSensors,
+					}),
 					Status:   "active",
 					Metadata: make(map[string]string),
 				}
