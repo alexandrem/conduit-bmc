@@ -104,7 +104,7 @@
                   ┌───────────────────────┼───────────────────────┐
                   │                       │                       │
                   │ (1) CLI → Manager     │ (2) Gateway → Manager │
-                  │     Auth requests     │     Token validation  │
+                  │     Auth requests     │      Registration     │
                   │     (client-init)     │     (outbound-init)   │
                   │                       │                       │
      ┌────────────┴────────┐    ┌────────┴─────────┐    ┌────────┴─────────┐
@@ -137,7 +137,7 @@
 
 - CLI/Browser → Manager: Client-initiated (auth, API calls)
 - CLI/Browser → Gateway: Client-initiated (session creation, web UI)
-- Gateway → Manager: Outbound-initiated (token validation)
+- Gateway → Manager: Outbound-initiated (gateway registration, agent/BMC endpoint reporting)
 - Agent → Gateway: Outbound-initiated (persistent gRPC connection)
 - Gateway → Agent: Bidirectional over Agent's connection (proxy requests)
 - Agent → BMC: Local network (IPMI/Redfish protocols)
@@ -147,6 +147,8 @@
 - Manager NEVER initiates connections to Gateway or Agent
 - Gateway NEVER initiates connections to Agent (uses Agent's outbound
   connection)
+- Gateway validates JWT tokens via signature (no Manager roundtrip needed)
+- Gateway registers itself and reports agent/BMC endpoints to Manager
 - Gateway sends proxy requests to Agent over Agent's persistent connection
 - All connections traverse NAT/firewalls via outbound initiation
 - BMCs remain completely private (no public exposure)
