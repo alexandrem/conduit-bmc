@@ -159,15 +159,6 @@ func setupRouter(path, region string, handler http.Handler, gatewayHandler *gate
 		consoleWebSocketHandler(w, r, gatewayHandler, &upgrader)
 	}).Methods("GET")
 
-	// Power operations REST API endpoints
-	r.HandleFunc("/api/servers/{serverId}/power/{operation}", func(w http.ResponseWriter, r *http.Request) {
-		powerOperationHandler(w, r, gatewayHandler)
-	}).Methods("POST")
-
-	r.HandleFunc("/api/servers/{serverId}/power/status", func(w http.ResponseWriter, r *http.Request) {
-		powerStatusHandler(w, r, gatewayHandler)
-	}).Methods("GET")
-
 	// Add CORS middleware for web clients
 	corsHandler := addCORS(r)
 
@@ -562,117 +553,6 @@ func consoleWebSocketHandler(w http.ResponseWriter, r *http.Request, gatewayHand
 	}
 
 	log.Info().Str("session_id", sessionID).Msg("Console WebSocket connection closed")
-}
-
-// powerOperationHandler handles REST API power operations
-func powerOperationHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) {
-	vars := mux.Vars(r)
-	serverID := vars["serverId"]
-	operation := vars["operation"]
-
-	if serverID == "" || operation == "" {
-		http.Error(w, "Server ID and operation required", http.StatusBadRequest)
-		return
-	}
-
-	// Extract JWT token from session cookie or Authorization header
-	// Try session cookie first (for web console), then fallback to header (for CLI/API)
-	token, err := getJWTFromRequest(r, gatewayHandler)
-	if err != nil {
-		http.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	// Add token to context for handler
-	ctx := context.WithValue(r.Context(), "token", token)
-
-	// Create RPC request
-	powerReq := &gatewayv1.PowerOperationRequest{
-		ServerId: serverID,
-	}
-	reqWrapper := connect.NewRequest(powerReq)
-
-	// Add authorization header
-	reqWrapper.Header().Set("Authorization", "Bearer "+token)
-
-	// Map REST operation to RPC call
-	var rpcErr error
-	switch operation {
-	case "on":
-		_, rpcErr = gatewayHandler.PowerOn(ctx, reqWrapper)
-	case "off":
-		_, rpcErr = gatewayHandler.PowerOff(ctx, reqWrapper)
-	case "cycle":
-		_, rpcErr = gatewayHandler.PowerCycle(ctx, reqWrapper)
-	case "reset":
-		_, rpcErr = gatewayHandler.Reset(ctx, reqWrapper)
-	default:
-		http.Error(w, "Invalid operation", http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if rpcErr != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "` + rpcErr.Error() + `"}`))
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"success": true, "message": "Operation completed"}`))
-	}
-}
-
-// powerStatusHandler handles REST API power status requests
-func powerStatusHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) {
-	vars := mux.Vars(r)
-	serverID := vars["serverId"]
-
-	if serverID == "" {
-		http.Error(w, "Server ID required", http.StatusBadRequest)
-		return
-	}
-
-	// Extract JWT token from session cookie or Authorization header
-	token, err := getJWTFromRequest(r, gatewayHandler)
-	if err != nil {
-		http.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	// Add token to context for handler
-	ctx := context.WithValue(r.Context(), "token", token)
-
-	// Create RPC request for power status
-	statusReq := &gatewayv1.PowerStatusRequest{
-		ServerId: serverID,
-	}
-	reqWrapper := connect.NewRequest(statusReq)
-	reqWrapper.Header().Set("Authorization", "Bearer "+token)
-
-	// Call power status RPC
-	resp, err := gatewayHandler.GetPowerStatus(ctx, reqWrapper)
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
-		return
-	}
-
-	// Convert power state to string
-	var status string
-	switch resp.Msg.State.String() {
-	case "POWER_STATE_ON":
-		status = "on"
-	case "POWER_STATE_OFF":
-		status = "off"
-	case "POWER_STATE_UNKNOWN":
-		status = "unknown"
-	default:
-		status = "unknown"
-	}
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(status))
 }
 
 // findWebSessionBySOLSessionID finds a web session by SOL session ID

@@ -513,7 +513,7 @@ function switchToConsole() {
     window.location.href = consoleUrl;
 }
 
-// Power Operations (same as console)
+// Power Operations using Connect RPC API
 async function powerOperation(operation) {
     if (powerOperationsInProgress.has(operation)) {
         return;
@@ -531,16 +531,33 @@ async function powerOperation(operation) {
     console.log(`Executing power ${operation} operation...`);
 
     try {
-        const response = await fetch(`/api/servers/${serverID}/power/${operation}`, {
+        // Map operation to Connect RPC method name
+        const methodMap = {
+            'on': 'PowerOn',
+            'off': 'PowerOff',
+            'reset': 'Reset',
+            'cycle': 'PowerCycle'
+        };
+
+        const method = methodMap[operation];
+        if (!method) {
+            throw new Error(`Unknown power operation: ${operation}`);
+        }
+
+        const response = await fetch(`/gateway.v1.GatewayService/${method}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + getAuthToken()
-            }
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // Send session cookie
+            body: JSON.stringify({
+                server_id: serverID
+            })
         });
 
         if (response.ok) {
-            console.log(`Power ${operation} operation completed successfully`);
+            const result = await response.json();
+            console.log(`Power ${operation} operation completed:`, result);
             setTimeout(() => refreshPowerStatus(), 2000);
         } else {
             const error = await response.text();
@@ -563,14 +580,29 @@ async function refreshPowerStatus() {
     const serverStateDot = document.getElementById('server-state-dot');
 
     try {
-        const response = await fetch(`/api/servers/${serverID}/power/status`, {
+        const response = await fetch('/gateway.v1.GatewayService/GetPowerStatus', {
+            method: 'POST',
             headers: {
-                'Authorization': 'Bearer ' + getAuthToken()
-            }
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // Send session cookie
+            body: JSON.stringify({
+                server_id: serverID
+            })
         });
 
         if (response.ok) {
-            const status = await response.text();
+            const result = await response.json();
+
+            // Map PowerState enum to string
+            const stateMap = {
+                'POWER_STATE_UNKNOWN': 'unknown',
+                'POWER_STATE_ON': 'on',
+                'POWER_STATE_OFF': 'off',
+                'POWER_STATE_CYCLING': 'cycling'
+            };
+
+            const status = stateMap[result.state] || 'unknown';
 
             if (statusElement) {
                 statusElement.textContent = status.charAt(0).toUpperCase() + status.slice(1);
@@ -603,11 +635,7 @@ async function refreshPowerStatus() {
     }
 }
 
-function getAuthToken() {
-    // For development/testing, use a placeholder
-    // In production, this should be properly managed
-    return 'placeholder-token';
-}
+// No longer needed - session cookies are used automatically via credentials: 'include'
 
 function updateConnectionInfo() {
     if (connectionStart && rfb) {

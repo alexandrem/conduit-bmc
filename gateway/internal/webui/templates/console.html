@@ -330,7 +330,7 @@ function logToTerminal(message, type = 'info') {
     updateConnectionInfo();
 }
 
-// Power Operations
+// Power Operations using Connect RPC API
 async function powerOperation(operation) {
     if (powerOperationsInProgress.has(operation)) {
         return;
@@ -349,16 +349,33 @@ async function powerOperation(operation) {
     logToTerminal(`Executing power ${operation} operation...`, 'info');
 
     try {
-        const response = await fetch(`/api/servers/${serverID}/power/${operation}`, {
+        // Map operation to Connect RPC method name
+        const methodMap = {
+            'on': 'PowerOn',
+            'off': 'PowerOff',
+            'reset': 'Reset',
+            'cycle': 'PowerCycle'
+        };
+
+        const method = methodMap[operation];
+        if (!method) {
+            throw new Error(`Unknown power operation: ${operation}`);
+        }
+
+        const response = await fetch(`/gateway.v1.GatewayService/${method}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + getAuthToken()
-            }
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // Send session cookie
+            body: JSON.stringify({
+                server_id: serverID
+            })
         });
 
         if (response.ok) {
-            logToTerminal(`Power ${operation} operation completed successfully`, 'success');
+            const result = await response.json();
+            logToTerminal(`Power ${operation} operation completed: ${result.message || 'Success'}`, 'success');
             // Refresh power status after successful operation
             setTimeout(() => refreshPowerStatus(), 2000);
         } else {
@@ -376,7 +393,7 @@ async function powerOperation(operation) {
     }
 }
 
-// Refresh power status
+// Refresh power status using Connect RPC API
 async function refreshPowerStatus() {
     const serverID = '{{.ServerID}}';
     const statusElement = document.getElementById('power-status');
@@ -386,14 +403,29 @@ async function refreshPowerStatus() {
     try {
         logToTerminal('Refreshing power status...', 'info');
 
-        const response = await fetch(`/api/servers/${serverID}/power/status`, {
+        const response = await fetch('/gateway.v1.GatewayService/GetPowerStatus', {
+            method: 'POST',
             headers: {
-                'Authorization': 'Bearer ' + getAuthToken()
-            }
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // Send session cookie
+            body: JSON.stringify({
+                server_id: serverID
+            })
         });
 
         if (response.ok) {
-            const status = await response.text();
+            const result = await response.json();
+
+            // Map PowerState enum to string
+            const stateMap = {
+                'POWER_STATE_UNKNOWN': 'unknown',
+                'POWER_STATE_ON': 'on',
+                'POWER_STATE_OFF': 'off',
+                'POWER_STATE_CYCLING': 'cycling'
+            };
+
+            const status = stateMap[result.state] || 'unknown';
 
             // Update power status display
             if (statusElement) {
@@ -494,25 +526,7 @@ function handleWebSocketMessage(message) {
 }
 
 // Utility functions
-function getAuthToken() {
-    if (authToken) {
-        return authToken;
-    }
-
-    // Try to extract token from URL parameters or session storage
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenFromUrl = urlParams.get('token');
-
-    if (tokenFromUrl) {
-        authToken = tokenFromUrl;
-        return authToken;
-    }
-
-    // For development/testing, use a placeholder
-    // In production, this should be properly managed
-    logToTerminal('Warning: Using placeholder token for development', 'warning');
-    return 'placeholder-token';
-}
+// No longer needed - session cookies are used automatically via credentials: 'include'
 
 function updateConnectionInfo() {
     if (connectionStart) {
