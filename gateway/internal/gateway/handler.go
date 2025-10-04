@@ -111,6 +111,7 @@ func NewGatewayHandler(
 }
 
 // TokenValidationInterceptor validates delegated tokens from BMC Manager.
+// It expects the AuthInterceptor to have already extracted the token and added it to the context.
 func (h *RegionalGatewayHandler) TokenValidationInterceptor() connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
@@ -121,18 +122,10 @@ func (h *RegionalGatewayHandler) TokenValidationInterceptor() connect.UnaryInter
 				return next(ctx, req)
 			}
 
-			// Extract and validate token
-			authHeader := req.Header().Get("Authorization")
-			if authHeader == "" {
-				return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("authorization header required"))
-			}
-
-			// Extract Bearer token
-			token := ""
-			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-				token = authHeader[7:]
-			} else {
-				return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid authorization header format"))
+			// Get token from context (added by AuthInterceptor)
+			token, ok := ctx.Value("token").(string)
+			if !ok || token == "" {
+				return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("no authentication token found"))
 			}
 
 			// Validate token
@@ -143,8 +136,7 @@ func (h *RegionalGatewayHandler) TokenValidationInterceptor() connect.UnaryInter
 
 			// Add claims to context for use in handlers
 			ctx = context.WithValue(ctx, "claims", claims)
-			// Also add the raw token for server context extraction
-			ctx = context.WithValue(ctx, "token", token)
+			// Token is already in context from AuthInterceptor
 			return next(ctx, req)
 		}
 	}

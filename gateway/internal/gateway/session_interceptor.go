@@ -121,13 +121,24 @@ func (i *SessionCookieInterceptor) handleSOLSessionResponse(
 		return
 	}
 
-	// Set session cookie
-	cookie := session.CreateSessionCookie(webSession.ID, int(session.DefaultSessionDuration.Seconds()))
+	// Get HTTP request from context to detect scheme
+	httpReq, ok := ctx.Value(httpRequestKey{}).(*http.Request)
+	var cookie *http.Cookie
+	if ok {
+		// Use request-aware cookie creation for proper HTTP/HTTPS detection
+		cookie = session.CreateSessionCookieForRequest(webSession.ID, int(session.DefaultSessionDuration.Seconds()), httpReq)
+	} else {
+		// Fallback to default (assumes HTTPS)
+		cookie = session.CreateSessionCookie(webSession.ID, int(session.DefaultSessionDuration.Seconds()))
+	}
+
 	http.SetCookie(w, cookie)
 
 	log.Debug().
 		Str("session_id", solResp.SessionId).
 		Str("web_session_id", webSession.ID).
+		Bool("cookie_secure", cookie.Secure).
+		Int("cookie_samesite", int(cookie.SameSite)).
 		Msg("Set session cookie for SOL console")
 }
 
@@ -171,13 +182,24 @@ func (i *SessionCookieInterceptor) handleVNCSessionResponse(
 		return
 	}
 
-	// Set session cookie
-	cookie := session.CreateSessionCookie(webSession.ID, int(session.DefaultSessionDuration.Seconds()))
+	// Get HTTP request from context to detect scheme
+	httpReq, ok := ctx.Value(httpRequestKey{}).(*http.Request)
+	var cookie *http.Cookie
+	if ok {
+		// Use request-aware cookie creation for proper HTTP/HTTPS detection
+		cookie = session.CreateSessionCookieForRequest(webSession.ID, int(session.DefaultSessionDuration.Seconds()), httpReq)
+	} else {
+		// Fallback to default (assumes HTTPS)
+		cookie = session.CreateSessionCookie(webSession.ID, int(session.DefaultSessionDuration.Seconds()))
+	}
+
 	http.SetCookie(w, cookie)
 
 	log.Debug().
 		Str("session_id", vncResp.SessionId).
 		Str("web_session_id", webSession.ID).
+		Bool("cookie_secure", cookie.Secure).
+		Int("cookie_samesite", int(cookie.SameSite)).
 		Msg("Set session cookie for VNC console")
 }
 

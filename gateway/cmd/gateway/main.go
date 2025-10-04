@@ -19,8 +19,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	baseconf "core/config"
-	streaming "core/streaming"
-	gatewayv1 "gateway/gen/gateway/v1"
+	"core/streaming"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 	"gateway/internal/gateway"
 	"gateway/internal/session"
@@ -67,11 +66,14 @@ func main() {
 	ctx := context.Background()
 	gatewayHandler.StartPeriodicRegistration(ctx)
 
-	// Create interceptors for delegated token validation and session management
+	// Create interceptors for authentication, token validation, and session management
+	// Order matters: auth extracts JWT → token validation validates it → session sets cookies
+	authInterceptor := gateway.NewAuthInterceptor(gatewayHandler)
 	sessionInterceptor := gateway.NewSessionCookieInterceptor(gatewayHandler)
 	interceptors := connect.WithInterceptors(
-		gatewayHandler.TokenValidationInterceptor(),
-		sessionInterceptor,
+		authInterceptor, // 1. Extract JWT from header or session cookie
+		gatewayHandler.TokenValidationInterceptor(), // 2. Validate the JWT token
+		sessionInterceptor,                          // 3. Set session cookies for CreateSOLSession/CreateVNCSession
 	)
 
 	// Create the Connect service handler
@@ -109,9 +111,10 @@ func setupRouter(path, region string, handler http.Handler, gatewayHandler *gate
 	// Create a new Gorilla Mux router
 	r := mux.NewRouter()
 
-	// Wrap Connect handler to inject HTTP response writer into context
+	// Wrap Connect handler to inject HTTP request and response writer into context
 	wrappedHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := gateway.WithHTTPResponseWriter(req.Context(), w)
+		ctx = gateway.WithHTTPRequest(ctx, req)
 		handler.ServeHTTP(w, req.WithContext(ctx))
 	})
 
