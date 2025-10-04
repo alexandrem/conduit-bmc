@@ -100,6 +100,8 @@ Every service exposes:
 - **[System Design](docs/DESIGN.md)** - Complete architecture and design
   decisions
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - High-level system topology
+- **[Authentication Architecture](docs/AUTH.md)** - Authentication architecture
+- **[Web Console](docs/WEB.md)** - Web console UI overview
 - **[Development Guide](docs/DEVELOPMENT.md)** - Complete setup and development
   workflow
 
