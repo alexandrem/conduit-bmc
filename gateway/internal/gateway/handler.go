@@ -17,6 +17,7 @@ import (
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 	"gateway/internal/agent"
+	"gateway/internal/session"
 	"gateway/pkg/server_context"
 	managerv1 "manager/gen/manager/v1"
 	"manager/gen/manager/v1/managerv1connect"
@@ -67,6 +68,8 @@ type RegionalGatewayHandler struct {
 	bmcEndpointMapping map[string]*domain.AgentBMCMapping
 	// Unified console session store (works for both VNC and SOL)
 	consoleSessions map[string]*ConsoleSession
+	// Web session store for cookie-based authentication
+	webSessionStore session.Store
 	mu              sync.RWMutex
 }
 
@@ -102,6 +105,7 @@ func NewGatewayHandler(
 		testMode:               false,
 		agentRegistry:          agent.NewRegistry(),
 		bmcEndpointMapping:     make(map[string]*domain.AgentBMCMapping),
+		webSessionStore:        session.NewInMemoryStore(),
 		consoleSessions:        make(map[string]*ConsoleSession),
 	}
 }
@@ -1178,20 +1182,20 @@ func (h *RegionalGatewayHandler) reportEndpointsToManager(ctx context.Context) e
 func convertBMCTypeToManagerProto(bmcType types.BMCType) managerv1.BMCType {
 	switch bmcType {
 	case types.BMCTypeIPMI:
-		return managerv1.BMCType_BMC_TYPE_IPMI
+		return managerv1.BMCType_BMC_IPMI
 	case types.BMCTypeRedfish:
-		return managerv1.BMCType_BMC_TYPE_REDFISH
+		return managerv1.BMCType_BMC_REDFISH
 	default:
-		return managerv1.BMCType_BMC_TYPE_UNSPECIFIED
+		return managerv1.BMCType_BMC_UNSPECIFIED
 	}
 }
 
 // convertProtoBMCTypeToModels converts from gateway protobuf BMCType to types.BMCType
 func convertProtoBMCTypeToModels(protoType gatewayv1.BMCType) types.BMCType {
 	switch protoType {
-	case gatewayv1.BMCType_BMC_TYPE_IPMI:
+	case gatewayv1.BMCType_BMC_IPMI:
 		return types.BMCTypeIPMI
-	case gatewayv1.BMCType_BMC_TYPE_REDFISH:
+	case gatewayv1.BMCType_BMC_REDFISH:
 		return types.BMCTypeRedfish
 	default:
 		return types.BMCTypeIPMI // Default fallback, but this should be rare

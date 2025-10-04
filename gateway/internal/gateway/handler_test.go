@@ -163,7 +163,7 @@ func TestRegisterAgent(t *testing.T) {
 			ServerId: "test-server-1",
 			ControlEndpoint: &gatewayv1.BMCControlEndpoint{
 				Endpoint: "192.168.1.100:623",
-				Type:     gatewayv1.BMCType_BMC_TYPE_IPMI,
+				Type:     gatewayv1.BMCType_BMC_IPMI,
 			},
 			Features: []string{"power", "console"},
 			Status:   "reachable",
@@ -249,7 +249,7 @@ func TestAgentHeartbeat(t *testing.T) {
 				ServerId: "test-server-2",
 				ControlEndpoint: &gatewayv1.BMCControlEndpoint{
 					Endpoint: "192.168.1.100:623",
-					Type:     gatewayv1.BMCType_BMC_TYPE_REDFISH,
+					Type:     gatewayv1.BMCType_BMC_REDFISH,
 				},
 				Features: []string{"power", "console"},
 				Status:   "reachable",

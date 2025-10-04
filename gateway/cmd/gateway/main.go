@@ -23,6 +23,7 @@ import (
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 	"gateway/internal/gateway"
+	"gateway/internal/session"
 	gatewaystreaming "gateway/internal/streaming"
 	"gateway/internal/webui"
 	"gateway/pkg/config"
@@ -66,8 +67,12 @@ func main() {
 	ctx := context.Background()
 	gatewayHandler.StartPeriodicRegistration(ctx)
 
-	// Create interceptors for delegated token validation
-	interceptors := connect.WithInterceptors(gatewayHandler.TokenValidationInterceptor())
+	// Create interceptors for delegated token validation and session management
+	sessionInterceptor := gateway.NewSessionCookieInterceptor(gatewayHandler)
+	interceptors := connect.WithInterceptors(
+		gatewayHandler.TokenValidationInterceptor(),
+		sessionInterceptor,
+	)
 
 	// Create the Connect service handler
 	path, handler := gatewayv1connect.NewGatewayServiceHandler(
@@ -104,8 +109,14 @@ func setupRouter(path, region string, handler http.Handler, gatewayHandler *gate
 	// Create a new Gorilla Mux router
 	r := mux.NewRouter()
 
-	// Register the provided path with the handler
-	r.PathPrefix(path).Handler(handler)
+	// Wrap Connect handler to inject HTTP response writer into context
+	wrappedHandler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx := gateway.WithHTTPResponseWriter(req.Context(), w)
+		handler.ServeHTTP(w, req.WithContext(ctx))
+	})
+
+	// Register the provided path with the wrapped handler
+	r.PathPrefix(path).Handler(wrappedHandler)
 
 	// Add health check endpoint
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -340,6 +351,28 @@ func vncViewerHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *ga
 		return
 	}
 
+	// Find the associated web session and set the cookie
+	// The web session was created when CreateVNCSession was called
+	sessionStore := gatewayHandler.GetWebSessionStore()
+
+	// Search for web session with this VNC session ID
+	webSession := findWebSessionByVNCSessionID(sessionStore, sessionID)
+	if webSession != nil {
+		// Set the session cookie for the browser (infer security from request)
+		cookie := session.CreateSessionCookieForRequest(webSession.ID, int(session.DefaultSessionDuration.Seconds()), r)
+		http.SetCookie(w, cookie)
+
+		log.Debug().
+			Str("vnc_session_id", sessionID).
+			Str("web_session_id", webSession.ID).
+			Bool("secure", cookie.Secure).
+			Msg("Set session cookie for VNC viewer")
+	} else {
+		log.Warn().
+			Str("vnc_session_id", sessionID).
+			Msg("No web session found for VNC session - cookie not set")
+	}
+
 	// Generate WebSocket URL for this session
 	protocol := "ws"
 	if r.TLS != nil {
@@ -412,6 +445,28 @@ func consoleViewerHandler(w http.ResponseWriter, r *http.Request, gatewayHandler
 	if !exists {
 		http.Error(w, "Console session not found or expired", http.StatusNotFound)
 		return
+	}
+
+	// Find the associated web session and set the cookie
+	// The web session was created when CreateSOLSession was called
+	sessionStore := gatewayHandler.GetWebSessionStore()
+
+	// Search for web session with this SOL session ID
+	webSession := findWebSessionBySOLSessionID(sessionStore, sessionID)
+	if webSession != nil {
+		// Set the session cookie for the browser (infer security from request)
+		cookie := session.CreateSessionCookieForRequest(webSession.ID, int(session.DefaultSessionDuration.Seconds()), r)
+		http.SetCookie(w, cookie)
+
+		log.Debug().
+			Str("sol_session_id", sessionID).
+			Str("web_session_id", webSession.ID).
+			Bool("secure", cookie.Secure).
+			Msg("Set session cookie for console viewer")
+	} else {
+		log.Warn().
+			Str("sol_session_id", sessionID).
+			Msg("No web session found for SOL session - cookie not set")
 	}
 
 	// Generate WebSocket URL for this session
@@ -520,18 +575,11 @@ func powerOperationHandler(w http.ResponseWriter, r *http.Request, gatewayHandle
 		return
 	}
 
-	// Extract and validate Bearer token
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization header required", http.StatusUnauthorized)
-		return
-	}
-
-	token := ""
-	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-		token = authHeader[7:]
-	} else {
-		http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+	// Extract JWT token from session cookie or Authorization header
+	// Try session cookie first (for web console), then fallback to header (for CLI/API)
+	token, err := getJWTFromRequest(r, gatewayHandler)
+	if err != nil {
+		http.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -548,25 +596,25 @@ func powerOperationHandler(w http.ResponseWriter, r *http.Request, gatewayHandle
 	reqWrapper.Header().Set("Authorization", "Bearer "+token)
 
 	// Map REST operation to RPC call
-	var err error
+	var rpcErr error
 	switch operation {
 	case "on":
-		_, err = gatewayHandler.PowerOn(ctx, reqWrapper)
+		_, rpcErr = gatewayHandler.PowerOn(ctx, reqWrapper)
 	case "off":
-		_, err = gatewayHandler.PowerOff(ctx, reqWrapper)
+		_, rpcErr = gatewayHandler.PowerOff(ctx, reqWrapper)
 	case "cycle":
-		_, err = gatewayHandler.PowerCycle(ctx, reqWrapper)
+		_, rpcErr = gatewayHandler.PowerCycle(ctx, reqWrapper)
 	case "reset":
-		_, err = gatewayHandler.Reset(ctx, reqWrapper)
+		_, rpcErr = gatewayHandler.Reset(ctx, reqWrapper)
 	default:
 		http.Error(w, "Invalid operation", http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err != nil {
+	if rpcErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		w.Write([]byte(`{"error": "` + rpcErr.Error() + `"}`))
 	} else {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"success": true, "message": "Operation completed"}`))
@@ -583,18 +631,10 @@ func powerStatusHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *
 		return
 	}
 
-	// Extract and validate Bearer token
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization header required", http.StatusUnauthorized)
-		return
-	}
-
-	token := ""
-	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-		token = authHeader[7:]
-	} else {
-		http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+	// Extract JWT token from session cookie or Authorization header
+	token, err := getJWTFromRequest(r, gatewayHandler)
+	if err != nil {
+		http.Error(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -633,6 +673,51 @@ func powerStatusHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(status))
+}
+
+// findWebSessionBySOLSessionID finds a web session by SOL session ID
+func findWebSessionBySOLSessionID(sessionStore session.Store, solSessionID string) *session.WebSession {
+	webSession, err := sessionStore.GetBySOLSessionID(solSessionID)
+	if err != nil {
+		return nil
+	}
+	return webSession
+}
+
+// findWebSessionByVNCSessionID finds a web session by VNC session ID
+func findWebSessionByVNCSessionID(sessionStore session.Store, vncSessionID string) *session.WebSession {
+	webSession, err := sessionStore.GetByVNCSessionID(vncSessionID)
+	if err != nil {
+		return nil
+	}
+	return webSession
+}
+
+// getJWTFromRequest extracts JWT token from session cookie or Authorization header
+// Priority: 1. Session cookie (for web console), 2. Authorization header (for CLI/API)
+func getJWTFromRequest(r *http.Request, gatewayHandler *gateway.RegionalGatewayHandler) (string, error) {
+	// Import session package at the top of the file
+	// Try session cookie first
+	sessionStore := gatewayHandler.GetWebSessionStore()
+	sessionID, err := session.GetSessionIDFromCookie(r)
+	if err == nil {
+		// Session cookie found - retrieve JWT from session
+		webSession, err := sessionStore.Get(sessionID)
+		if err == nil {
+			// Update activity timestamp
+			sessionStore.UpdateActivity(sessionID)
+			return webSession.CustomerJWT, nil
+		}
+		// Session expired or invalid - fall through to header auth
+	}
+
+	// Fallback to Authorization header (for CLI and direct API access)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", fmt.Errorf("no authentication provided")
+	}
+
+	return session.ExtractJWTFromAuthHeader(authHeader)
 }
 
 // handleSimpleVNCTest - simple test to verify WebSocket is working before trying full VNC protocol
