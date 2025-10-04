@@ -3,9 +3,9 @@
 This document describes the complete authentication and authorization flow for the BMC management system, from initial login through web console access.
 
 **Current Authentication Methods**:
-- Email/Password (implemented)
-- API Keys (implemented)
-- **OIDC/OAuth2** (coming soon - see `docs/features/002-oidc-authentication.md`)
+- Email/Password (partial)
+- API Keys (partial)
+- **OIDC/OAuth2** (future - see `docs/features/002-oidc-authentication.md`)
 
 ## Architecture Overview
 
