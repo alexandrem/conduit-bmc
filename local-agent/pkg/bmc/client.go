@@ -26,8 +26,20 @@ func NewClient(ipmiClient *ipmi.Client, redfishClient *redfish.Client) *Client {
 
 // GetPowerState retrieves the current power state of a server
 func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (string, error) {
+	if server == nil {
+		return "", fmt.Errorf("server is nil")
+	}
+
 	if server.ControlEndpoint == nil {
 		return "", fmt.Errorf("server has no control endpoint")
+	}
+
+	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+		return "", fmt.Errorf("IPMI client is nil")
+	}
+
+	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+		return "", fmt.Errorf("Redfish client is nil")
 	}
 
 	endpoint := server.ControlEndpoint.Endpoint
@@ -56,8 +68,20 @@ func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (s
 
 // PowerOn powers on a server
 func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
+	if server == nil {
+		return fmt.Errorf("server is nil")
+	}
+
 	if server.ControlEndpoint == nil {
 		return fmt.Errorf("server has no control endpoint")
+	}
+
+	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+		return fmt.Errorf("IPMI client is nil")
+	}
+
+	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+		return fmt.Errorf("Redfish client is nil")
 	}
 
 	endpoint := server.ControlEndpoint.Endpoint
@@ -84,8 +108,20 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 
 // PowerOff powers off a server
 func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
+	if server == nil {
+		return fmt.Errorf("server is nil")
+	}
+
 	if server.ControlEndpoint == nil {
 		return fmt.Errorf("server has no control endpoint")
+	}
+
+	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+		return fmt.Errorf("IPMI client is nil")
+	}
+
+	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+		return fmt.Errorf("Redfish client is nil")
 	}
 
 	endpoint := server.ControlEndpoint.Endpoint
@@ -112,8 +148,20 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 
 // PowerCycle power cycles a server
 func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error {
+	if server == nil {
+		return fmt.Errorf("server is nil")
+	}
+
 	if server.ControlEndpoint == nil {
 		return fmt.Errorf("server has no control endpoint")
+	}
+
+	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+		return fmt.Errorf("IPMI client is nil")
+	}
+
+	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+		return fmt.Errorf("Redfish client is nil")
 	}
 
 	endpoint := server.ControlEndpoint.Endpoint
@@ -140,8 +188,20 @@ func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error
 
 // Reset resets a server
 func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
+	if server == nil {
+		return fmt.Errorf("server is nil")
+	}
+
 	if server.ControlEndpoint == nil {
 		return fmt.Errorf("server has no control endpoint")
+	}
+
+	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+		return fmt.Errorf("IPMI client is nil")
+	}
+
+	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+		return fmt.Errorf("Redfish client is nil")
 	}
 
 	endpoint := server.ControlEndpoint.Endpoint

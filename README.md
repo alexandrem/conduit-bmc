@@ -21,12 +21,12 @@ providers who need to give customers secure access to their server consoles.
 ## 🖥️ Supported BMC Protocols
 
 **Control Protocols:**
-- ✅ **IPMI v2.0 (RMCP+)** — Power management, sensor monitoring, event logs
+- ✅ **IPMI v2.0 (RMCP+) / v1.5 (lan)** — Power management with auto-fallback for compatibility
 - ✅ **Redfish** — standardized REST API for server management (basic operations tested)
 
 **Console Access:**
 - ✅ **Serial Console (SOL)**
-  - **IPMI SOL (Serial-over-LAN)** over **RCMP+**
+  - **IPMI SOL (Serial-over-LAN)** over **RCMP+ / lan** (auto-fallback)
   - **Redfish Serial Console** over **WebSocket**
 - ✅ **Graphical Console (KVM / VNC)**
   - **Native VNC (RFB protocol)** — direct TCP port 5900 access (where supported)

@@ -6,12 +6,13 @@ FROM golang:1.25-alpine AS base
 # Install system dependencies:
 # - git, curl, build-base: Build toolchain
 # - freeipmi: IPMI Serial-over-LAN (SOL) console support via ipmiconsole subprocess
-#   (IPMI power management uses go-ipmi library, no binary needed)
+# - ipmitool: IPMI power management via ipmitool subprocess (more reliable than go-ipmi library)
 RUN apk add --no-cache \
     git \
     curl \
     build-base \
-    freeipmi
+    freeipmi \
+    ipmitool
 
 # Development build stage with hot reloading tools
 FROM base AS build
