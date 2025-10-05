@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	baseconf "core/config"
+	managerv1 "manager/gen/manager/v1"
 	"manager/gen/manager/v1/managerv1connect"
 	"manager/internal/database"
 	"manager/internal/manager"
@@ -18,6 +19,7 @@ import (
 	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func init() {
@@ -85,6 +87,35 @@ func main() {
 		w.Write([]byte(`{"status": "healthy"}`))
 	})
 
+	// Add status endpoint (wraps GetSystemStatus RPC)
+	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Call GetSystemStatus RPC handler
+		rpcReq := connect.NewRequest(&managerv1.GetSystemStatusRequest{})
+		rpcResp, err := managerHandler.GetSystemStatus(ctx, rpcReq)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get system status")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "Failed to get system status"}`))
+			return
+		}
+
+		// Convert protobuf response to JSON
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		// Use protobuf's JSON marshaler for proper formatting
+		jsonBytes, err := protojson.Marshal(rpcResp.Msg)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to marshal status response")
+			w.Write([]byte(`{"error": "Failed to marshal response"}`))
+			return
+		}
+		w.Write(jsonBytes)
+	})
+
 	// Add CORS middleware for web clients
 	corsHandler := addCORS(mux)
 
@@ -105,6 +136,7 @@ func main() {
 		Bool("rate_limiting", cfg.Manager.RateLimit.Enabled).
 		Msg("Starting manager server")
 	log.Info().Msgf("Health check: http://%s/health", cfg.GetListenAddress())
+	log.Info().Msgf("System status: http://%s/status", cfg.GetListenAddress())
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("Server failed to start")
