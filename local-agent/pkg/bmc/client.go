@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	gatewayv1 "gateway/gen/gateway/v1"
+
 	"core/types"
 	"local-agent/internal/discovery"
 	"local-agent/pkg/ipmi"
@@ -224,4 +226,167 @@ func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
 	default:
 		return fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
 	}
+}
+
+// GetBMCInfo retrieves detailed BMC hardware information
+func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gatewayv1.BMCInfo, error) {
+	if server == nil {
+		return nil, fmt.Errorf("server is nil")
+	}
+
+	if server.ControlEndpoint == nil {
+		return nil, fmt.Errorf("server has no control endpoint")
+	}
+
+	endpoint := server.ControlEndpoint.Endpoint
+	username := server.ControlEndpoint.Username
+	password := server.ControlEndpoint.Password
+
+	switch server.ControlEndpoint.Type {
+	case types.BMCTypeIPMI:
+		if c.ipmiClient == nil {
+			return nil, fmt.Errorf("IPMI client is nil")
+		}
+
+		mcInfo, err := c.ipmiClient.GetMCInfo(ctx, endpoint, username, password)
+		if err != nil {
+			return nil, fmt.Errorf("IPMI GetMCInfo failed: %w", err)
+		}
+
+		// Parse additional device support
+		additionalSupport := []string{}
+		if support, ok := mcInfo["Additional Device Support"]; ok && support != "" {
+			// Split comma-separated values
+			parts := splitAndTrim(support, ",")
+			additionalSupport = parts
+		}
+
+		// Convert to protobuf format
+		ipmiInfo := &gatewayv1.IPMIInfo{
+			DeviceId:                mcInfo["Device ID"],
+			DeviceRevision:          mcInfo["Device Revision"],
+			FirmwareRevision:        mcInfo["Firmware Revision"],
+			IpmiVersion:             mcInfo["IPMI Version"],
+			ManufacturerId:          mcInfo["Manufacturer ID"],
+			ManufacturerName:        mcInfo["Manufacturer Name"],
+			ProductId:               mcInfo["Product ID"],
+			DeviceAvailable:         mcInfo["Device Available"] == "yes",
+			ProvidesDeviceSdrs:      mcInfo["Provides Device SDRs"] == "yes",
+			AdditionalDeviceSupport: additionalSupport,
+		}
+
+		return &gatewayv1.BMCInfo{
+			BmcType: "ipmi",
+			Details: &gatewayv1.BMCInfo_IpmiInfo{IpmiInfo: ipmiInfo},
+		}, nil
+
+	case types.BMCTypeRedfish:
+		if c.redfishClient == nil {
+			return nil, fmt.Errorf("Redfish client is nil")
+		}
+
+		manager, netProto, err := c.redfishClient.GetManagerInfo(ctx, endpoint, username, password)
+		if err != nil {
+			return nil, fmt.Errorf("Redfish GetManagerInfo failed: %w", err)
+		}
+
+		// Build network protocols list
+		networkProtocols := []*gatewayv1.NetworkProtocol{}
+		if netProto != nil {
+			if netProto.SSH.ProtocolEnabled {
+				networkProtocols = append(networkProtocols, &gatewayv1.NetworkProtocol{
+					Name:    "SSH",
+					Port:    netProto.SSH.Port,
+					Enabled: true,
+				})
+			}
+			if netProto.HTTPS.ProtocolEnabled {
+				networkProtocols = append(networkProtocols, &gatewayv1.NetworkProtocol{
+					Name:    "HTTPS",
+					Port:    netProto.HTTPS.Port,
+					Enabled: true,
+				})
+			}
+			if netProto.HTTP.ProtocolEnabled {
+				networkProtocols = append(networkProtocols, &gatewayv1.NetworkProtocol{
+					Name:    "HTTP",
+					Port:    netProto.HTTP.Port,
+					Enabled: true,
+				})
+			}
+			if netProto.IPMI.ProtocolEnabled {
+				networkProtocols = append(networkProtocols, &gatewayv1.NetworkProtocol{
+					Name:    "IPMI",
+					Port:    netProto.IPMI.Port,
+					Enabled: true,
+				})
+			}
+		}
+
+		// Build status string
+		status := manager.Status.State
+		if manager.Status.Health != "" {
+			status = status + " (" + manager.Status.Health + ")"
+		}
+
+		redfishInfo := &gatewayv1.RedfishInfo{
+			ManagerId:        manager.ID,
+			Name:             manager.Name,
+			Model:            manager.Model,
+			Manufacturer:     manager.Manufacturer,
+			FirmwareVersion:  manager.FirmwareVersion,
+			Status:           status,
+			PowerState:       string(manager.PowerState),
+			NetworkProtocols: networkProtocols,
+		}
+
+		return &gatewayv1.BMCInfo{
+			BmcType: "redfish",
+			Details: &gatewayv1.BMCInfo_RedfishInfo{RedfishInfo: redfishInfo},
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+	}
+}
+
+// splitAndTrim splits a string by delimiter and trims whitespace from each part
+func splitAndTrim(s, sep string) []string {
+	if s == "" {
+		return []string{}
+	}
+	parts := []string{}
+	for _, part := range splitString(s, sep) {
+		trimmed := trimSpace(part)
+		if trimmed != "" {
+			parts = append(parts, trimmed)
+		}
+	}
+	return parts
+}
+
+func splitString(s, sep string) []string {
+	var result []string
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if i+len(sep) <= len(s) && s[i:i+len(sep)] == sep {
+			result = append(result, s[start:i])
+			start = i + len(sep)
+			i += len(sep) - 1
+		}
+	}
+	result = append(result, s[start:])
+	return result
+}
+
+func trimSpace(s string) string {
+	start := 0
+	end := len(s)
+	for start < end && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n' || s[start] == '\r') {
+		start++
+	}
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n' || s[end-1] == '\r') {
+		end--
+	}
+	return s[start:end]
 }

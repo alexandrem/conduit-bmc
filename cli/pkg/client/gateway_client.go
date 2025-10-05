@@ -220,6 +220,21 @@ func (c *RegionalGatewayClient) GetPowerStatusWithToken(ctx context.Context, ser
 	return resp.Msg.State.String(), nil
 }
 
+func (c *RegionalGatewayClient) GetBMCInfoWithToken(ctx context.Context, serverID, serverToken string) (*gatewayv1.BMCInfo, error) {
+	req := connect.NewRequest(&gatewayv1.GetBMCInfoRequest{
+		ServerId: serverID,
+	})
+
+	c.addAuthHeadersWithToken(req, serverToken)
+
+	resp, err := c.client.GetBMCInfo(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get BMC info: %w", err)
+	}
+
+	return resp.Msg.Info, nil
+}
+
 // CreateVNCSession creates a new VNC console session
 func (c *RegionalGatewayClient) CreateVNCSession(ctx context.Context, serverID string) (*VNCSession, error) {
 	req := connect.NewRequest(&gatewayv1.CreateVNCSessionRequest{
@@ -470,6 +485,8 @@ func (c *RegionalGatewayClient) addAuthHeadersWithToken(req interface{}, serverT
 	case *connect.Request[gatewayv1.PowerOperationRequest]:
 		addAuthHeaders(r, serverToken)
 	case *connect.Request[gatewayv1.PowerStatusRequest]:
+		addAuthHeaders(r, serverToken)
+	case *connect.Request[gatewayv1.GetBMCInfoRequest]:
 		addAuthHeaders(r, serverToken)
 	case *connect.Request[gatewayv1.CreateVNCSessionRequest]:
 		addAuthHeaders(r, serverToken)

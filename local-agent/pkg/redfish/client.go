@@ -66,6 +66,51 @@ type BMCInfo struct {
 	Features        []string
 }
 
+// Manager represents a Redfish Manager (BMC)
+type Manager struct {
+	ID              string     `json:"Id"`
+	Name            string     `json:"Name"`
+	ManagerType     string     `json:"ManagerType"`
+	Model           string     `json:"Model"`
+	FirmwareVersion string     `json:"FirmwareVersion"`
+	Manufacturer    string     `json:"Manufacturer"`
+	PowerState      PowerState `json:"PowerState"`
+	Status          struct {
+		State  string `json:"State"`
+		Health string `json:"Health"`
+	} `json:"Status"`
+	NetworkProtocol struct {
+		ODataID string `json:"@odata.id"`
+	} `json:"NetworkProtocol"`
+}
+
+// NetworkProtocol represents Redfish network protocol information
+type NetworkProtocol struct {
+	ID          string `json:"Id"`
+	Name        string `json:"Name"`
+	Description string `json:"Description"`
+	Status      struct {
+		State  string `json:"State"`
+		Health string `json:"Health"`
+	} `json:"Status"`
+	HTTP struct {
+		ProtocolEnabled bool  `json:"ProtocolEnabled"`
+		Port            int32 `json:"Port"`
+	} `json:"HTTP"`
+	HTTPS struct {
+		ProtocolEnabled bool  `json:"ProtocolEnabled"`
+		Port            int32 `json:"Port"`
+	} `json:"HTTPS"`
+	SSH struct {
+		ProtocolEnabled bool  `json:"ProtocolEnabled"`
+		Port            int32 `json:"Port"`
+	} `json:"SSH"`
+	IPMI struct {
+		ProtocolEnabled bool  `json:"ProtocolEnabled"`
+		Port            int32 `json:"Port"`
+	} `json:"IPMI"`
+}
+
 func NewClient() *Client {
 	// Create HTTP client with insecure TLS (common for BMCs)
 	httpClient := &http.Client{
@@ -311,6 +356,90 @@ func (c *Client) performPowerAction(ctx context.Context, endpoint, username, pas
 
 	log.Debug().Str("action", action).Msg("Power action completed")
 	return nil
+}
+
+// GetManagerInfo retrieves Manager (BMC) information from Redfish
+func (c *Client) GetManagerInfo(ctx context.Context, endpoint, username, password string) (*Manager, *NetworkProtocol, error) {
+	log.Debug().Str("endpoint", endpoint).Msg("Getting Manager info")
+
+	// Get Managers collection
+	managersURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/Managers"
+	req, err := http.NewRequestWithContext(ctx, "GET", managersURL, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	if username != "" && password != "" {
+		req.SetBasicAuth(username, password)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer resp.Body.Close()
+
+	var managersCollection struct {
+		Members []struct {
+			ODataID string `json:"@odata.id"`
+		} `json:"Members"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&managersCollection); err != nil {
+		return nil, nil, fmt.Errorf("failed to decode managers collection: %w", err)
+	}
+
+	if len(managersCollection.Members) == 0 {
+		return nil, nil, fmt.Errorf("no managers found")
+	}
+
+	// Get the first manager (BMC)
+	managerURL := strings.TrimSuffix(endpoint, "/") + managersCollection.Members[0].ODataID
+	req, err = http.NewRequestWithContext(ctx, "GET", managerURL, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	if username != "" && password != "" {
+		req.SetBasicAuth(username, password)
+	}
+
+	resp, err = c.httpClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer resp.Body.Close()
+
+	var manager Manager
+	if err := json.NewDecoder(resp.Body).Decode(&manager); err != nil {
+		return nil, nil, fmt.Errorf("failed to decode manager: %w", err)
+	}
+
+	// Get NetworkProtocol if available
+	var netProto *NetworkProtocol
+	if manager.NetworkProtocol.ODataID != "" {
+		netProtoURL := strings.TrimSuffix(endpoint, "/") + manager.NetworkProtocol.ODataID
+		req, err = http.NewRequestWithContext(ctx, "GET", netProtoURL, nil)
+		if err == nil {
+			req.Header.Set("Accept", "application/json")
+			if username != "" && password != "" {
+				req.SetBasicAuth(username, password)
+			}
+
+			resp, err = c.httpClient.Do(req)
+			if err == nil {
+				defer resp.Body.Close()
+				var np NetworkProtocol
+				if err := json.NewDecoder(resp.Body).Decode(&np); err == nil {
+					netProto = &np
+				}
+			}
+		}
+	}
+
+	return &manager, netProto, nil
 }
 
 // GetSensors retrieves sensor readings from the BMC

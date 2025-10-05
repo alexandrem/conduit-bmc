@@ -543,6 +543,79 @@ func (h *RegionalGatewayHandler) GetPowerStatus(
 	return resp, nil
 }
 
+// GetBMCInfo retrieves detailed BMC hardware information
+func (h *RegionalGatewayHandler) GetBMCInfo(
+	ctx context.Context,
+	req *connect.Request[gatewayv1.GetBMCInfoRequest],
+) (*connect.Response[gatewayv1.GetBMCInfoResponse], error) {
+	// Extract server context from JWT token
+	serverContext, err := h.extractServerContextFromJWT(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid server context: %w", err))
+	}
+
+	// Validate server ID matches token context
+	if serverContext.ServerID != req.Msg.ServerId {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("server ID mismatch"))
+	}
+
+	// Check permissions - BMC info is similar to power status, requires power:read
+	if !serverContext.HasPermission("power:read") {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("insufficient permissions for BMC info"))
+	}
+
+	// Check if BMC endpoint is available through an agent
+	h.mu.RLock()
+	mapping, exists := h.bmcEndpointMapping[serverContext.BMCEndpoint]
+	h.mu.RUnlock()
+
+	if !exists {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("BMC endpoint not found: %s", serverContext.BMCEndpoint))
+	}
+
+	agentInfo := h.agentRegistry.Get(mapping.AgentID)
+	if agentInfo == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("agent not available: %s", mapping.AgentID))
+	}
+
+	log.Info().
+		Str("server_id", serverContext.ServerID).
+		Str("bmc_endpoint", serverContext.BMCEndpoint).
+		Str("agent_id", mapping.AgentID).
+		Str("agent_endpoint", agentInfo.Endpoint).
+		Msg("Proxying BMC info request to agent")
+
+	// Create RPC client for the agent
+	agentClient := gatewayv1connect.NewGatewayServiceClient(
+		h.httpClient,
+		agentInfo.Endpoint,
+	)
+
+	// Create request for BMC info
+	agentReq := connect.NewRequest(&gatewayv1.GetBMCInfoRequest{
+		ServerId: serverContext.ServerID,
+	})
+
+	// Call the agent
+	resp, err := agentClient.GetBMCInfo(ctx, agentReq)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("bmc_endpoint", serverContext.BMCEndpoint).
+			Str("agent_id", mapping.AgentID).
+			Msg("BMC info request failed")
+		return nil, err
+	}
+
+	log.Info().
+		Str("server_id", serverContext.ServerID).
+		Str("bmc_endpoint", serverContext.BMCEndpoint).
+		Str("bmc_type", resp.Msg.Info.BmcType).
+		Msg("BMC info retrieved")
+
+	return resp, nil
+}
+
 // Helper method to proxy power operations to Local Agents.
 func (h *RegionalGatewayHandler) proxyPowerOperation(
 	ctx context.Context,

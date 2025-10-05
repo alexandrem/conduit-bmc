@@ -192,6 +192,76 @@ func (c *SubprocessClient) GetBMCInfo(ctx context.Context, endpoint, username, p
 	return info, nil
 }
 
+// GetMCInfo gets Management Controller information using ipmitool mc info
+func (c *SubprocessClient) GetMCInfo(ctx context.Context, endpoint, username, password string) (map[string]string, error) {
+	output, err := c.runIPMITool(ctx, endpoint, username, password, "mc", "info")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get MC info: %w", err)
+	}
+
+	info := make(map[string]string)
+
+	// Parse output line by line
+	// Example format:
+	// Device ID                 : 32
+	// Device Revision           : 1
+	// Firmware Revision         : 2.76
+	// IPMI Version              : 2.0
+	// Manufacturer ID           : 10876
+	// Manufacturer Name         : Supermicro
+	// Product ID                : 2402
+	// Device Available          : yes
+	// Provides Device SDRs      : yes
+	// Additional Device Support :
+	//     Sensor Device
+	//     SDR Repository Device
+	lines := strings.Split(output, "\n")
+	var additionalSupport []string
+	inAdditionalSection := false
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Check if we're in the Additional Device Support section
+		if strings.HasPrefix(line, "Additional Device Support") {
+			inAdditionalSection = true
+			continue
+		}
+
+		// If line starts with a letter and we're in additional section, it's a new field
+		if inAdditionalSection && len(line) > 0 && line[0] >= 'A' && line[0] <= 'Z' {
+			// Check if it contains a colon (new field)
+			if strings.Contains(line, ":") {
+				inAdditionalSection = false
+			} else {
+				// It's an additional device support item
+				additionalSupport = append(additionalSupport, line)
+				continue
+			}
+		}
+
+		// Parse key-value pairs
+		if strings.Contains(line, ":") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+				info[key] = value
+			}
+		}
+	}
+
+	// Add additional device support as comma-separated string
+	if len(additionalSupport) > 0 {
+		info["Additional Device Support"] = strings.Join(additionalSupport, ", ")
+	}
+
+	return info, nil
+}
+
 // IsAccessible checks if IPMI is accessible using ipmitool
 func (c *SubprocessClient) IsAccessible(ctx context.Context, endpoint string) bool {
 	// Use a simple command with default/no credentials to test accessibility

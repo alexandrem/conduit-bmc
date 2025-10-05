@@ -77,6 +77,12 @@ service GatewayService {
   // Streaming RPC for SOL/Console data (Gateway <-> Agent bidirectional streaming)
   // Gateway initiates this stream to agent, then bidirectionally streams console data
   rpc StreamConsoleData(stream ConsoleDataChunk) returns (stream ConsoleDataChunk);
+
+  // BMC hardware information retrieval
+
+  // GetBMCInfo retrieves detailed hardware information from the BMC
+  // This returns firmware version, manufacturer details, and capabilities
+  rpc GetBMCInfo(GetBMCInfoRequest) returns (GetBMCInfoResponse);
 }
 
 // BMCType specifies the type of BMC interface available on a server
@@ -388,4 +394,58 @@ message ConsoleDataChunk {
   bytes data = 3;                 // Raw console/SOL data
   bool is_handshake = 4;          // True if this is the initial connection handshake
   bool close_stream = 5;          // True to signal stream closure
+}
+
+// BMC Hardware Information Messages
+
+// GetBMCInfoRequest requests hardware information from a BMC
+message GetBMCInfoRequest {
+  string server_id = 1;  // The server ID to retrieve BMC information for
+}
+
+// GetBMCInfoResponse provides BMC hardware information
+message GetBMCInfoResponse {
+  BMCInfo info = 1;  // BMC hardware information
+}
+
+// BMCInfo contains hardware information from a BMC
+message BMCInfo {
+  string bmc_type = 1;  // "ipmi" or "redfish"
+  oneof details {
+    IPMIInfo ipmi_info = 2;
+    RedfishInfo redfish_info = 3;
+  }
+}
+
+// IPMIInfo contains hardware information from IPMI mc info command
+message IPMIInfo {
+  string device_id = 1;
+  string device_revision = 2;
+  string firmware_revision = 3;
+  string ipmi_version = 4;
+  string manufacturer_id = 5;
+  string manufacturer_name = 6;
+  string product_id = 7;
+  bool device_available = 8;
+  bool provides_device_sdrs = 9;
+  repeated string additional_device_support = 10;
+}
+
+// RedfishInfo contains hardware information from Redfish Manager endpoint
+message RedfishInfo {
+  string manager_id = 1;
+  string name = 2;
+  string model = 3;
+  string manufacturer = 4;
+  string firmware_version = 5;
+  string status = 6;
+  string power_state = 7;
+  repeated NetworkProtocol network_protocols = 8;
+}
+
+// NetworkProtocol represents a network service provided by the BMC
+message NetworkProtocol {
+  string name = 1;
+  int32 port = 2;
+  bool enabled = 3;
 }

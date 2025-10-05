@@ -344,6 +344,14 @@ func (c *Client) Reset(ctx context.Context, serverID string) error {
 	return gatewayClient.ResetWithToken(ctx, serverID, serverToken)
 }
 
+func (c *Client) GetBMCInfo(ctx context.Context, serverID string) (*gatewayv1.BMCInfo, error) {
+	gatewayClient, serverToken, err := c.getGatewayClientWithServerToken(ctx, serverID)
+	if err != nil {
+		return nil, err
+	}
+	return gatewayClient.GetBMCInfoWithToken(ctx, serverID, serverToken)
+}
+
 // VNC session management methods
 
 type VNCSession struct {

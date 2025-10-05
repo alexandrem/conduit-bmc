@@ -212,3 +212,24 @@ func (a *LocalAgent) CloseSOLSession(
 ) (*connect.Response[gatewayv1.CloseSOLSessionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("agents do not implement CloseSOLSession"))
 }
+
+func (a *LocalAgent) GetBMCInfo(
+	ctx context.Context,
+	req *connect.Request[gatewayv1.GetBMCInfoRequest],
+) (*connect.Response[gatewayv1.GetBMCInfoResponse], error) {
+	// Find the server by ID
+	server := a.discoveredServers[req.Msg.ServerId]
+	if server == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server %s not found", req.Msg.ServerId))
+	}
+
+	// Get BMC info using BMC client
+	bmcInfo, err := a.bmcClient.GetBMCInfo(ctx, server)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get BMC info: %w", err))
+	}
+
+	return connect.NewResponse(&gatewayv1.GetBMCInfoResponse{
+		Info: bmcInfo,
+	}), nil
+}

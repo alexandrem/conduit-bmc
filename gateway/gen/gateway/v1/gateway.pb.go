@@ -2551,6 +2551,466 @@ func (x *ConsoleDataChunk) GetCloseStream() bool {
 	return false
 }
 
+// GetBMCInfoRequest requests hardware information from a BMC
+type GetBMCInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The server ID to retrieve BMC information for
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBMCInfoRequest) Reset() {
+	*x = GetBMCInfoRequest{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBMCInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBMCInfoRequest) ProtoMessage() {}
+
+func (x *GetBMCInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBMCInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetBMCInfoRequest) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *GetBMCInfoRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+// GetBMCInfoResponse provides BMC hardware information
+type GetBMCInfoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Info          *BMCInfo               `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"` // BMC hardware information
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBMCInfoResponse) Reset() {
+	*x = GetBMCInfoResponse{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBMCInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBMCInfoResponse) ProtoMessage() {}
+
+func (x *GetBMCInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBMCInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetBMCInfoResponse) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *GetBMCInfoResponse) GetInfo() *BMCInfo {
+	if x != nil {
+		return x.Info
+	}
+	return nil
+}
+
+// BMCInfo contains hardware information from a BMC
+type BMCInfo struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	BmcType string                 `protobuf:"bytes,1,opt,name=bmc_type,json=bmcType,proto3" json:"bmc_type,omitempty"` // "ipmi" or "redfish"
+	// Types that are valid to be assigned to Details:
+	//
+	//	*BMCInfo_IpmiInfo
+	//	*BMCInfo_RedfishInfo
+	Details       isBMCInfo_Details `protobuf_oneof:"details"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BMCInfo) Reset() {
+	*x = BMCInfo{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BMCInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BMCInfo) ProtoMessage() {}
+
+func (x *BMCInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BMCInfo.ProtoReflect.Descriptor instead.
+func (*BMCInfo) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *BMCInfo) GetBmcType() string {
+	if x != nil {
+		return x.BmcType
+	}
+	return ""
+}
+
+func (x *BMCInfo) GetDetails() isBMCInfo_Details {
+	if x != nil {
+		return x.Details
+	}
+	return nil
+}
+
+func (x *BMCInfo) GetIpmiInfo() *IPMIInfo {
+	if x != nil {
+		if x, ok := x.Details.(*BMCInfo_IpmiInfo); ok {
+			return x.IpmiInfo
+		}
+	}
+	return nil
+}
+
+func (x *BMCInfo) GetRedfishInfo() *RedfishInfo {
+	if x != nil {
+		if x, ok := x.Details.(*BMCInfo_RedfishInfo); ok {
+			return x.RedfishInfo
+		}
+	}
+	return nil
+}
+
+type isBMCInfo_Details interface {
+	isBMCInfo_Details()
+}
+
+type BMCInfo_IpmiInfo struct {
+	IpmiInfo *IPMIInfo `protobuf:"bytes,2,opt,name=ipmi_info,json=ipmiInfo,proto3,oneof"`
+}
+
+type BMCInfo_RedfishInfo struct {
+	RedfishInfo *RedfishInfo `protobuf:"bytes,3,opt,name=redfish_info,json=redfishInfo,proto3,oneof"`
+}
+
+func (*BMCInfo_IpmiInfo) isBMCInfo_Details() {}
+
+func (*BMCInfo_RedfishInfo) isBMCInfo_Details() {}
+
+// IPMIInfo contains hardware information from IPMI mc info command
+type IPMIInfo struct {
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId                string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	DeviceRevision          string                 `protobuf:"bytes,2,opt,name=device_revision,json=deviceRevision,proto3" json:"device_revision,omitempty"`
+	FirmwareRevision        string                 `protobuf:"bytes,3,opt,name=firmware_revision,json=firmwareRevision,proto3" json:"firmware_revision,omitempty"`
+	IpmiVersion             string                 `protobuf:"bytes,4,opt,name=ipmi_version,json=ipmiVersion,proto3" json:"ipmi_version,omitempty"`
+	ManufacturerId          string                 `protobuf:"bytes,5,opt,name=manufacturer_id,json=manufacturerId,proto3" json:"manufacturer_id,omitempty"`
+	ManufacturerName        string                 `protobuf:"bytes,6,opt,name=manufacturer_name,json=manufacturerName,proto3" json:"manufacturer_name,omitempty"`
+	ProductId               string                 `protobuf:"bytes,7,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	DeviceAvailable         bool                   `protobuf:"varint,8,opt,name=device_available,json=deviceAvailable,proto3" json:"device_available,omitempty"`
+	ProvidesDeviceSdrs      bool                   `protobuf:"varint,9,opt,name=provides_device_sdrs,json=providesDeviceSdrs,proto3" json:"provides_device_sdrs,omitempty"`
+	AdditionalDeviceSupport []string               `protobuf:"bytes,10,rep,name=additional_device_support,json=additionalDeviceSupport,proto3" json:"additional_device_support,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *IPMIInfo) Reset() {
+	*x = IPMIInfo{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IPMIInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IPMIInfo) ProtoMessage() {}
+
+func (x *IPMIInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IPMIInfo.ProtoReflect.Descriptor instead.
+func (*IPMIInfo) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *IPMIInfo) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetDeviceRevision() string {
+	if x != nil {
+		return x.DeviceRevision
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetFirmwareRevision() string {
+	if x != nil {
+		return x.FirmwareRevision
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetIpmiVersion() string {
+	if x != nil {
+		return x.IpmiVersion
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetManufacturerId() string {
+	if x != nil {
+		return x.ManufacturerId
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetManufacturerName() string {
+	if x != nil {
+		return x.ManufacturerName
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetProductId() string {
+	if x != nil {
+		return x.ProductId
+	}
+	return ""
+}
+
+func (x *IPMIInfo) GetDeviceAvailable() bool {
+	if x != nil {
+		return x.DeviceAvailable
+	}
+	return false
+}
+
+func (x *IPMIInfo) GetProvidesDeviceSdrs() bool {
+	if x != nil {
+		return x.ProvidesDeviceSdrs
+	}
+	return false
+}
+
+func (x *IPMIInfo) GetAdditionalDeviceSupport() []string {
+	if x != nil {
+		return x.AdditionalDeviceSupport
+	}
+	return nil
+}
+
+// RedfishInfo contains hardware information from Redfish Manager endpoint
+type RedfishInfo struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	ManagerId        string                 `protobuf:"bytes,1,opt,name=manager_id,json=managerId,proto3" json:"manager_id,omitempty"`
+	Name             string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Model            string                 `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	Manufacturer     string                 `protobuf:"bytes,4,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
+	FirmwareVersion  string                 `protobuf:"bytes,5,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
+	Status           string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`
+	PowerState       string                 `protobuf:"bytes,7,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
+	NetworkProtocols []*NetworkProtocol     `protobuf:"bytes,8,rep,name=network_protocols,json=networkProtocols,proto3" json:"network_protocols,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *RedfishInfo) Reset() {
+	*x = RedfishInfo{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RedfishInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RedfishInfo) ProtoMessage() {}
+
+func (x *RedfishInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RedfishInfo.ProtoReflect.Descriptor instead.
+func (*RedfishInfo) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *RedfishInfo) GetManagerId() string {
+	if x != nil {
+		return x.ManagerId
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetManufacturer() string {
+	if x != nil {
+		return x.Manufacturer
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetFirmwareVersion() string {
+	if x != nil {
+		return x.FirmwareVersion
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetPowerState() string {
+	if x != nil {
+		return x.PowerState
+	}
+	return ""
+}
+
+func (x *RedfishInfo) GetNetworkProtocols() []*NetworkProtocol {
+	if x != nil {
+		return x.NetworkProtocols
+	}
+	return nil
+}
+
+// NetworkProtocol represents a network service provided by the BMC
+type NetworkProtocol struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Enabled       bool                   `protobuf:"varint,3,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NetworkProtocol) Reset() {
+	*x = NetworkProtocol{}
+	mi := &file_gateway_v1_gateway_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NetworkProtocol) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NetworkProtocol) ProtoMessage() {}
+
+func (x *NetworkProtocol) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_v1_gateway_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NetworkProtocol.ProtoReflect.Descriptor instead.
+func (*NetworkProtocol) Descriptor() ([]byte, []int) {
+	return file_gateway_v1_gateway_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *NetworkProtocol) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *NetworkProtocol) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *NetworkProtocol) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
 var File_gateway_v1_gateway_proto protoreflect.FileDescriptor
 
 const file_gateway_v1_gateway_proto_rawDesc = "" +
@@ -2736,7 +3196,44 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\tserver_id\x18\x02 \x01(\tR\bserverId\x12\x12\n" +
 	"\x04data\x18\x03 \x01(\fR\x04data\x12!\n" +
 	"\fis_handshake\x18\x04 \x01(\bR\visHandshake\x12!\n" +
-	"\fclose_stream\x18\x05 \x01(\bR\vcloseStream*=\n" +
+	"\fclose_stream\x18\x05 \x01(\bR\vcloseStream\"0\n" +
+	"\x11GetBMCInfoRequest\x12\x1b\n" +
+	"\tserver_id\x18\x01 \x01(\tR\bserverId\"=\n" +
+	"\x12GetBMCInfoResponse\x12'\n" +
+	"\x04info\x18\x01 \x01(\v2\x13.gateway.v1.BMCInfoR\x04info\"\xa2\x01\n" +
+	"\aBMCInfo\x12\x19\n" +
+	"\bbmc_type\x18\x01 \x01(\tR\abmcType\x123\n" +
+	"\tipmi_info\x18\x02 \x01(\v2\x14.gateway.v1.IPMIInfoH\x00R\bipmiInfo\x12<\n" +
+	"\fredfish_info\x18\x03 \x01(\v2\x17.gateway.v1.RedfishInfoH\x00R\vredfishInfoB\t\n" +
+	"\adetails\"\xae\x03\n" +
+	"\bIPMIInfo\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12'\n" +
+	"\x0fdevice_revision\x18\x02 \x01(\tR\x0edeviceRevision\x12+\n" +
+	"\x11firmware_revision\x18\x03 \x01(\tR\x10firmwareRevision\x12!\n" +
+	"\fipmi_version\x18\x04 \x01(\tR\vipmiVersion\x12'\n" +
+	"\x0fmanufacturer_id\x18\x05 \x01(\tR\x0emanufacturerId\x12+\n" +
+	"\x11manufacturer_name\x18\x06 \x01(\tR\x10manufacturerName\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\a \x01(\tR\tproductId\x12)\n" +
+	"\x10device_available\x18\b \x01(\bR\x0fdeviceAvailable\x120\n" +
+	"\x14provides_device_sdrs\x18\t \x01(\bR\x12providesDeviceSdrs\x12:\n" +
+	"\x19additional_device_support\x18\n" +
+	" \x03(\tR\x17additionalDeviceSupport\"\xa8\x02\n" +
+	"\vRedfishInfo\x12\x1d\n" +
+	"\n" +
+	"manager_id\x18\x01 \x01(\tR\tmanagerId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\x12\"\n" +
+	"\fmanufacturer\x18\x04 \x01(\tR\fmanufacturer\x12)\n" +
+	"\x10firmware_version\x18\x05 \x01(\tR\x0ffirmwareVersion\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\x12\x1f\n" +
+	"\vpower_state\x18\a \x01(\tR\n" +
+	"powerState\x12H\n" +
+	"\x11network_protocols\x18\b \x03(\v2\x1b.gateway.v1.NetworkProtocolR\x10networkProtocols\"S\n" +
+	"\x0fNetworkProtocol\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\x05R\x04port\x12\x18\n" +
+	"\aenabled\x18\x03 \x01(\bR\aenabled*=\n" +
 	"\aBMCType\x12\x13\n" +
 	"\x0fBMC_UNSPECIFIED\x10\x00\x12\f\n" +
 	"\bBMC_IPMI\x10\x01\x12\x0f\n" +
@@ -2755,7 +3252,7 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\x0fVNC_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
 	"VNC_NATIVE\x10\x01\x12\x11\n" +
-	"\rVNC_WEBSOCKET\x10\x022\xc2\v\n" +
+	"\rVNC_WEBSOCKET\x10\x022\x8f\f\n" +
 	"\x0eGatewayService\x12N\n" +
 	"\vHealthCheck\x12\x1e.gateway.v1.HealthCheckRequest\x1a\x1f.gateway.v1.HealthCheckResponse\x12T\n" +
 	"\rRegisterAgent\x12 .gateway.v1.RegisterAgentRequest\x1a!.gateway.v1.RegisterAgentResponse\x12W\n" +
@@ -2774,7 +3271,9 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\rGetSOLSession\x12 .gateway.v1.GetSOLSessionRequest\x1a!.gateway.v1.GetSOLSessionResponse\x12Z\n" +
 	"\x0fCloseSOLSession\x12\".gateway.v1.CloseSOLSessionRequest\x1a#.gateway.v1.CloseSOLSessionResponse\x12G\n" +
 	"\rStreamVNCData\x12\x18.gateway.v1.VNCDataChunk\x1a\x18.gateway.v1.VNCDataChunk(\x010\x01\x12S\n" +
-	"\x11StreamConsoleData\x12\x1c.gateway.v1.ConsoleDataChunk\x1a\x1c.gateway.v1.ConsoleDataChunk(\x010\x01B\"Z gateway/gen/gateway/v1;gatewayv1b\x06proto3"
+	"\x11StreamConsoleData\x12\x1c.gateway.v1.ConsoleDataChunk\x1a\x1c.gateway.v1.ConsoleDataChunk(\x010\x01\x12K\n" +
+	"\n" +
+	"GetBMCInfo\x12\x1d.gateway.v1.GetBMCInfoRequest\x1a\x1e.gateway.v1.GetBMCInfoResponseB\"Z gateway/gen/gateway/v1;gatewayv1b\x06proto3"
 
 var (
 	file_gateway_v1_gateway_proto_rawDescOnce sync.Once
@@ -2789,7 +3288,7 @@ func file_gateway_v1_gateway_proto_rawDescGZIP() []byte {
 }
 
 var file_gateway_v1_gateway_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_gateway_v1_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
+var file_gateway_v1_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_gateway_v1_gateway_proto_goTypes = []any{
 	(BMCType)(0),                             // 0: gateway.v1.BMCType
 	(PowerState)(0),                          // 1: gateway.v1.PowerState
@@ -2833,74 +3332,86 @@ var file_gateway_v1_gateway_proto_goTypes = []any{
 	(*StartVNCProxyResponse)(nil),            // 39: gateway.v1.StartVNCProxyResponse
 	(*VNCDataChunk)(nil),                     // 40: gateway.v1.VNCDataChunk
 	(*ConsoleDataChunk)(nil),                 // 41: gateway.v1.ConsoleDataChunk
-	nil,                                      // 42: gateway.v1.BMCEndpointRegistration.MetadataEntry
-	(*timestamppb.Timestamp)(nil),            // 43: google.protobuf.Timestamp
+	(*GetBMCInfoRequest)(nil),                // 42: gateway.v1.GetBMCInfoRequest
+	(*GetBMCInfoResponse)(nil),               // 43: gateway.v1.GetBMCInfoResponse
+	(*BMCInfo)(nil),                          // 44: gateway.v1.BMCInfo
+	(*IPMIInfo)(nil),                         // 45: gateway.v1.IPMIInfo
+	(*RedfishInfo)(nil),                      // 46: gateway.v1.RedfishInfo
+	(*NetworkProtocol)(nil),                  // 47: gateway.v1.NetworkProtocol
+	nil,                                      // 48: gateway.v1.BMCEndpointRegistration.MetadataEntry
+	(*timestamppb.Timestamp)(nil),            // 49: google.protobuf.Timestamp
 }
 var file_gateway_v1_gateway_proto_depIdxs = []int32{
-	43, // 0: gateway.v1.HealthCheckResponse.timestamp:type_name -> google.protobuf.Timestamp
+	49, // 0: gateway.v1.HealthCheckResponse.timestamp:type_name -> google.protobuf.Timestamp
 	1,  // 1: gateway.v1.PowerStatusResponse.state:type_name -> gateway.v1.PowerState
 	14, // 2: gateway.v1.RegisterAgentRequest.bmc_endpoints:type_name -> gateway.v1.BMCEndpointRegistration
 	14, // 3: gateway.v1.AgentHeartbeatRequest.bmc_endpoints:type_name -> gateway.v1.BMCEndpointRegistration
 	15, // 4: gateway.v1.BMCEndpointRegistration.control_endpoint:type_name -> gateway.v1.BMCControlEndpoint
 	16, // 5: gateway.v1.BMCEndpointRegistration.sol_endpoint:type_name -> gateway.v1.SOLEndpoint
 	17, // 6: gateway.v1.BMCEndpointRegistration.vnc_endpoint:type_name -> gateway.v1.VNCEndpoint
-	42, // 7: gateway.v1.BMCEndpointRegistration.metadata:type_name -> gateway.v1.BMCEndpointRegistration.MetadataEntry
+	48, // 7: gateway.v1.BMCEndpointRegistration.metadata:type_name -> gateway.v1.BMCEndpointRegistration.MetadataEntry
 	0,  // 8: gateway.v1.BMCControlEndpoint.type:type_name -> gateway.v1.BMCType
 	18, // 9: gateway.v1.BMCControlEndpoint.tls:type_name -> gateway.v1.TLSConfig
 	2,  // 10: gateway.v1.SOLEndpoint.type:type_name -> gateway.v1.SOLType
 	19, // 11: gateway.v1.SOLEndpoint.config:type_name -> gateway.v1.SOLConfig
 	3,  // 12: gateway.v1.VNCEndpoint.type:type_name -> gateway.v1.VNCType
 	20, // 13: gateway.v1.VNCEndpoint.config:type_name -> gateway.v1.VNCConfig
-	43, // 14: gateway.v1.CreateVNCSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
-	43, // 15: gateway.v1.VNCSession.created_at:type_name -> google.protobuf.Timestamp
-	43, // 16: gateway.v1.VNCSession.expires_at:type_name -> google.protobuf.Timestamp
+	49, // 14: gateway.v1.CreateVNCSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
+	49, // 15: gateway.v1.VNCSession.created_at:type_name -> google.protobuf.Timestamp
+	49, // 16: gateway.v1.VNCSession.expires_at:type_name -> google.protobuf.Timestamp
 	24, // 17: gateway.v1.GetVNCSessionResponse.session:type_name -> gateway.v1.VNCSession
-	43, // 18: gateway.v1.CreateSOLSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
-	43, // 19: gateway.v1.SOLSession.created_at:type_name -> google.protobuf.Timestamp
-	43, // 20: gateway.v1.SOLSession.expires_at:type_name -> google.protobuf.Timestamp
+	49, // 18: gateway.v1.CreateSOLSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
+	49, // 19: gateway.v1.SOLSession.created_at:type_name -> google.protobuf.Timestamp
+	49, // 20: gateway.v1.SOLSession.expires_at:type_name -> google.protobuf.Timestamp
 	31, // 21: gateway.v1.GetSOLSessionResponse.session:type_name -> gateway.v1.SOLSession
 	36, // 22: gateway.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> gateway.v1.BMCEndpointAvailability
 	0,  // 23: gateway.v1.BMCEndpointAvailability.bmc_type:type_name -> gateway.v1.BMCType
-	43, // 24: gateway.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
-	4,  // 25: gateway.v1.GatewayService.HealthCheck:input_type -> gateway.v1.HealthCheckRequest
-	10, // 26: gateway.v1.GatewayService.RegisterAgent:input_type -> gateway.v1.RegisterAgentRequest
-	12, // 27: gateway.v1.GatewayService.AgentHeartbeat:input_type -> gateway.v1.AgentHeartbeatRequest
-	6,  // 28: gateway.v1.GatewayService.PowerOn:input_type -> gateway.v1.PowerOperationRequest
-	6,  // 29: gateway.v1.GatewayService.PowerOff:input_type -> gateway.v1.PowerOperationRequest
-	6,  // 30: gateway.v1.GatewayService.PowerCycle:input_type -> gateway.v1.PowerOperationRequest
-	6,  // 31: gateway.v1.GatewayService.Reset:input_type -> gateway.v1.PowerOperationRequest
-	8,  // 32: gateway.v1.GatewayService.GetPowerStatus:input_type -> gateway.v1.PowerStatusRequest
-	21, // 33: gateway.v1.GatewayService.CreateVNCSession:input_type -> gateway.v1.CreateVNCSessionRequest
-	23, // 34: gateway.v1.GatewayService.GetVNCSession:input_type -> gateway.v1.GetVNCSessionRequest
-	26, // 35: gateway.v1.GatewayService.CloseVNCSession:input_type -> gateway.v1.CloseVNCSessionRequest
-	38, // 36: gateway.v1.GatewayService.StartVNCProxy:input_type -> gateway.v1.StartVNCProxyRequest
-	28, // 37: gateway.v1.GatewayService.CreateSOLSession:input_type -> gateway.v1.CreateSOLSessionRequest
-	30, // 38: gateway.v1.GatewayService.GetSOLSession:input_type -> gateway.v1.GetSOLSessionRequest
-	33, // 39: gateway.v1.GatewayService.CloseSOLSession:input_type -> gateway.v1.CloseSOLSessionRequest
-	40, // 40: gateway.v1.GatewayService.StreamVNCData:input_type -> gateway.v1.VNCDataChunk
-	41, // 41: gateway.v1.GatewayService.StreamConsoleData:input_type -> gateway.v1.ConsoleDataChunk
-	5,  // 42: gateway.v1.GatewayService.HealthCheck:output_type -> gateway.v1.HealthCheckResponse
-	11, // 43: gateway.v1.GatewayService.RegisterAgent:output_type -> gateway.v1.RegisterAgentResponse
-	13, // 44: gateway.v1.GatewayService.AgentHeartbeat:output_type -> gateway.v1.AgentHeartbeatResponse
-	7,  // 45: gateway.v1.GatewayService.PowerOn:output_type -> gateway.v1.PowerOperationResponse
-	7,  // 46: gateway.v1.GatewayService.PowerOff:output_type -> gateway.v1.PowerOperationResponse
-	7,  // 47: gateway.v1.GatewayService.PowerCycle:output_type -> gateway.v1.PowerOperationResponse
-	7,  // 48: gateway.v1.GatewayService.Reset:output_type -> gateway.v1.PowerOperationResponse
-	9,  // 49: gateway.v1.GatewayService.GetPowerStatus:output_type -> gateway.v1.PowerStatusResponse
-	22, // 50: gateway.v1.GatewayService.CreateVNCSession:output_type -> gateway.v1.CreateVNCSessionResponse
-	25, // 51: gateway.v1.GatewayService.GetVNCSession:output_type -> gateway.v1.GetVNCSessionResponse
-	27, // 52: gateway.v1.GatewayService.CloseVNCSession:output_type -> gateway.v1.CloseVNCSessionResponse
-	39, // 53: gateway.v1.GatewayService.StartVNCProxy:output_type -> gateway.v1.StartVNCProxyResponse
-	29, // 54: gateway.v1.GatewayService.CreateSOLSession:output_type -> gateway.v1.CreateSOLSessionResponse
-	32, // 55: gateway.v1.GatewayService.GetSOLSession:output_type -> gateway.v1.GetSOLSessionResponse
-	34, // 56: gateway.v1.GatewayService.CloseSOLSession:output_type -> gateway.v1.CloseSOLSessionResponse
-	40, // 57: gateway.v1.GatewayService.StreamVNCData:output_type -> gateway.v1.VNCDataChunk
-	41, // 58: gateway.v1.GatewayService.StreamConsoleData:output_type -> gateway.v1.ConsoleDataChunk
-	42, // [42:59] is the sub-list for method output_type
-	25, // [25:42] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	49, // 24: gateway.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
+	44, // 25: gateway.v1.GetBMCInfoResponse.info:type_name -> gateway.v1.BMCInfo
+	45, // 26: gateway.v1.BMCInfo.ipmi_info:type_name -> gateway.v1.IPMIInfo
+	46, // 27: gateway.v1.BMCInfo.redfish_info:type_name -> gateway.v1.RedfishInfo
+	47, // 28: gateway.v1.RedfishInfo.network_protocols:type_name -> gateway.v1.NetworkProtocol
+	4,  // 29: gateway.v1.GatewayService.HealthCheck:input_type -> gateway.v1.HealthCheckRequest
+	10, // 30: gateway.v1.GatewayService.RegisterAgent:input_type -> gateway.v1.RegisterAgentRequest
+	12, // 31: gateway.v1.GatewayService.AgentHeartbeat:input_type -> gateway.v1.AgentHeartbeatRequest
+	6,  // 32: gateway.v1.GatewayService.PowerOn:input_type -> gateway.v1.PowerOperationRequest
+	6,  // 33: gateway.v1.GatewayService.PowerOff:input_type -> gateway.v1.PowerOperationRequest
+	6,  // 34: gateway.v1.GatewayService.PowerCycle:input_type -> gateway.v1.PowerOperationRequest
+	6,  // 35: gateway.v1.GatewayService.Reset:input_type -> gateway.v1.PowerOperationRequest
+	8,  // 36: gateway.v1.GatewayService.GetPowerStatus:input_type -> gateway.v1.PowerStatusRequest
+	21, // 37: gateway.v1.GatewayService.CreateVNCSession:input_type -> gateway.v1.CreateVNCSessionRequest
+	23, // 38: gateway.v1.GatewayService.GetVNCSession:input_type -> gateway.v1.GetVNCSessionRequest
+	26, // 39: gateway.v1.GatewayService.CloseVNCSession:input_type -> gateway.v1.CloseVNCSessionRequest
+	38, // 40: gateway.v1.GatewayService.StartVNCProxy:input_type -> gateway.v1.StartVNCProxyRequest
+	28, // 41: gateway.v1.GatewayService.CreateSOLSession:input_type -> gateway.v1.CreateSOLSessionRequest
+	30, // 42: gateway.v1.GatewayService.GetSOLSession:input_type -> gateway.v1.GetSOLSessionRequest
+	33, // 43: gateway.v1.GatewayService.CloseSOLSession:input_type -> gateway.v1.CloseSOLSessionRequest
+	40, // 44: gateway.v1.GatewayService.StreamVNCData:input_type -> gateway.v1.VNCDataChunk
+	41, // 45: gateway.v1.GatewayService.StreamConsoleData:input_type -> gateway.v1.ConsoleDataChunk
+	42, // 46: gateway.v1.GatewayService.GetBMCInfo:input_type -> gateway.v1.GetBMCInfoRequest
+	5,  // 47: gateway.v1.GatewayService.HealthCheck:output_type -> gateway.v1.HealthCheckResponse
+	11, // 48: gateway.v1.GatewayService.RegisterAgent:output_type -> gateway.v1.RegisterAgentResponse
+	13, // 49: gateway.v1.GatewayService.AgentHeartbeat:output_type -> gateway.v1.AgentHeartbeatResponse
+	7,  // 50: gateway.v1.GatewayService.PowerOn:output_type -> gateway.v1.PowerOperationResponse
+	7,  // 51: gateway.v1.GatewayService.PowerOff:output_type -> gateway.v1.PowerOperationResponse
+	7,  // 52: gateway.v1.GatewayService.PowerCycle:output_type -> gateway.v1.PowerOperationResponse
+	7,  // 53: gateway.v1.GatewayService.Reset:output_type -> gateway.v1.PowerOperationResponse
+	9,  // 54: gateway.v1.GatewayService.GetPowerStatus:output_type -> gateway.v1.PowerStatusResponse
+	22, // 55: gateway.v1.GatewayService.CreateVNCSession:output_type -> gateway.v1.CreateVNCSessionResponse
+	25, // 56: gateway.v1.GatewayService.GetVNCSession:output_type -> gateway.v1.GetVNCSessionResponse
+	27, // 57: gateway.v1.GatewayService.CloseVNCSession:output_type -> gateway.v1.CloseVNCSessionResponse
+	39, // 58: gateway.v1.GatewayService.StartVNCProxy:output_type -> gateway.v1.StartVNCProxyResponse
+	29, // 59: gateway.v1.GatewayService.CreateSOLSession:output_type -> gateway.v1.CreateSOLSessionResponse
+	32, // 60: gateway.v1.GatewayService.GetSOLSession:output_type -> gateway.v1.GetSOLSessionResponse
+	34, // 61: gateway.v1.GatewayService.CloseSOLSession:output_type -> gateway.v1.CloseSOLSessionResponse
+	40, // 62: gateway.v1.GatewayService.StreamVNCData:output_type -> gateway.v1.VNCDataChunk
+	41, // 63: gateway.v1.GatewayService.StreamConsoleData:output_type -> gateway.v1.ConsoleDataChunk
+	43, // 64: gateway.v1.GatewayService.GetBMCInfo:output_type -> gateway.v1.GetBMCInfoResponse
+	47, // [47:65] is the sub-list for method output_type
+	29, // [29:47] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_gateway_v1_gateway_proto_init() }
@@ -2908,13 +3419,17 @@ func file_gateway_v1_gateway_proto_init() {
 	if File_gateway_v1_gateway_proto != nil {
 		return
 	}
+	file_gateway_v1_gateway_proto_msgTypes[40].OneofWrappers = []any{
+		(*BMCInfo_IpmiInfo)(nil),
+		(*BMCInfo_RedfishInfo)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gateway_v1_gateway_proto_rawDesc), len(file_gateway_v1_gateway_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   39,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

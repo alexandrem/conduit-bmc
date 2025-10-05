@@ -93,6 +93,11 @@ func (c *Client) GetSensors(ctx context.Context, endpoint, username, password st
 	return sensors, nil
 }
 
+// GetMCInfo retrieves Management Controller information from the BMC
+func (c *Client) GetMCInfo(ctx context.Context, endpoint, username, password string) (map[string]string, error) {
+	return c.subprocessClient.GetMCInfo(ctx, endpoint, username, password)
+}
+
 // StartSOLSession starts a Serial-over-LAN console session
 func (c *Client) StartSOLSession(ctx context.Context, endpoint, username, password string) error {
 	log.Debug().Str("endpoint", endpoint).Msg("Starting SOL session")

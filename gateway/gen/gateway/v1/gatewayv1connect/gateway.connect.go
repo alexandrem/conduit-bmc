@@ -81,6 +81,9 @@ const (
 	// GatewayServiceStreamConsoleDataProcedure is the fully-qualified name of the GatewayService's
 	// StreamConsoleData RPC.
 	GatewayServiceStreamConsoleDataProcedure = "/gateway.v1.GatewayService/StreamConsoleData"
+	// GatewayServiceGetBMCInfoProcedure is the fully-qualified name of the GatewayService's GetBMCInfo
+	// RPC.
+	GatewayServiceGetBMCInfoProcedure = "/gateway.v1.GatewayService/GetBMCInfo"
 )
 
 // GatewayServiceClient is a client for the gateway.v1.GatewayService service.
@@ -123,6 +126,9 @@ type GatewayServiceClient interface {
 	// Streaming RPC for SOL/Console data (Gateway <-> Agent bidirectional streaming)
 	// Gateway initiates this stream to agent, then bidirectionally streams console data
 	StreamConsoleData(context.Context) *connect.BidiStreamForClient[v1.ConsoleDataChunk, v1.ConsoleDataChunk]
+	// GetBMCInfo retrieves detailed hardware information from the BMC
+	// This returns firmware version, manufacturer details, and capabilities
+	GetBMCInfo(context.Context, *connect.Request[v1.GetBMCInfoRequest]) (*connect.Response[v1.GetBMCInfoResponse], error)
 }
 
 // NewGatewayServiceClient constructs a client for the gateway.v1.GatewayService service. By
@@ -238,6 +244,12 @@ func NewGatewayServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(gatewayServiceMethods.ByName("StreamConsoleData")),
 			connect.WithClientOptions(opts...),
 		),
+		getBMCInfo: connect.NewClient[v1.GetBMCInfoRequest, v1.GetBMCInfoResponse](
+			httpClient,
+			baseURL+GatewayServiceGetBMCInfoProcedure,
+			connect.WithSchema(gatewayServiceMethods.ByName("GetBMCInfo")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -260,6 +272,7 @@ type gatewayServiceClient struct {
 	closeSOLSession   *connect.Client[v1.CloseSOLSessionRequest, v1.CloseSOLSessionResponse]
 	streamVNCData     *connect.Client[v1.VNCDataChunk, v1.VNCDataChunk]
 	streamConsoleData *connect.Client[v1.ConsoleDataChunk, v1.ConsoleDataChunk]
+	getBMCInfo        *connect.Client[v1.GetBMCInfoRequest, v1.GetBMCInfoResponse]
 }
 
 // HealthCheck calls gateway.v1.GatewayService.HealthCheck.
@@ -347,6 +360,11 @@ func (c *gatewayServiceClient) StreamConsoleData(ctx context.Context) *connect.B
 	return c.streamConsoleData.CallBidiStream(ctx)
 }
 
+// GetBMCInfo calls gateway.v1.GatewayService.GetBMCInfo.
+func (c *gatewayServiceClient) GetBMCInfo(ctx context.Context, req *connect.Request[v1.GetBMCInfoRequest]) (*connect.Response[v1.GetBMCInfoResponse], error) {
+	return c.getBMCInfo.CallUnary(ctx, req)
+}
+
 // GatewayServiceHandler is an implementation of the gateway.v1.GatewayService service.
 type GatewayServiceHandler interface {
 	// Health check endpoint for monitoring and load balancer health probes
@@ -387,6 +405,9 @@ type GatewayServiceHandler interface {
 	// Streaming RPC for SOL/Console data (Gateway <-> Agent bidirectional streaming)
 	// Gateway initiates this stream to agent, then bidirectionally streams console data
 	StreamConsoleData(context.Context, *connect.BidiStream[v1.ConsoleDataChunk, v1.ConsoleDataChunk]) error
+	// GetBMCInfo retrieves detailed hardware information from the BMC
+	// This returns firmware version, manufacturer details, and capabilities
+	GetBMCInfo(context.Context, *connect.Request[v1.GetBMCInfoRequest]) (*connect.Response[v1.GetBMCInfoResponse], error)
 }
 
 // NewGatewayServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -498,6 +519,12 @@ func NewGatewayServiceHandler(svc GatewayServiceHandler, opts ...connect.Handler
 		connect.WithSchema(gatewayServiceMethods.ByName("StreamConsoleData")),
 		connect.WithHandlerOptions(opts...),
 	)
+	gatewayServiceGetBMCInfoHandler := connect.NewUnaryHandler(
+		GatewayServiceGetBMCInfoProcedure,
+		svc.GetBMCInfo,
+		connect.WithSchema(gatewayServiceMethods.ByName("GetBMCInfo")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/gateway.v1.GatewayService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case GatewayServiceHealthCheckProcedure:
@@ -534,6 +561,8 @@ func NewGatewayServiceHandler(svc GatewayServiceHandler, opts ...connect.Handler
 			gatewayServiceStreamVNCDataHandler.ServeHTTP(w, r)
 		case GatewayServiceStreamConsoleDataProcedure:
 			gatewayServiceStreamConsoleDataHandler.ServeHTTP(w, r)
+		case GatewayServiceGetBMCInfoProcedure:
+			gatewayServiceGetBMCInfoHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -609,4 +638,8 @@ func (UnimplementedGatewayServiceHandler) StreamVNCData(context.Context, *connec
 
 func (UnimplementedGatewayServiceHandler) StreamConsoleData(context.Context, *connect.BidiStream[v1.ConsoleDataChunk, v1.ConsoleDataChunk]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("gateway.v1.GatewayService.StreamConsoleData is not implemented"))
+}
+
+func (UnimplementedGatewayServiceHandler) GetBMCInfo(context.Context, *connect.Request[v1.GetBMCInfoRequest]) (*connect.Response[v1.GetBMCInfoResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gateway.v1.GatewayService.GetBMCInfo is not implemented"))
 }
