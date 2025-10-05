@@ -703,6 +703,13 @@ func (h *RegionalGatewayHandler) GetVNCSessionByID(sessionID string) (*VNCSessio
 	return h.GetConsoleSessionByID(sessionID)
 }
 
+// GetConsoleSessionCount returns the count of active console sessions
+func (h *RegionalGatewayHandler) GetConsoleSessionCount() int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.consoleSessions)
+}
+
 // GetConsoleSessionByID retrieves a console session by ID for internal use
 func (h *RegionalGatewayHandler) GetConsoleSessionByID(sessionID string) (*ConsoleSession, bool) {
 	h.mu.RLock()

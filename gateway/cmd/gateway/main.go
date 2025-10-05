@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -84,7 +85,7 @@ func main() {
 
 	log.Info().Msg("Gateway starting with shared webui templates")
 
-	corsHandler := setupRouter(path, cfg.Gateway.Region, handler, gatewayHandler)
+	corsHandler := setupRouter(path, cfg.Gateway.Region, cfg.Gateway.ManagerEndpoint, handler, gatewayHandler)
 
 	// Create server with HTTP/2 support
 	server := &http.Server{
@@ -101,13 +102,14 @@ func main() {
 		Bool("rate_limiting", cfg.Gateway.RateLimit.Enabled).
 		Msg("Starting gateway server")
 	log.Info().Msgf("Health check: http://%s/health", cfg.GetListenAddress())
+	log.Info().Msgf("Gateway status: http://%s/status", cfg.GetListenAddress())
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("Server failed to start")
 	}
 }
 
-func setupRouter(path, region string, handler http.Handler, gatewayHandler *gateway.RegionalGatewayHandler) http.Handler {
+func setupRouter(path, region, managerEndpoint string, handler http.Handler, gatewayHandler *gateway.RegionalGatewayHandler) http.Handler {
 	// Create a new Gorilla Mux router
 	r := mux.NewRouter()
 
@@ -126,6 +128,44 @@ func setupRouter(path, region string, handler http.Handler, gatewayHandler *gate
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "healthy", "service": "gateway", "region": "` + region + `"}`))
+	}).Methods("GET")
+
+	// Add status endpoint (gateway-specific status)
+	r.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		// Gather gateway status information
+		agentRegistry := gatewayHandler.GetAgentRegistry()
+		agents := agentRegistry.List()
+
+		// Build agent status list
+		agentStatuses := make([]map[string]interface{}, 0, len(agents))
+		for _, agent := range agents {
+			agentStatuses = append(agentStatuses, map[string]interface{}{
+				"id":         agent.ID,
+				"datacenter": agent.DatacenterID,
+				"endpoint":   agent.Endpoint,
+				"last_seen":  agent.LastSeen,
+				"status":     agent.Status,
+			})
+		}
+
+		// Get active session counts from handler
+		sessionCount := gatewayHandler.GetConsoleSessionCount()
+
+		status := map[string]interface{}{
+			"service":                 "gateway",
+			"region":                  region,
+			"manager_endpoint":        managerEndpoint,
+			"agents":                  agentStatuses,
+			"agent_count":             len(agents),
+			"active_console_sessions": sessionCount,
+		}
+
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(status); err != nil {
+			log.Error().Err(err).Msg("Failed to encode status response")
+		}
 	}).Methods("GET")
 
 	// Add metrics endpoint for monitoring
