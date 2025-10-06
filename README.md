@@ -104,6 +104,8 @@ Every service exposes:
 - **[Web Console](docs/WEB.md)** - Web console UI overview
 - **[Development Guide](docs/DEVELOPMENT.md)** - Complete setup and development
   workflow
+- **[Security Considerations](docs/SECURITY.md)** - Security design overview
+- **[BMC Support](docs/BMC-SUPPORT.md)** - BMC support status
 
 <!--
 - **[Features (RFDs)](docs/features/)** - Upcoming initiatives & design documents
