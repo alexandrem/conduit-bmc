@@ -7,7 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/zerolog/log"
 
-	streaming "core/streaming"
+	"core/streaming"
 	gatewayv1 "gateway/gen/gateway/v1"
 	agentstreaming "local-agent/internal/streaming"
 	"local-agent/pkg/sol"
@@ -107,9 +107,6 @@ func (a *LocalAgent) StreamVNCData(
 	return proxy.ProxyFromStream(ctx, stream, vncTransport)
 }
 
-// parseVNCEndpoint helper moved to local-agent/pkg/vnc/transport.go
-// This function is no longer needed here as transport selection is handled by vnc.NewTransport()
-
 // StreamConsoleData implements bidirectional streaming for SOL/Console data
 // Gateway sends console data from browser, agent forwards to BMC SOL endpoint
 func (a *LocalAgent) StreamConsoleData(
@@ -152,8 +149,17 @@ func (a *LocalAgent) StreamConsoleData(
 		return fmt.Errorf("failed to create SOL client: %w", err)
 	}
 
+	// Prepare SOL config, inheriting TLS settings from control endpoint
+	solConfig := sol.DefaultSOLConfig()
+	if server.ControlEndpoint != nil && server.ControlEndpoint.TLS != nil {
+		solConfig.InsecureSkipVerify = server.ControlEndpoint.TLS.InsecureSkipVerify
+	} else {
+		// Default to true for BMCs (they typically use self-signed certs)
+		solConfig.InsecureSkipVerify = true
+	}
+
 	// Create SOL session
-	solSession, err := solClient.CreateSession(ctx, server.SOLEndpoint.Endpoint, server.SOLEndpoint.Username, server.SOLEndpoint.Password, nil)
+	solSession, err := solClient.CreateSession(ctx, server.SOLEndpoint.Endpoint, server.SOLEndpoint.Username, server.SOLEndpoint.Password, solConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create SOL session: %w", err)
 	}

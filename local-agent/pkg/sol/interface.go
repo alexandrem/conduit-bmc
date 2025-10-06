@@ -39,17 +39,19 @@ type Client interface {
 
 // Config contains configuration for SOL sessions
 type Config struct {
-	BaudRate       int    `json:"baud_rate"`       // Serial baud rate (default: 115200)
-	FlowControl    string `json:"flow_control"`    // Flow control settings ("none", "hardware", "software")
-	TimeoutSeconds int    `json:"timeout_seconds"` // Session timeout in seconds
+	BaudRate           int    `json:"baud_rate"`            // Serial baud rate (default: 115200)
+	FlowControl        string `json:"flow_control"`         // Flow control settings ("none", "hardware", "software")
+	TimeoutSeconds     int    `json:"timeout_seconds"`      // Session timeout in seconds
+	InsecureSkipVerify bool   `json:"insecure_skip_verify"` // Skip TLS certificate verification (for Redfish)
 }
 
 // DefaultSOLConfig returns a default SOL configuration
 func DefaultSOLConfig() *Config {
 	return &Config{
-		BaudRate:       115200,
-		FlowControl:    "none",
-		TimeoutSeconds: 300, // 5 minutes
+		BaudRate:           115200,
+		FlowControl:        "none",
+		TimeoutSeconds:     300,  // 5 minutes
+		InsecureSkipVerify: true, // Default to true for BMCs with self-signed certs
 	}
 }
 

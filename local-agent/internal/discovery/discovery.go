@@ -33,6 +33,12 @@ type BMCControlEndpoint struct {
 	Username     string        `json:"username"`
 	Password     string        `json:"password"`
 	Capabilities []string      `json:"capabilities"`
+	TLS          *TLSConfig    `json:"tls"`
+}
+
+type TLSConfig struct {
+	Enabled            bool `json:"enabled"`
+	InsecureSkipVerify bool `json:"insecure_skip_verify"`
 }
 
 // SOLEndpoint represents Serial-over-LAN access
@@ -141,6 +147,36 @@ func (s *Service) loadStaticServers() []*Server {
 				Endpoint: host.VNCEndpoint.Endpoint,
 				Username: host.VNCEndpoint.Username,
 				Password: host.VNCEndpoint.Password,
+			}
+		}
+
+		// If Redfish, perform API discovery if enabled
+		if server.ControlEndpoint != nil && server.ControlEndpoint.Type == "redfish" {
+			endpoint := server.ControlEndpoint.Endpoint
+			info, err := s.redfishClient.DiscoverSerialConsole(context.Background(), endpoint, server.ControlEndpoint.Username, server.ControlEndpoint.Password)
+			if err != nil {
+				log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to discover SerialConsole for static server")
+				server.Metadata["discovery_error"] = err.Error()
+			} else if info.Supported {
+				if server.SOLEndpoint == nil { // Don't override if explicitly configured
+					server.SOLEndpoint = &SOLEndpoint{
+						Type:     "redfish_serial",
+						Endpoint: endpoint + "/redfish/v1/Managers/1/SerialConsole", // Adjust based on actual path
+						Username: server.ControlEndpoint.Username,
+						Password: server.ControlEndpoint.Password,
+					}
+				}
+				// Ensure FeatureConsole is included
+				hasConsole := false
+				for _, f := range server.Features {
+					if f == string(types.FeatureConsole) {
+						hasConsole = true
+						break
+					}
+				}
+				if !hasConsole {
+					server.Features = append(server.Features, string(types.FeatureConsole))
+				}
 			}
 		}
 
@@ -319,6 +355,32 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 					Status:   "active",
 					Metadata: make(map[string]string),
 				}
+
+				// Perform API discovery
+				info, err := s.redfishClient.DiscoverSerialConsole(ctx, endpoint, server.ControlEndpoint.Username, server.ControlEndpoint.Password)
+				if err != nil {
+					log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to discover SerialConsole")
+					server.Metadata["discovery_error"] = err.Error()
+				} else if info.Supported {
+					server.SOLEndpoint = &SOLEndpoint{
+						Type:     "redfish_serial",
+						Endpoint: endpoint + "/redfish/v1/Managers/1/SerialConsole", // Adjust based on actual path
+						Username: server.ControlEndpoint.Username,
+						Password: server.ControlEndpoint.Password,
+					}
+					// Ensure FeatureConsole is included
+					hasConsole := false
+					for _, f := range server.Features {
+						if f == string(types.FeatureConsole) {
+							hasConsole = true
+							break
+						}
+					}
+					if !hasConsole {
+						server.Features = append(server.Features, string(types.FeatureConsole))
+					}
+				}
+
 				servers = append(servers, server)
 				log.Info().Str("endpoint", endpoint).Msg("Found Redfish BMC")
 				break // Found Redfish on this IP, no need to check other ports

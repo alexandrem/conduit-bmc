@@ -442,7 +442,6 @@ func (c *Client) GetManagerInfo(ctx context.Context, endpoint, username, passwor
 	return &manager, netProto, nil
 }
 
-// GetSensors retrieves sensor readings from the BMC
 func (c *Client) GetSensors(ctx context.Context, endpoint, username, password string) (map[string]interface{}, error) {
 	log.Debug().Str("endpoint", endpoint).Msg("Getting sensors")
 
@@ -462,4 +461,120 @@ func (c *Client) GetSensors(ctx context.Context, endpoint, username, password st
 	}
 
 	return sensors, nil
+}
+
+// CreateSession creates a Redfish session and returns the X-Auth-Token
+func (c *Client) CreateSession(ctx context.Context, endpoint, username, password string) (string, error) {
+	sessionURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/SessionService/Sessions"
+
+	payload := map[string]string{
+		"UserName": username,
+		"Password": password,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal session payload: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", sessionURL, strings.NewReader(string(payloadBytes)))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("session creation failed: HTTP %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	token := resp.Header.Get("X-Auth-Token")
+	if token == "" {
+		return "", fmt.Errorf("no X-Auth-Token in response")
+	}
+
+	return token, nil
+}
+
+// GetWithToken performs a GET request using the provided X-Auth-Token
+func (c *Client) GetWithToken(ctx context.Context, url, token string, target interface{}) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-Auth-Token", token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("GET failed: HTTP %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(target); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return nil
+}
+
+// SerialConsoleInfo represents SerialConsole support info
+type SerialConsoleInfo struct {
+	Supported bool
+	Enabled   bool
+	// Add more fields as needed, e.g., ServiceEnabled, MaxConcurrentSessions
+}
+
+// DiscoverSerialConsole checks if SerialConsole is supported
+func (c *Client) DiscoverSerialConsole(ctx context.Context, endpoint, username, password string) (*SerialConsoleInfo, error) {
+	token, err := c.CreateSession(ctx, endpoint, username, password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create session: %w", err)
+	}
+
+	// Get Managers
+	managersURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/Managers"
+	var managersCollection struct {
+		Members []struct {
+			ODataID string `json:"@odata.id"`
+		} `json:"Members"`
+	}
+	if err := c.GetWithToken(ctx, managersURL, token, &managersCollection); err != nil {
+		return nil, err
+	}
+
+	if len(managersCollection.Members) == 0 {
+		return nil, fmt.Errorf("no managers found")
+	}
+
+	// Get first manager
+	managerURL := strings.TrimSuffix(endpoint, "/") + managersCollection.Members[0].ODataID
+	var manager struct {
+		SerialConsole struct {
+			ServiceEnabled        bool `json:"ServiceEnabled"`
+			MaxConcurrentSessions int  `json:"MaxConcurrentSessions"`
+			// Add other fields as needed
+		} `json:"SerialConsole"`
+	}
+	if err := c.GetWithToken(ctx, managerURL, token, &manager); err != nil {
+		return nil, err
+	}
+
+	info := &SerialConsoleInfo{
+		Supported: manager.SerialConsole.MaxConcurrentSessions > 0, // Assuming >0 means supported
+		Enabled:   manager.SerialConsole.ServiceEnabled,
+	}
+
+	return info, nil
 }

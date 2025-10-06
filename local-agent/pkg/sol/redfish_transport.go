@@ -3,6 +3,7 @@ package sol
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ type RedfishTransport struct {
 	mu         sync.RWMutex
 	httpClient *http.Client
 	wsConn     *websocket.Conn
+	config     *Config // Store config for TLS settings
 	status     TransportStatus
 	stopCh     chan struct{}
 	readCh     chan []byte
@@ -46,6 +48,12 @@ func (t *RedfishTransport) Connect(ctx context.Context, endpoint, username, pass
 	if t.status.Connected {
 		return nil
 	}
+
+	// Store config for TLS settings
+	if config == nil {
+		config = DefaultSOLConfig()
+	}
+	t.config = config
 
 	// Find system ID
 	systemID, err := t.findSystemID(ctx, endpoint, username, password)
@@ -129,6 +137,23 @@ func (t *RedfishTransport) Close() error {
 	return nil
 }
 
+// getHTTPClient returns an HTTP client with TLS config based on transport config
+func (t *RedfishTransport) getHTTPClient() *http.Client {
+	if t.config == nil {
+		return t.httpClient
+	}
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: t.config.InsecureSkipVerify,
+		},
+	}
+	return &http.Client{
+		Timeout:   t.httpClient.Timeout,
+		Transport: transport,
+	}
+}
+
 // Status returns the current transport status
 func (t *RedfishTransport) Status() TransportStatus {
 	t.mu.RLock()
@@ -150,7 +175,9 @@ func (t *RedfishTransport) SupportsSOL(ctx context.Context, endpoint, username, 
 
 	req.SetBasicAuth(username, password)
 
-	resp, err := t.httpClient.Do(req)
+	httpClient := t.getHTTPClient()
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("failed to access Redfish service: %w", err)
 	}
@@ -169,7 +196,7 @@ func (t *RedfishTransport) SupportsSOL(ctx context.Context, endpoint, username, 
 
 	req.SetBasicAuth(username, password)
 
-	resp, err = t.httpClient.Do(req)
+	resp, err = httpClient.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("failed to access Systems collection: %w", err)
 	}
@@ -191,7 +218,8 @@ func (t *RedfishTransport) findSystemID(ctx context.Context, endpoint, username,
 
 	req.SetBasicAuth(username, password)
 
-	resp, err := t.httpClient.Do(req)
+	httpClient := t.getHTTPClient()
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -238,7 +266,9 @@ func (t *RedfishTransport) getSerialConsoleURI(ctx context.Context, endpoint, us
 
 	req.SetBasicAuth(username, password)
 
-	resp, err := t.httpClient.Do(req)
+	httpClient := t.getHTTPClient()
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
