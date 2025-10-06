@@ -170,6 +170,8 @@
         </div>
     </div>
 
+    {{template "bmc_info_sidebar" .}}
+
     <!-- Connection Info -->
     <div class="mb-4">
         <h3 class="text-sm font-semibold mb-3 text-white/90">Connection Info</h3>
@@ -668,6 +670,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initial power status check
     refreshPowerStatus();
+
+    // Fetch BMC hardware info
+    fetchBMCInfo();
 });
 
 // Update connection info every second

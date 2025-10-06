@@ -229,6 +229,209 @@
             }
         }
 
+        // Shared BMC Info functionality (used by both console.html and vnc.html)
+        let bmcInfoData = null;
+
+        async function fetchBMCInfo() {
+            const serverID = '{{.ServerID}}';
+            if (!serverID) return;
+
+            try {
+                const response = await fetch('/gateway.v1.GatewayService/GetBMCInfo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        server_id: serverID
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    bmcInfoData = result.info;
+                    updateBMCInfoDisplay();
+                    if (typeof logToTerminal === 'function') {
+                        logToTerminal('BMC hardware info loaded', 'success');
+                    }
+                } else {
+                    const error = await response.text();
+                    console.error('Failed to fetch BMC info:', error);
+                    updateBMCInfoError();
+                }
+            } catch (error) {
+                console.error('Error fetching BMC info:', error);
+                updateBMCInfoError();
+            }
+        }
+
+        function updateBMCInfoDisplay() {
+            if (!bmcInfoData) return;
+
+            const bmcType = document.getElementById('bmc-type');
+            const bmcFirmware = document.getElementById('bmc-firmware');
+            const bmcManufacturer = document.getElementById('bmc-manufacturer');
+            const bmcVersion = document.getElementById('bmc-version');
+
+            const type = bmcInfoData.bmc_type || bmcInfoData.bmcType || 'unknown';
+
+            if (bmcType) {
+                bmcType.textContent = type.toUpperCase();
+                bmcType.className = 'px-2 py-0.5 text-xs font-medium rounded ' +
+                    (type === 'ipmi' ? 'bg-blue-600/50' : type === 'redfish' ? 'bg-purple-600/50' : 'bg-gray-600/50');
+            }
+
+            if (type === 'ipmi' && bmcInfoData.ipmi_info) {
+                const info = bmcInfoData.ipmi_info;
+                if (bmcFirmware) bmcFirmware.textContent = info.firmware_revision || 'Unknown';
+                if (bmcManufacturer) bmcManufacturer.textContent = info.manufacturer_name || info.manufacturer_id || 'Unknown';
+                if (bmcVersion) bmcVersion.textContent = info.ipmi_version || 'Unknown';
+            } else if (type === 'redfish' && bmcInfoData.redfish_info) {
+                const info = bmcInfoData.redfish_info;
+                if (bmcFirmware) bmcFirmware.textContent = info.firmware_version || 'Unknown';
+                if (bmcManufacturer) bmcManufacturer.textContent = info.manufacturer || 'Unknown';
+                if (bmcVersion) bmcVersion.textContent = info.model || 'Unknown';
+            }
+        }
+
+        function updateBMCInfoError() {
+            const bmcType = document.getElementById('bmc-type');
+            if (bmcType) {
+                bmcType.textContent = 'Error';
+                bmcType.className = 'text-xs text-red-400';
+            }
+        }
+
+        function toggleBMCInfo() {
+            const content = document.getElementById('bmc-info-content');
+            const toggle = document.getElementById('bmc-info-toggle');
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▶';
+            }
+        }
+
+        function showBMCDetails() {
+            if (!bmcInfoData) {
+                console.warn('BMC info not loaded yet');
+                return;
+            }
+
+            const type = bmcInfoData.bmc_type || bmcInfoData.bmcType;
+            let detailsHTML = '';
+
+            if (type === 'ipmi' && bmcInfoData.ipmi_info) {
+                const info = bmcInfoData.ipmi_info;
+                detailsHTML = `
+                    <div class="space-y-3">
+                        <h4 class="font-semibold text-lg mb-3">IPMI Hardware Details</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-white/70">Device ID:</div>
+                            <div class="font-mono">${info.device_id || 'N/A'}</div>
+
+                            <div class="text-white/70">Device Revision:</div>
+                            <div class="font-mono">${info.device_revision || 'N/A'}</div>
+
+                            <div class="text-white/70">Firmware Revision:</div>
+                            <div class="font-mono">${info.firmware_revision || 'N/A'}</div>
+
+                            <div class="text-white/70">IPMI Version:</div>
+                            <div class="font-mono">${info.ipmi_version || 'N/A'}</div>
+
+                            <div class="text-white/70">Manufacturer ID:</div>
+                            <div class="font-mono">${info.manufacturer_id || 'N/A'}</div>
+
+                            <div class="text-white/70">Manufacturer Name:</div>
+                            <div class="font-mono">${info.manufacturer_name || 'Unknown'}</div>
+
+                            <div class="text-white/70">Product ID:</div>
+                            <div class="font-mono">${info.product_id || 'N/A'}</div>
+
+                            <div class="text-white/70">Device Available:</div>
+                            <div>${info.device_available ? '✓ Yes' : '✗ No'}</div>
+
+                            <div class="text-white/70">Provides SDRs:</div>
+                            <div>${info.provides_device_sdrs ? '✓ Yes' : '✗ No'}</div>
+                        </div>
+                        ${info.additional_device_support && info.additional_device_support.length > 0 ? `
+                            <div class="mt-4">
+                                <div class="text-white/70 mb-2">Additional Device Support:</div>
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    ${info.additional_device_support.map(s => `<li>${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (type === 'redfish' && bmcInfoData.redfish_info) {
+                const info = bmcInfoData.redfish_info;
+                detailsHTML = `
+                    <div class="space-y-3">
+                        <h4 class="font-semibold text-lg mb-3">Redfish Manager Details</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="text-white/70">Manager ID:</div>
+                            <div class="font-mono">${info.manager_id || 'N/A'}</div>
+
+                            <div class="text-white/70">Name:</div>
+                            <div>${info.name || 'N/A'}</div>
+
+                            <div class="text-white/70">Model:</div>
+                            <div>${info.model || 'N/A'}</div>
+
+                            <div class="text-white/70">Manufacturer:</div>
+                            <div>${info.manufacturer || 'N/A'}</div>
+
+                            <div class="text-white/70">Firmware Version:</div>
+                            <div class="font-mono">${info.firmware_version || 'N/A'}</div>
+
+                            <div class="text-white/70">Status:</div>
+                            <div>${info.status || 'N/A'}</div>
+
+                            <div class="text-white/70">Power State:</div>
+                            <div>${info.power_state || 'N/A'}</div>
+                        </div>
+                        ${info.network_protocols && info.network_protocols.length > 0 ? `
+                            <div class="mt-4">
+                                <div class="text-white/70 mb-2">Network Protocols:</div>
+                                <ul class="list-disc list-inside text-sm space-y-1">
+                                    ${info.network_protocols.map(p => `<li>${p.name} (port ${p.port})${p.enabled ? '' : ' - Disabled'}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                detailsHTML = '<p class="text-white/70">No detailed information available</p>';
+            }
+
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-gradient-to-br from-gray-900 to-black border border-white/20 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    ${detailsHTML}
+                    <button onclick="this.closest('.fixed').remove()"
+                            class="w-full mt-6 p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg font-medium transition-all hover:-translate-y-0.5">
+                        Close
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Close on background click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
         {{block "scripts" .}}{{end}}
     </script>
 </body>

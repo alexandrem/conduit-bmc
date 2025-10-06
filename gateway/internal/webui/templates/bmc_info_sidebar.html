@@ -1,0 +1,31 @@
+{{define "bmc_info_sidebar"}}
+<!-- BMC Hardware Info -->
+<div class="mb-6">
+    <h3 class="text-sm font-semibold mb-3 text-white/90 flex items-center gap-2 cursor-pointer" onclick="toggleBMCInfo()">
+        <span id="bmc-info-toggle">▼</span>
+        BMC Hardware Info
+    </h3>
+    <div id="bmc-info-content" class="space-y-2 text-sm">
+        <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-white/70">Type</span>
+            <span id="bmc-type" class="text-xs">Loading...</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-white/70">Firmware</span>
+            <span id="bmc-firmware" class="text-xs">--</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-white/70">Manufacturer</span>
+            <span id="bmc-manufacturer" class="text-xs">--</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-white/70">Version</span>
+            <span id="bmc-version" class="text-xs">--</span>
+        </div>
+        <button onclick="showBMCDetails()"
+                class="w-full mt-2 p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+            <span class="inline-block mr-2">📋</span>View Full Details
+        </button>
+    </div>
+</div>
+{{end}}
