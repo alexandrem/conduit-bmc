@@ -1,6 +1,6 @@
 # 🔐 Conduit BMC Proxy
 
-**Secure BMC access proxy for hosting providers**
+**Secure, multi-tenant BMC proxy for hosting providers**
 
 > ⚠️ **Experimental**: APIs and features are evolving; not production-ready.
 
