@@ -367,7 +367,6 @@ All feature documents must include YAML frontmatter with the following fields:
 rfd: "XXX" # Sequential number (001, 002, etc.)
 title: "Feature Name" # Descriptive title
 state: "draft" # draft, under-review, approved, implemented
-priority: "high" # low, medium, high, critical
 breaking_changes: true # true/false
 testing_required: true # true/false
 database_changes: true # true/false - requires migrations
@@ -387,9 +386,37 @@ areas: ["manager", "gateway"] # Affected areas (same as area)
 3. **Problem**: What problem this solves
 4. **Solution**: How the feature addresses the problem
 5. **Implementation Plan**: Phased approach if applicable
+   - **IMPORTANT**: Do NOT include time estimates (weeks, hours, days)
+   - Focus on deliverable phases and concrete tasks
+   - Use checkboxes for task lists
 6. **API Changes**: New endpoints, modified interfaces
 7. **Testing Strategy**: How to validate the feature
-8. **Migration Strategy**: How to deploy safely
+8. **Migration Strategy**: How to deploy safely, ignore backward
+   compatibility for now
+
+### RFD Writing Guidelines
+
+**Time Estimates:**
+- ❌ **DO NOT** include time estimates like "Week 1", "2 hours", "3 days"
+- ❌ **DO NOT** predict how long implementation will take
+- ✅ **DO** organize work into logical phases
+- ✅ **DO** use checkboxes for concrete, testable tasks
+- ✅ **DO** focus on what needs to be done, not when
+
+**Example:**
+```markdown
+## Implementation Plan
+
+### Phase 1: Database Schema
+- [ ] Create migration for new table
+- [ ] Add indexes for common queries
+- [ ] Update models to support new fields
+
+### Phase 2: API Implementation
+- [ ] Add RPC endpoint
+- [ ] Implement handler logic
+- [ ] Add input validation
+```
 
 ### File Naming Convention
 
