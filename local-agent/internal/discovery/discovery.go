@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -157,25 +158,50 @@ func (s *Service) loadStaticServers() []*Server {
 			if err != nil {
 				log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to discover SerialConsole for static server")
 				server.Metadata["discovery_error"] = err.Error()
-			} else if info.Supported {
+			} else {
+				// Store vendor information
+				server.Metadata["vendor"] = string(info.Vendor)
+
+				// Configure SOL endpoint based on discovery
 				if server.SOLEndpoint == nil { // Don't override if explicitly configured
-					server.SOLEndpoint = &SOLEndpoint{
-						Type:     "redfish_serial",
-						Endpoint: endpoint + "/redfish/v1/Managers/1/SerialConsole", // Adjust based on actual path
-						Username: server.ControlEndpoint.Username,
-						Password: server.ControlEndpoint.Password,
+					if info.Supported && info.SerialPath != "" {
+						// Use Redfish serial console if supported
+						server.SOLEndpoint = &SOLEndpoint{
+							Type:     "redfish_serial",
+							Endpoint: endpoint + info.SerialPath,
+							Username: server.ControlEndpoint.Username,
+							Password: server.ControlEndpoint.Password,
+						}
+					} else if info.FallbackToIPMI {
+						// Fallback to IPMI SOL
+						ipmiEndpoint, err := s.buildIPMIEndpoint(endpoint)
+						if err != nil {
+							log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to build IPMI endpoint")
+						} else {
+							server.SOLEndpoint = &SOLEndpoint{
+								Type:     "ipmi",
+								Endpoint: ipmiEndpoint,
+								Username: server.ControlEndpoint.Username,
+								Password: server.ControlEndpoint.Password,
+							}
+							server.Metadata["sol_fallback"] = "ipmi"
+							log.Info().Str("endpoint", endpoint).Str("vendor", string(info.Vendor)).Msg("Using IPMI SOL fallback")
+						}
 					}
 				}
-				// Ensure FeatureConsole is included
-				hasConsole := false
-				for _, f := range server.Features {
-					if f == string(types.FeatureConsole) {
-						hasConsole = true
-						break
+
+				// Ensure FeatureConsole is included if supported or fallback
+				if info.Supported || info.FallbackToIPMI {
+					hasConsole := false
+					for _, f := range server.Features {
+						if f == string(types.FeatureConsole) {
+							hasConsole = true
+							break
+						}
 					}
-				}
-				if !hasConsole {
-					server.Features = append(server.Features, string(types.FeatureConsole))
+					if !hasConsole {
+						server.Features = append(server.Features, string(types.FeatureConsole))
+					}
 				}
 			}
 		}
@@ -463,6 +489,24 @@ func (s *Service) isBMCSubnet(ipnet *net.IPNet) bool {
 	return (ip[0] == 192 && ip[1] == 168) || // 192.168.x.x
 		(ip[0] == 10) || // 10.x.x.x
 		(ip[0] == 172 && ip[1] >= 16 && ip[1] <= 31) // 172.16-31.x.x
+}
+
+// buildIPMIEndpoint converts a Redfish endpoint URL to an IPMI endpoint
+func (s *Service) buildIPMIEndpoint(redfishEndpoint string) (string, error) {
+	u, err := url.Parse(redfishEndpoint)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse endpoint: %w", err)
+	}
+
+	// Extract host without port
+	host, _, err := net.SplitHostPort(u.Host)
+	if err != nil {
+		// No port specified, use the host as-is
+		host = u.Host
+	}
+
+	// Standard IPMI port is 623
+	return host + ":623", nil
 }
 
 // generateIPsFromSubnet generates a list of IPs to scan in a subnet

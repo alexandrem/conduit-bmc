@@ -14,101 +14,9 @@ import (
 
 // Client handles Redfish BMC communications
 type Client struct {
-	httpClient *http.Client
-	timeout    time.Duration
-}
-
-// PowerState represents the power state of a server
-type PowerState string
-
-const (
-	PowerStateOn      PowerState = "On"
-	PowerStateOff     PowerState = "Off"
-	PowerStateUnknown PowerState = "Unknown"
-)
-
-// ServiceRoot represents the Redfish service root response
-type ServiceRoot struct {
-	ID             string `json:"Id"`
-	Name           string `json:"Name"`
-	RedfishVersion string `json:"RedfishVersion"`
-	UUID           string `json:"UUID"`
-	Systems        struct {
-		ODataID string `json:"@odata.id"`
-	} `json:"Systems"`
-	Chassis struct {
-		ODataID string `json:"@odata.id"`
-	} `json:"Chassis"`
-}
-
-// ComputerSystem represents a Redfish computer system
-type ComputerSystem struct {
-	ID           string     `json:"Id"`
-	Name         string     `json:"Name"`
-	Manufacturer string     `json:"Manufacturer"`
-	Model        string     `json:"Model"`
-	SerialNumber string     `json:"SerialNumber"`
-	PowerState   PowerState `json:"PowerState"`
-	Actions      struct {
-		ComputerSystemReset struct {
-			Target                   string   `json:"target"`
-			ResetTypeAllowableValues []string `json:"ResetType@Redfish.AllowableValues"`
-		} `json:"#ComputerSystem.Reset"`
-	} `json:"Actions"`
-}
-
-// BMCInfo represents information about a Redfish BMC
-type BMCInfo struct {
-	Vendor          string
-	Model           string
-	FirmwareVersion string
-	RedfishVersion  string
-	Features        []string
-}
-
-// Manager represents a Redfish Manager (BMC)
-type Manager struct {
-	ID              string     `json:"Id"`
-	Name            string     `json:"Name"`
-	ManagerType     string     `json:"ManagerType"`
-	Model           string     `json:"Model"`
-	FirmwareVersion string     `json:"FirmwareVersion"`
-	Manufacturer    string     `json:"Manufacturer"`
-	PowerState      PowerState `json:"PowerState"`
-	Status          struct {
-		State  string `json:"State"`
-		Health string `json:"Health"`
-	} `json:"Status"`
-	NetworkProtocol struct {
-		ODataID string `json:"@odata.id"`
-	} `json:"NetworkProtocol"`
-}
-
-// NetworkProtocol represents Redfish network protocol information
-type NetworkProtocol struct {
-	ID          string `json:"Id"`
-	Name        string `json:"Name"`
-	Description string `json:"Description"`
-	Status      struct {
-		State  string `json:"State"`
-		Health string `json:"Health"`
-	} `json:"Status"`
-	HTTP struct {
-		ProtocolEnabled bool  `json:"ProtocolEnabled"`
-		Port            int32 `json:"Port"`
-	} `json:"HTTP"`
-	HTTPS struct {
-		ProtocolEnabled bool  `json:"ProtocolEnabled"`
-		Port            int32 `json:"Port"`
-	} `json:"HTTPS"`
-	SSH struct {
-		ProtocolEnabled bool  `json:"ProtocolEnabled"`
-		Port            int32 `json:"Port"`
-	} `json:"SSH"`
-	IPMI struct {
-		ProtocolEnabled bool  `json:"ProtocolEnabled"`
-		Port            int32 `json:"Port"`
-	} `json:"IPMI"`
+	httpClient     *http.Client
+	timeout        time.Duration
+	SessionManager *SessionManager
 }
 
 func NewClient() *Client {
@@ -123,8 +31,9 @@ func NewClient() *Client {
 	}
 
 	return &Client{
-		httpClient: httpClient,
-		timeout:    10 * time.Second,
+		httpClient:     httpClient,
+		timeout:        10 * time.Second,
+		SessionManager: NewSessionManager(httpClient),
 	}
 }
 
@@ -137,7 +46,7 @@ func (c *Client) IsAccessible(ctx context.Context, endpoint string) bool {
 	defer cancel()
 
 	// Try to access the Redfish service root
-	serviceRootURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/"
+	serviceRootURL := BuildServiceRootURL(endpoint)
 	req, err := http.NewRequestWithContext(reqCtx, "GET", serviceRootURL, nil)
 	if err != nil {
 		log.Debug().Str("url", serviceRootURL).Err(err).Msg("Failed to create request")
@@ -185,7 +94,7 @@ func (c *Client) GetBMCInfo(ctx context.Context, endpoint, username, password st
 
 // getServiceRoot retrieves the Redfish service root
 func (c *Client) getServiceRoot(ctx context.Context, endpoint, username, password string) (*ServiceRoot, error) {
-	serviceRootURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/"
+	serviceRootURL := BuildServiceRootURL(endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", serviceRootURL, nil)
 	if err != nil {
@@ -235,7 +144,7 @@ func (c *Client) getComputerSystem(ctx context.Context, endpoint, username, pass
 	}
 
 	// Get systems collection
-	systemsURL := strings.TrimSuffix(endpoint, "/") + serviceRoot.Systems.ODataID
+	systemsURL := BuildRedfishURL(endpoint, serviceRoot.Systems.ODataID)
 	req, err := http.NewRequestWithContext(ctx, "GET", systemsURL, nil)
 	if err != nil {
 		return nil, err
@@ -267,7 +176,7 @@ func (c *Client) getComputerSystem(ctx context.Context, endpoint, username, pass
 	}
 
 	// Get the first system
-	systemURL := strings.TrimSuffix(endpoint, "/") + systemsCollection.Members[0].ODataID
+	systemURL := BuildRedfishURL(endpoint, systemsCollection.Members[0].ODataID)
 	req, err = http.NewRequestWithContext(ctx, "GET", systemURL, nil)
 	if err != nil {
 		return nil, err
@@ -322,7 +231,7 @@ func (c *Client) performPowerAction(ctx context.Context, endpoint, username, pas
 	}
 
 	// Perform the reset action
-	resetURL := strings.TrimSuffix(endpoint, "/") + system.Actions.ComputerSystemReset.Target
+	resetURL := BuildRedfishURL(endpoint, system.Actions.ComputerSystemReset.Target)
 
 	resetPayload := map[string]string{
 		"ResetType": action,
@@ -363,7 +272,7 @@ func (c *Client) GetManagerInfo(ctx context.Context, endpoint, username, passwor
 	log.Debug().Str("endpoint", endpoint).Msg("Getting Manager info")
 
 	// Get Managers collection
-	managersURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/Managers"
+	managersURL := BuildManagersURL(endpoint)
 	req, err := http.NewRequestWithContext(ctx, "GET", managersURL, nil)
 	if err != nil {
 		return nil, nil, err
@@ -395,7 +304,7 @@ func (c *Client) GetManagerInfo(ctx context.Context, endpoint, username, passwor
 	}
 
 	// Get the first manager (BMC)
-	managerURL := strings.TrimSuffix(endpoint, "/") + managersCollection.Members[0].ODataID
+	managerURL := BuildRedfishURL(endpoint, managersCollection.Members[0].ODataID)
 	req, err = http.NewRequestWithContext(ctx, "GET", managerURL, nil)
 	if err != nil {
 		return nil, nil, err
@@ -420,7 +329,7 @@ func (c *Client) GetManagerInfo(ctx context.Context, endpoint, username, passwor
 	// Get NetworkProtocol if available
 	var netProto *NetworkProtocol
 	if manager.NetworkProtocol.ODataID != "" {
-		netProtoURL := strings.TrimSuffix(endpoint, "/") + manager.NetworkProtocol.ODataID
+		netProtoURL := BuildRedfishURL(endpoint, manager.NetworkProtocol.ODataID)
 		req, err = http.NewRequestWithContext(ctx, "GET", netProtoURL, nil)
 		if err == nil {
 			req.Header.Set("Accept", "application/json")
@@ -463,43 +372,70 @@ func (c *Client) GetSensors(ctx context.Context, endpoint, username, password st
 	return sensors, nil
 }
 
-// CreateSession creates a Redfish session and returns the X-Auth-Token
-func (c *Client) CreateSession(ctx context.Context, endpoint, username, password string) (string, error) {
-	sessionURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/SessionService/Sessions"
-
-	payload := map[string]string{
-		"UserName": username,
-		"Password": password,
-	}
-	payloadBytes, err := json.Marshal(payload)
+// DetectVendor determines the BMC vendor type from the Manager information.
+// This method uses session-based authentication to retrieve manager details.
+func (c *Client) DetectVendor(ctx context.Context, endpoint, username, password string) (VendorType, error) {
+	token, sessionURI, err := c.SessionManager.CreateSession(ctx, endpoint, username, password)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal session payload: %w", err)
+		return VendorGeneric, fmt.Errorf("failed to create session for vendor detection: %w", err)
 	}
+	defer func() {
+		if err := c.SessionManager.DeleteSession(ctx, endpoint, sessionURI, token); err != nil {
+			log.Warn().Err(err).Msg("Failed to delete session after vendor detection")
+		}
+	}()
 
-	req, err := http.NewRequestWithContext(ctx, "POST", sessionURL, strings.NewReader(string(payloadBytes)))
+	// Get the first manager
+	manager, err := c.getFirstManager(ctx, endpoint, token)
 	if err != nil {
-		return "", err
+		return VendorGeneric, fmt.Errorf("failed to get manager for vendor detection: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+	return detectVendorFromManager(manager), nil
+}
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("session creation failed: HTTP %d: %s", resp.StatusCode, resp.Status)
+// detectVendorFromManager inspects Manager fields to determine vendor type
+func detectVendorFromManager(manager *Manager) VendorType {
+	// Check Manager ID for vendor-specific patterns
+	if strings.Contains(manager.ID, "iDRAC") {
+		return VendorIDRAC
 	}
 
-	token := resp.Header.Get("X-Auth-Token")
-	if token == "" {
-		return "", fmt.Errorf("no X-Auth-Token in response")
+	// Check Manufacturer field
+	if strings.Contains(strings.ToLower(manager.Manufacturer), "dell") {
+		return VendorIDRAC
 	}
 
-	return token, nil
+	// Add more vendor detection patterns here as needed
+	// Example: HPE iLO, Supermicro, etc.
+
+	return VendorGeneric
+}
+
+// getFirstManager retrieves the first manager from the BMC using a token
+func (c *Client) getFirstManager(ctx context.Context, endpoint, token string) (*Manager, error) {
+	managersURL := BuildManagersURL(endpoint)
+	var managersCollection struct {
+		Members []struct {
+			ODataID string `json:"@odata.id"`
+		} `json:"Members"`
+	}
+	if err := c.GetWithToken(ctx, managersURL, token, &managersCollection); err != nil {
+		return nil, fmt.Errorf("failed to get managers collection: %w", err)
+	}
+
+	if len(managersCollection.Members) == 0 {
+		return nil, fmt.Errorf("no managers found")
+	}
+
+	// Get first manager
+	managerURL := BuildRedfishURL(endpoint, managersCollection.Members[0].ODataID)
+	var manager Manager
+	if err := c.GetWithToken(ctx, managerURL, token, &manager); err != nil {
+		return nil, fmt.Errorf("failed to get manager: %w", err)
+	}
+
+	return &manager, nil
 }
 
 // GetWithToken performs a GET request using the provided X-Auth-Token
@@ -529,52 +465,32 @@ func (c *Client) GetWithToken(ctx context.Context, url, token string, target int
 	return nil
 }
 
-// SerialConsoleInfo represents SerialConsole support info
-type SerialConsoleInfo struct {
-	Supported bool
-	Enabled   bool
-	// Add more fields as needed, e.g., ServiceEnabled, MaxConcurrentSessions
-}
-
-// DiscoverSerialConsole checks if SerialConsole is supported
+// DiscoverSerialConsole checks if SerialConsole is supported.
+// It automatically detects the vendor and delegates to the appropriate handler.
 func (c *Client) DiscoverSerialConsole(ctx context.Context, endpoint, username, password string) (*SerialConsoleInfo, error) {
-	token, err := c.CreateSession(ctx, endpoint, username, password)
+	token, sessionURI, err := c.SessionManager.CreateSession(ctx, endpoint, username, password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
+	defer func() {
+		if err := c.SessionManager.DeleteSession(ctx, endpoint, sessionURI, token); err != nil {
+			log.Warn().Err(err).Msg("Failed to delete session after discovery")
+		}
+	}()
 
-	// Get Managers
-	managersURL := strings.TrimSuffix(endpoint, "/") + "/redfish/v1/Managers"
-	var managersCollection struct {
-		Members []struct {
-			ODataID string `json:"@odata.id"`
-		} `json:"Members"`
-	}
-	if err := c.GetWithToken(ctx, managersURL, token, &managersCollection); err != nil {
-		return nil, err
-	}
-
-	if len(managersCollection.Members) == 0 {
-		return nil, fmt.Errorf("no managers found")
+	// Get manager for vendor detection
+	manager, err := c.getFirstManager(ctx, endpoint, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get manager: %w", err)
 	}
 
-	// Get first manager
-	managerURL := strings.TrimSuffix(endpoint, "/") + managersCollection.Members[0].ODataID
-	var manager struct {
-		SerialConsole struct {
-			ServiceEnabled        bool `json:"ServiceEnabled"`
-			MaxConcurrentSessions int  `json:"MaxConcurrentSessions"`
-			// Add other fields as needed
-		} `json:"SerialConsole"`
-	}
-	if err := c.GetWithToken(ctx, managerURL, token, &manager); err != nil {
-		return nil, err
-	}
+	// Detect vendor from manager
+	vendorType := detectVendorFromManager(manager)
+	log.Debug().Str("vendor", string(vendorType)).Str("endpoint", endpoint).Msg("Detected BMC vendor")
 
-	info := &SerialConsoleInfo{
-		Supported: manager.SerialConsole.MaxConcurrentSessions > 0, // Assuming >0 means supported
-		Enabled:   manager.SerialConsole.ServiceEnabled,
-	}
+	// Get the appropriate vendor handler
+	handler := NewVendorHandler(vendorType, c)
 
-	return info, nil
+	// Delegate to vendor-specific handler
+	return handler.DiscoverSerialConsole(ctx, endpoint, username, password, token)
 }
