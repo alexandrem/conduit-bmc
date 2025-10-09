@@ -10,4 +10,5 @@ use (
 	./local-agent
 	./manager
 	./tests
+	tooling/bmc-test
 )
