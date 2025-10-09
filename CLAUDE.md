@@ -8,7 +8,7 @@ Multi-tenant BMC (IPMI/Redfish) management system. Flow: `CLI/Browser ↔ Manage
 - **Design**: `docs/.ai/DESIGN-AI.md` (components, sessions, API types)
 - **Development**: `docs/.ai/DEVELOPMENT-AI.md` (setup, commands, workflows)
 - **Testing**: `docs/.ai/TESTING-AI.md` (test tiers, commands)
-- **Features**: RFD format in `docs/features/TEMPLATE-rfd.md`
+- **Features**: RFD format in `docs/features/000-RFD-TEMPLATE.md`
 
 ## Critical Rules
 
