@@ -355,84 +355,21 @@ tests:
 
 ## Feature Documentation
 
-Feature documentation follows the RFD (Request for Discussion) format in
-`docs/features/`. When creating new feature documents:
+Feature documentation follows the RFD (Request for Discussion) format in `docs/features/`.
 
-### RFD Format Requirements
+**Template**: See `docs/features/TEMPLATE-rfd.md` for the complete structure and guidelines.
 
-All feature documents must include YAML frontmatter with the following fields:
+**Key Principles:**
+- Focus on WHAT changes, not HOW to implement every detail
+- No time estimates (weeks, hours, days)
+- API specifications should be fully detailed
+- Implementation code should be minimal (signatures only)
+- Use `docs/features/TEMPLATE-rfd.md` as the starting point
 
-```yaml
----
-rfd: "XXX" # Sequential number (001, 002, etc.)
-title: "Feature Name" # Descriptive title
-state: "draft" # draft, under-review, approved, implemented
-breaking_changes: true # true/false
-testing_required: true # true/false
-database_changes: true # true/false - requires migrations
-api_changes: true # true/false - affects public APIs
-dependencies: # External dependencies required
-    - "github.com/example/lib"
-database_migrations: # List of required migrations
-    - "create_new_table"
-areas: ["manager", "gateway"] # Affected areas (same as area)
----
-```
-
-### Document Structure
-
-1. **Title**: `# RFD XXX - Feature Name`
-2. **Summary**: Brief description of the feature
-3. **Problem**: What problem this solves
-4. **Solution**: How the feature addresses the problem
-5. **Implementation Plan**: Phased approach if applicable
-   - **IMPORTANT**: Do NOT include time estimates (weeks, hours, days)
-   - Focus on deliverable phases and concrete tasks
-   - Use checkboxes for task lists
-6. **API Changes**: New endpoints, modified interfaces
-7. **Testing Strategy**: How to validate the feature
-8. **Migration Strategy**: How to deploy safely, ignore backward
-   compatibility for now
-
-### RFD Writing Guidelines
-
-**Time Estimates:**
-- ❌ **DO NOT** include time estimates like "Week 1", "2 hours", "3 days"
-- ❌ **DO NOT** predict how long implementation will take
-- ✅ **DO** organize work into logical phases
-- ✅ **DO** use checkboxes for concrete, testable tasks
-- ✅ **DO** focus on what needs to be done, not when
-
-**Example:**
-```markdown
-## Implementation Plan
-
-### Phase 1: Database Schema
-- [ ] Create migration for new table
-- [ ] Add indexes for common queries
-- [ ] Update models to support new fields
-
-### Phase 2: API Implementation
-- [ ] Add RPC endpoint
-- [ ] Implement handler logic
-- [ ] Add input validation
-```
-
-### File Naming Convention
-
--   Files should be numbered sequentially: `001-feature-name.md`
--   Use kebab-case for feature names
--   Place all RFDs in `docs/features/` directory
-
-### Examples
-
-See existing RFDs for reference:
-
--   `docs/features/001-encrypted-server-tokens.md` - Authentication enhancement
--   `docs/features/002-oidc-authentication.md` - OIDC integration
--   `docs/features/003-server-ownership.md` - Authorization system
--   `docs/features/004-server-identity-integration.md` - Server lifecycle
-    management
+**File Naming:**
+- Sequential numbering: `001-feature-name.md`
+- Use kebab-case for feature names
+- Place all RFDs in `docs/features/` directory
 
 # important-instruction-reminders
 
