@@ -487,3 +487,56 @@ When using `make bmc-up` or `make bmc-full-up`, you get:
 - **📊 Development Isolation**: Run BMC simulation independently or with core services
 - **🐛 Error Scenarios**: Test network failures, timeouts, and protocol edge cases
 - **🧪 Interactive Testing**: Built-in shells for manual IPMI and Redfish testing
+
+## Project Structure
+
+```
+bmc-mgmt/
+├── README.md                  # Primary project overview
+├── CLAUDE.md                  # Claude code guidance
+├── Makefile                   # Top-level build/test targets
+├── docs/
+│   ├── ARCHITECTURE.md        # High-level system topology
+│   ├── DESIGN.md              # Detailed design decisions
+│   ├── DEVELOPMENT.md         # Canonical development setup guide
+│   └── features/              # RFDs (feature proposals)
+├── manager/
+│   ├── cmd/manager/           # Manager service entrypoint
+│   ├── internal/              # Core handlers/business logic
+│   ├── pkg/                   # Shared packages (auth, database, models)
+│   ├── proto/                 # Protobuf definitions
+│   └── gen/                   # Generated buf/connect code
+├── gateway/                   # Gateway service (traffic routing, web UI & proxy)
+│   ├── cmd/gateway/           # Gateway service entrypoint
+│   ├── internal/              # Core handlers/business logic
+│   ├── internal/webui/        # Embedded templates & assets
+│   ├── pkg/                   # Shared packages
+│   ├── proto/                 # Protobuf definitions
+│   └── gen/                   # Generated buf/connect code
+├── local-agent/
+│   ├── cmd/agent/             # Agent service entrypoint
+│   ├── internal/agent/        # Core handlers/business logic
+│   ├── pkg/
+│   └── config/                # Agent configuration samples
+├── cli/
+│   ├── cmd/                   # Cobra command tree
+│   └── pkg/                   # CLI client + config helpers
+├── docker/
+│   ├── README.md              # Containerized IPMI/Redfish docs
+│   ├── *.Dockerfile           # Service and simulator images
+│   ├── configs/               # Agent/test config templates
+│   ├── scripts/               # Startup helpers (VirtualBMC, etc.)
+│   └── supervisor/            # Supervisord configuration
+├── docker-compose.core.yml    # Core manager/gateway/agent dev stack
+├── docker-compose.e2e.yml     # Ephemeral E2E infrastructure
+├── docker-compose.virtualbmc.yml # Persistent VirtualBMC/Redfish dev stack
+├── tests/
+│   ├── e2e/                   # End-to-end test suite & clients
+│   ├── smoke/                 # Functional smoke tests
+│   ├── integration/           # Integration-level tests
+│   ├── synthetic/             # Synthetic BMC helpers
+│   └── go.mod / go.sum        # Dedicated Go module for tests
+├── tooling/
+│   └── make/                  # Extended make targets (docker, CI)
+└── tmp/                       # Temporary tooling (generated makefiles, caches)
+```
