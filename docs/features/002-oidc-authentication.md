@@ -7,13 +7,13 @@ testing_required: true
 database_changes: true
 api_changes: true
 dependencies:
-	- "github.com/coreos/go-oidc/v3"
-	- "golang.org/x/oauth2"
+  - "github.com/coreos/go-oidc/v3"
+  - "golang.org/x/oauth2"
 database_migrations:
-	- "add_oidc_columns_to_customers"
-	- "create_oidc_sessions_table"
-	- "create_oidc_states_table"
-	- "create_oidc_providers_table"
+  - "add_oidc_columns_to_customers"
+  - "create_oidc_sessions_table"
+  - "create_oidc_states_table"
+  - "create_oidc_providers_table"
 areas: [ "manager", "cli" ]
 ---
 
