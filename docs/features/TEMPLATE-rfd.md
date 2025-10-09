@@ -225,12 +225,25 @@ test:
 - ✅ Include configuration examples (YAML, CLI commands)
 - ✅ Show expected output for CLI commands
 - ✅ Use diagrams for complex architectures
-- ✅ Show function signatures, not full implementations
 - ✅ Put protocol details in Appendix
+- ✅ Reference files by path only (e.g., `manager/pkg/database/database.go`)
 
 **DO NOT:**
 - ❌ Include time estimates (weeks, hours, days)
 - ❌ Show complete Go/Python implementations
 - ❌ Include verbose code that belongs in actual implementation
+- ❌ Reference specific line numbers (e.g., `file.go:123` or `lines 45-67`)
+- ❌ Use line number ranges - they become stale as code changes
+- ❌ Duplicate RPC handler signatures when protobuf already defines the API
+- ❌ Show function signatures for internal implementation details
 
-**Exception:** API changes (protobuf definitions, endpoint signatures) should be fully detailed.
+**What to include in API Changes:**
+- ✅ Protobuf messages and service definitions (the actual API contract)
+- ✅ Database schema changes (migrations, new columns/tables)
+- ✅ CLI command usage examples with expected output
+- ✅ Configuration file changes
+- ❌ Go handler function signatures (implementation detail)
+- ❌ Internal database method signatures (implementation detail)
+
+**Why avoid redundant signatures:**
+- Protobuf already defines the API contract completely
