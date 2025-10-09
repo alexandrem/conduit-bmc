@@ -16,16 +16,16 @@ This document describes the detailed communication flow between the browser VNC 
 The VNC access system uses a three-tier architecture that maintains security while providing seamless browser-based VNC access:
 
 ```
-┌─────────────────┐      WebSocket       ┌─────────────────┐      gRPC Stream      ┌─────────────────┐      TCP/WebSocket    ┌─────────────────┐
-│   Browser       │ <─────────────────> │   Gateway       │ <─────────────────> │  Local Agent    │ <─────────────────> │   BMC VNC       │
+┌─────────────────┐      WebSocket       ┌─────────────────┐      gRPC Stream     ┌─────────────────┐      TCP/WebSocket   ┌─────────────────┐
+│   Browser       │ <──────────────────> │   Gateway       │ <──────────────────> │  Local Agent    │ <──────────────────> │   BMC VNC       │
 │   (noVNC)       │    RFB Handshake     │   (Proxy)       │   RFB Handshake      │  (RFB Proxy)    │   Authenticated      │   Server        │
 └─────────────────┘                      └─────────────────┘                      └─────────────────┘   VNC Session        └─────────────────┘
         │                                         │                                         │                                         │
-        │ Thinks it's talking to VNC server      │ Transparent WebSocket ↔ gRPC           │ Performs RFB protocol                   │
-        │ Sees "no authentication required"      │ protocol translation                   │ termination and translation             │
+        │ Thinks it's talking to VNC server       │ Transparent WebSocket ↔ gRPC            │ Performs RFB protocol                   │
+        │ Sees "no authentication required"       │ protocol translation                    │ termination and translation             │
         │                                         │                                         │                                         │
         └─────────────────────────────────────────┴─────────────────────────────────────────┴─────────────────────────────────────────┘
-                                            BMC credentials never leave the Agent
+                                                BMC credentials never leave the Agent
 ```
 
 ### Key Components
@@ -62,10 +62,10 @@ The VNC access system uses a three-tier architecture that maintains security whi
 **Critical Security Principle**: BMC credentials MUST NOT be exposed to the browser or transmitted over the internet.
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                    SECURITY BOUNDARY                              │
-│                                                                   │
-│  Browser Zone          │  Gateway Zone       │  Agent Zone       │
+┌─────────────────────────────────────────────────────────────────┐
+│                    SECURITY BOUNDARY                            │
+│                                                                 │
+│  Browser Zone         │  Gateway Zone       │  Agent Zone       │
 │  (Untrusted)          │  (Authenticated)    │  (Trusted)        │
 │                       │                     │                   │
 │  • No BMC creds       │  • User session     │  • BMC creds      │
@@ -77,22 +77,29 @@ The VNC access system uses a three-tier architecture that maintains security whi
 
 ### Authentication Flow
 
-1. **User → Manager**: User authenticates with username/password or API key
-2. **Manager → User**: Issues JWT token (returned in HTTP response and set as `token` cookie)
-3. **User → Gateway (HTTP)**: Browser opens VNC web UI, sends JWT cookie with request
-4. **Gateway**: Validates JWT token from cookie, verifies user has access to server
-5. **Browser → Gateway (WebSocket)**: noVNC client establishes WebSocket connection with JWT cookie
-6. **Gateway → Agent**: Creates gRPC stream with validated session context
-7. **Agent → BMC**: Uses stored credentials to authenticate VNC session
+1. **CLI → Manager**: User authenticates with username/password or API key
+2. **Manager → CLI**: Issues JWT token with server access claims
+3. **CLI → Gateway**: Calls `CreateVNCSession` RPC with JWT in Authorization header
+4. **Gateway**:
+   - Validates JWT token
+   - Creates VNC session (session ID, server mapping)
+   - **Creates web session** (maps session cookie → JWT)
+   - **Sets `gateway_session` cookie** in RPC response
+5. **CLI → Browser**: Opens Gateway VNC URL (`/vnc/{sessionId}`)
+6. **Browser → Gateway**: Automatically sends `gateway_session` cookie
+7. **Gateway**: Validates session cookie, serves VNC web UI
+8. **Browser → Gateway (WebSocket)**: noVNC establishes WebSocket with session cookie
+9. **Gateway → Agent**: Creates gRPC stream for VNC data proxying
+10. **Agent → BMC**: Uses stored credentials to authenticate VNC session
 
-**Result**: Browser gets VNC access without ever knowing BMC credentials.
+**Result**: Browser gets VNC access without ever knowing JWT or BMC credentials.
 
-**Token Flow**:
-- **JWT Creation**: Manager creates and signs JWT with user identity and server access claims
-- **Cookie Storage**: JWT stored in secure HTTP-only cookie (`token`) by Manager
-- **Cookie Transmission**: Browser automatically sends cookie with all Gateway requests
-- **Token Validation**: Gateway validates JWT signature and checks authorization claims
-- **Session Context**: Gateway creates encrypted session context from validated JWT for Agent
+**Cookie Management** (Gateway's Responsibility):
+- **JWT Extraction**: Gateway extracts JWT from CLI's `Authorization` header during `CreateVNCSession`
+- **Web Session Creation**: Gateway creates web session mapping (cookie ID → JWT → server context)
+- **Cookie Issuance**: Gateway sets `gateway_session` HttpOnly cookie in `CreateVNCSession` response
+- **Cookie Validation**: When browser requests `/vnc/{sessionId}`, Gateway validates session cookie
+- **Session Lookup**: Gateway uses cookie to retrieve JWT and server context for authorization
 
 ## Detailed Protocol Flow
 
@@ -102,32 +109,32 @@ This happens when the agent receives a VNC streaming request from the Gateway.
 
 ```
 Agent                                    BMC VNC Server
-  │                                            │
+  │                                           │
   │─────── TCP Connect ──────────────────────>│
-  │                                            │
+  │                                           │
   │<────── RFB Version (3.8) ─────────────────│
-  │                                            │
+  │                                           │
   │─────── RFB Version (3.8) ────────────────>│
-  │                                            │
+  │                                           │
   │<────── Security Types [VNC Auth] ─────────│
-  │                                            │
+  │                                           │
   │─────── Selected: VNC Auth ───────────────>│
-  │                                            │
+  │                                           │
   │<────── Challenge (16 bytes) ──────────────│
-  │                                            │
+  │                                           │
   │─────── DES Encrypted Response ───────────>│
-  │                                            │
+  │                                           │
   │<────── Security Result: OK ───────────────│
-  │                                            │
+  │                                           │
   │─────── ClientInit (shared=1) ────────────>│
-  │                                            │
+  │                                           │
   │<────── ServerInit ────────────────────────│
   │         • Framebuffer size (width, height)│
   │         • Pixel format (RGB888, etc.)     │
   │         • Desktop name string             │
-  │                                            │
-  │─── CACHE ServerInit for later replay ────│
-  │                                            │
+  │                                           │
+  │─── CACHE ServerInit for later replay  ────│
+  │                                           │
   └─ Agent now has authenticated VNC session ─┘
 ```
 
@@ -169,27 +176,27 @@ The browser (noVNC) initiates a standard RFB handshake, but the agent **terminat
 ```
 Browser (noVNC)                          Agent (RFB Proxy)
   │                                            │
-  │◄────── RFB Version "RFB 003.008\n" ───────│  Agent acts as VNC server
+  │◄────── RFB Version "RFB 003.008\n" ────────│  Agent acts as VNC server
   │                                            │
-  │─────── RFB Version "RFB 003.008\n" ──────►│
+  │─────── RFB Version "RFB 003.008\n" ───────►│
   │                                            │
-  │◄────── Security Types:                    │  Agent offers "None"
+  │◄────── Security Types:                     │  Agent offers "None"
   │         Count: 1                           │  (agent already authenticated)
   │         Types: [SecurityTypeNone] ─────────│
   │                                            │
   │─────── Selected: SecurityTypeNone ────────►│
   │                                            │
-  │◄────── Security Result: OK (0x00000000) ──│
+  │◄────── Security Result: OK (0x00000000) ───│
   │                                            │
   │─────── ClientInit (shared=1) ─────────────►│
   │                                            │
-  │◄────── ServerInit (CACHED from BMC) ──────│  Agent replays cached ServerInit
+  │◄────── ServerInit (CACHED from BMC) ───────│  Agent replays cached ServerInit
   │         • Width: 1024                      │  from Phase 1
   │         • Height: 768                      │
   │         • Pixel Format: RGB888             │
   │         • Desktop: "iDRAC Virtual Console" │
   │                                            │
-  └── Browser RFB handshake complete ─────────┘
+  └── Browser RFB handshake complete ──────────┘
 ```
 
 **Key Security Feature**: Browser thinks it connected to a VNC server with "no authentication required", when in reality:
