@@ -97,19 +97,37 @@ Every service exposes:
 
 ## 📚 Documentation
 
-- **[System Design](docs/DESIGN.md)** - Complete architecture and design
-  decisions
-- **[Architecture Overview](docs/ARCHITECTURE.md)** - High-level system topology
-- **[Authentication Architecture](docs/AUTH.md)** - Authentication architecture
-- **[Web Console](docs/WEB.md)** - Web console UI overview
-- **[Development Guide](docs/DEVELOPMENT.md)** - Complete setup and development
-  workflow
-- **[Security Considerations](docs/SECURITY.md)** - Security design overview
-- **[BMC Support](docs/BMC-SUPPORT.md)** - BMC support status
+### Core Documentation
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - High-level system topology and component interactions
+- **[System Design](docs/DESIGN.md)** - Design decisions and architectural rationale
+- **[Development Guide](docs/DEVELOPMENT.md)** - Setup instructions and development workflow
+- **[Testing Guide](docs/TESTING.md)** - Testing strategy and test execution
 
+### Technical Documentation
+In-depth technical specifications and protocol implementations:
+- **[Authentication Flow](docs/technical/auth-flow.md)** - JWT tokens, session management, and authorization
+- **[VNC Protocol Flow](docs/technical/vnc-protocol-flow.md)** - RFB proxy architecture and VNC implementation
+- **[IPMI Implementation](docs/technical/ipmi-implementation.md)** - IPMI SOL and power control details
+- **[Web Architecture](docs/technical/web-architecture.md)** - Web console and UI implementation
+- **[Protocol Overview](docs/technical/protocols.md)** - BMC protocol comparison and usage
+
+### Guides
+User-facing guides and compatibility information:
+- **[BMC Support](docs/guides/BMC-SUPPORT.md)** - Supported BMC types and compatibility matrix
+- **[Building OpenBMC](docs/guides/build-openbmc.md)** - OpenBMC compilation instructions
+- **[VirtualBMC Setup](docs/guides/dev-virtualbmc.md)** - VirtualBMC development environment
+
+### Security
+Security considerations and threat modeling:
+- **[Security Overview](docs/security/overview.md)** - Security design and best practices
 <!--
-- **[Features (RFDs)](docs/features/)** - Upcoming initiatives & design documents
+- **[Threat Model](docs/security/threats-model.md)** - Attack vectors and mitigations
+- **[BMC Risks](docs/security/bmc-risks.md)** - BMC-specific security concerns
 -->
+
+### Features (RFDs)
+Request for Discussion documents for upcoming features:
+- **[Feature Proposals](docs/features/)** - RFDs for planned features and enhancements
 
 ## 🔮 Future Work
 
