@@ -20,7 +20,6 @@ areas: [ "manager", "gateway", "cli", "database" ]
 
 - **Status:** ❌ Abandoned
   - **Reason:** This manual naming approach requires too many API calls and admin effort. RFD 020 replaces it with automatic identity extraction from BMC discovery metadata.
-  - See **RFD 020** for automatic discovery-based approach
 - **Dependencies:**
     - **RFD 003 (Server Ownership and Authorization)**: This RFD builds on the
       ownership model established in RFD 003. Server names and metadata are
