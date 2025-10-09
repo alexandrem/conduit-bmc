@@ -7,13 +7,13 @@ testing_required: true
 database_changes: true
 api_changes: true
 dependencies:
-  - "github.com/coreos/go-oidc/v3"
-  - "golang.org/x/oauth2"
+    - "github.com/coreos/go-oidc/v3"
+    - "golang.org/x/oauth2"
 database_migrations:
-  - "add_oidc_columns_to_customers"
-  - "create_oidc_sessions_table"
-  - "create_oidc_states_table"
-  - "create_oidc_providers_table"
+    - "add_oidc_columns_to_customers"
+    - "create_oidc_sessions_table"
+    - "create_oidc_states_table"
+    - "create_oidc_providers_table"
 areas: [ "manager", "cli" ]
 ---
 
@@ -104,22 +104,22 @@ Service Accounts:          CLI → Manager (API key) → JWT → Gateway → Age
 **Component Responsibilities:**
 
 1. **Manager Service**
-	- Hosts OIDC login web pages
-	- Handles OAuth callbacks from providers
-	- Manages OIDC provider configurations
-	- Issues JWTs after successful authentication
-	- Provides RPC endpoints for CLI polling
+    - Hosts OIDC login web pages
+    - Handles OAuth callbacks from providers
+    - Manages OIDC provider configurations
+    - Issues JWTs after successful authentication
+    - Provides RPC endpoints for CLI polling
 
 2. **CLI**
-	- Opens browser to Manager OIDC login page
-	- Polls Manager for authentication completion
-	- Stores tokens securely (encrypted, file-based)
-	- Supports device flow for headless environments
+    - Opens browser to Manager OIDC login page
+    - Polls Manager for authentication completion
+    - Stores tokens securely (encrypted, file-based)
+    - Supports device flow for headless environments
 
 3. **Gateway**
-	- Remains OIDC-unaware
-	- Validates JWTs from Manager (existing functionality)
-	- No changes required
+    - Remains OIDC-unaware
+    - Validates JWTs from Manager (existing functionality)
+    - No changes required
 
 ### Database Schema
 
@@ -139,17 +139,17 @@ Service Accounts:          CLI → Manager (API key) → JWT → Gateway → Age
 
 ```yaml
 oidc:
-	enabled: true
-	redirect_url: "http://localhost:8080/auth/oidc/callback"
-	providers:
-		-   name: "google"
-			display_name: "Google"
-			client_id: "${GOOGLE_CLIENT_ID}"
-			client_secret: "${GOOGLE_CLIENT_SECRET}"
-			issuer_url: "https://accounts.google.com"
-			scopes: [ "openid", "email", "profile" ]
-			role_mapping:
-				"@company.com": [ "user" ]
+    enabled: true
+    redirect_url: "http://localhost:8080/auth/oidc/callback"
+    providers:
+        -   name: "google"
+        display_name: "Google"
+        client_id: "${GOOGLE_CLIENT_ID}"
+        client_secret: "${GOOGLE_CLIENT_SECRET}"
+        issuer_url: "https://accounts.google.com"
+        scopes: [ "openid", "email", "profile" ]
+        role_mapping:
+            "@company.com": [ "user" ]
 ```
 
 **Role Mapping:**
@@ -203,13 +203,13 @@ bmc-cli auth logout                          # Logout and clear tokens
 rpc ListOIDCProviders(ListOIDCProvidersRequest) returns (ListOIDCProvidersResponse)
 
 message ListOIDCProvidersResponse {
-	repeated OIDCProvider providers = 1;
+    repeated OIDCProvider providers = 1;
 }
 
 message OIDCProvider {
-	string name = 1;
-	string display_name = 2;
-	bool enabled = 3;
+    string name = 1;
+    string display_name = 2;
+    bool enabled = 3;
 }
 ```
 
@@ -219,12 +219,12 @@ message OIDCProvider {
 rpc InitiateOIDCAuth(InitiateOIDCAuthRequest) returns (InitiateOIDCAuthResponse)
 
 message InitiateOIDCAuthRequest {
-	string provider = 1;
+    string provider = 1;
 }
 
 message InitiateOIDCAuthResponse {
-	string session_id = 1;
-	string login_url = 2;  // Manager OIDC login page URL
+    string session_id = 1;
+    string login_url = 2;  // Manager OIDC login page URL
 }
 ```
 
@@ -234,15 +234,15 @@ message InitiateOIDCAuthResponse {
 rpc CheckOIDCAuthStatus(CheckOIDCAuthStatusRequest) returns (CheckOIDCAuthStatusResponse)
 
 message CheckOIDCAuthStatusRequest {
-	string session_id = 1;
+    string session_id = 1;
 }
 
 message CheckOIDCAuthStatusResponse {
-	string status = 1;  // "pending", "completed", "expired", "failed"
-	string access_token = 2;
-	string refresh_token = 3;
-	google.protobuf.Timestamp expires_at = 4;
-	string message = 5;
+    string status = 1;  // "pending", "completed", "expired", "failed"
+    string access_token = 2;
+    string refresh_token = 3;
+    google.protobuf.Timestamp expires_at = 4;
+    string message = 5;
 }
 ```
 
@@ -252,14 +252,14 @@ message CheckOIDCAuthStatusResponse {
 rpc InitiateDeviceAuth(InitiateDeviceAuthRequest) returns (InitiateDeviceAuthResponse)
 
 message InitiateDeviceAuthRequest {
-	string provider = 1;
+    string provider = 1;
 }
 
 message InitiateDeviceAuthResponse {
-	string device_code = 1;
-	string user_code = 2;
-	string verification_uri = 3;
-	int32 interval = 4;  // Polling interval in seconds
+    string device_code = 1;
+    string user_code = 2;
+    string verification_uri = 3;
+    int32 interval = 4;  // Polling interval in seconds
 }
 ```
 
@@ -269,16 +269,16 @@ message InitiateDeviceAuthResponse {
 rpc PollDeviceAuth(PollDeviceAuthRequest) returns (PollDeviceAuthResponse)
 
 message PollDeviceAuthRequest {
-	string provider = 1;
-	string device_code = 2;
+    string provider = 1;
+    string device_code = 2;
 }
 
 message PollDeviceAuthResponse {
-	string status = 1;  // "pending", "completed", "slow_down", "expired", "access_denied"
-	string access_token = 2;
-	string refresh_token = 3;
-	google.protobuf.Timestamp expires_at = 4;
-	string message = 5;
+    string status = 1;  // "pending", "completed", "slow_down", "expired", "access_denied"
+    string access_token = 2;
+    string refresh_token = 3;
+    google.protobuf.Timestamp expires_at = 4;
+    string message = 5;
 }
 ```
 
@@ -297,87 +297,87 @@ message PollDeviceAuthResponse {
 ### Phase 1: Database and Core Infrastructure
 
 - [ ] Create database migrations for OIDC tables
-	- [ ] Add OIDC columns to customers table
-	- [ ] Create oidc_sessions table
-	- [ ] Create oidc_states table (for CSRF protection)
-	- [ ] Create oidc_providers table
+    - [ ] Add OIDC columns to customers table
+    - [ ] Create oidc_sessions table
+    - [ ] Create oidc_states table (for CSRF protection)
+    - [ ] Create oidc_providers table
 - [ ] Implement OIDCConfig structure and YAML parsing
 - [ ] Create OIDCService with provider management
-	- [ ] Provider initialization and discovery
-	- [ ] OAuth2 config setup per provider
-	- [ ] ID token verifier setup
+    - [ ] Provider initialization and discovery
+    - [ ] OAuth2 config setup per provider
+    - [ ] ID token verifier setup
 - [ ] Add database methods for OIDC state management
-	- [ ] StoreOIDCState/ValidateOIDCState
-	- [ ] StoreAuthResult/GetAuthResult (for CLI polling)
+    - [ ] StoreOIDCState/ValidateOIDCState
+    - [ ] StoreAuthResult/GetAuthResult (for CLI polling)
 
 ### Phase 2: Manager OIDC Implementation
 
 - [ ] Create Manager web templates for OIDC login
-	- [ ] oidc_login.html (provider selection page)
-	- [ ] oidc_success.html (post-auth success page)
+    - [ ] oidc_login.html (provider selection page)
+    - [ ] oidc_success.html (post-auth success page)
 - [ ] Implement Manager HTTP handlers
-	- [ ] handleOIDCLoginPage (GET /auth/oidc/login)
-	- [ ] handleProviderLogin (GET /auth/oidc/{provider}/login)
-	- [ ] handleProviderCallback (GET /auth/oidc/{provider}/callback)
-	- [ ] handleOIDCSuccess (GET /auth/oidc/success)
+    - [ ] handleOIDCLoginPage (GET /auth/oidc/login)
+    - [ ] handleProviderLogin (GET /auth/oidc/{provider}/login)
+    - [ ] handleProviderCallback (GET /auth/oidc/{provider}/callback)
+    - [ ] handleOIDCSuccess (GET /auth/oidc/success)
 - [ ] Implement Connect RPC endpoints
-	- [ ] ListOIDCProviders
-	- [ ] InitiateOIDCAuth (returns login URL for CLI)
-	- [ ] CheckOIDCAuthStatus (polling endpoint for CLI)
-	- [ ] InitiateDeviceAuth
-	- [ ] PollDeviceAuth
+    - [ ] ListOIDCProviders
+    - [ ] InitiateOIDCAuth (returns login URL for CLI)
+    - [ ] CheckOIDCAuthStatus (polling endpoint for CLI)
+    - [ ] InitiateDeviceAuth
+    - [ ] PollDeviceAuth
 - [ ] Add user claims extraction and role mapping
 - [ ] Implement createOrUpdateCustomer for OIDC users
 
 ### Phase 3: CLI OIDC Integration
 
 - [ ] Update CLI auth command structure
-	- [ ] Add --provider flag
-	- [ ] Add --device flag for headless flow
+    - [ ] Add --provider flag
+    - [ ] Add --device flag for headless flow
 - [ ] Implement CLI OIDCAuthenticator
-	- [ ] InteractiveLogin (browser-based flow)
-	- [ ] DeviceFlowLogin (headless flow)
-	- [ ] Browser opening utility
-	- [ ] Status polling logic
+    - [ ] InteractiveLogin (browser-based flow)
+    - [ ] DeviceFlowLogin (headless flow)
+    - [ ] Browser opening utility
+    - [ ] Status polling logic
 - [ ] Implement FileTokenStore for secure token storage
-	- [ ] Token encryption/decryption
-	- [ ] File permissions (0600)
-	- [ ] Per-provider token files
+    - [ ] Token encryption/decryption
+    - [ ] File permissions (0600)
+    - [ ] Per-provider token files
 - [ ] Update auth status command to show OIDC provider
 - [ ] Update auth refresh command for OIDC tokens
 
 ### Phase 4: Testing and Validation
 
 - [ ] Unit tests
-	- [ ] OIDCService.HandleCallback
-	- [ ] Role mapping logic
-	- [ ] Token encryption/decryption
-	- [ ] State validation
+    - [ ] OIDCService.HandleCallback
+    - [ ] Role mapping logic
+    - [ ] Token encryption/decryption
+    - [ ] State validation
 - [ ] Integration tests
-	- [ ] Mock OIDC provider setup
-	- [ ] End-to-end web flow test
-	- [ ] End-to-end device flow test
-	- [ ] CLI polling test
+    - [ ] Mock OIDC provider setup
+    - [ ] End-to-end web flow test
+    - [ ] End-to-end device flow test
+    - [ ] CLI polling test
 - [ ] Security tests
-	- [ ] CSRF protection (state parameter)
-	- [ ] Token tampering detection
-	- [ ] Role escalation prevention
-	- [ ] Token expiration handling
+    - [ ] CSRF protection (state parameter)
+    - [ ] Token tampering detection
+    - [ ] Role escalation prevention
+    - [ ] Token expiration handling
 
 ### Phase 5: Provider Configuration and Documentation
 
 - [ ] Create provider configuration templates
-	- [ ] Google OIDC config example
-	- [ ] GitHub OIDC config example
-	- [ ] Azure AD config example
+    - [ ] Google OIDC config example
+    - [ ] GitHub OIDC config example
+    - [ ] Azure AD config example
 - [ ] Add OIDC configuration to development environment
 - [ ] Create deployment documentation
-	- [ ] Provider registration instructions
-	- [ ] Role mapping examples
-	- [ ] Troubleshooting guide
+    - [ ] Provider registration instructions
+    - [ ] Role mapping examples
+    - [ ] Troubleshooting guide
 - [ ] Update user-facing documentation
-	- [ ] CLI authentication guide
-	- [ ] OIDC provider setup guide
+    - [ ] CLI authentication guide
+    - [ ] OIDC provider setup guide
 
 ### Phase 6: Deployment
 
@@ -385,9 +385,9 @@ message PollDeviceAuthResponse {
 - [ ] Deploy to development environment
 - [ ] Configure mock OIDC provider for testing
 - [ ] Gradual enablement strategy
-	- [ ] Enable for pilot users
-	- [ ] Monitor authentication metrics
-	- [ ] Expand to broader user base
+    - [ ] Enable for pilot users
+    - [ ] Monitor authentication metrics
+    - [ ] Expand to broader user base
 
 ## Migration Strategy
 
@@ -460,49 +460,49 @@ claims map[string]interface{}
 
 ```yaml
 oidc:
-	enabled: true
-	redirect_url: "http://localhost:8080/auth/oidc/callback"
-	providers:
-		-   name: "mock"
-			display_name: "Mock Provider (Development)"
-			# Mock provider configuration for testing
+    enabled: true
+    redirect_url: "http://localhost:8080/auth/oidc/callback"
+    providers:
+        -   name: "mock"
+        display_name: "Mock Provider (Development)"
+        # Mock provider configuration for testing
 ```
 
 **Production:**
 
 ```yaml
 oidc:
-	enabled: true
-	redirect_url: "https://bmc.company.com/auth/oidc/callback"
-	session_store:
-		type: "redis"
-		redis_url: "${REDIS_URL}"
-	providers:
-		-   name: "company-azure"
-			display_name: "Company SSO"
-			client_id: "${AZURE_CLIENT_ID}"
-			client_secret: "${AZURE_CLIENT_SECRET}"
-			issuer_url: "https://login.microsoftonline.com/${COMPANY_TENANT_ID}/v2.0"
+    enabled: true
+    redirect_url: "https://bmc.company.com/auth/oidc/callback"
+    session_store:
+        type: "redis"
+        redis_url: "${REDIS_URL}"
+    providers:
+        -   name: "company-azure"
+        display_name: "Company SSO"
+        client_id: "${AZURE_CLIENT_ID}"
+        client_secret: "${AZURE_CLIENT_SECRET}"
+        issuer_url: "https://login.microsoftonline.com/${COMPANY_TENANT_ID}/v2.0"
 ```
 
 ### Monitoring
 
 ```yaml
 metrics:
-	-   name: oidc_auth_attempts_total
-		type: counter
-		labels: [ provider, status ]
-		description: Total OIDC authentication attempts
+    -   name: oidc_auth_attempts_total
+    type: counter
+    labels: [ provider, status ]
+    description: Total OIDC authentication attempts
 
-	-   name: oidc_token_refresh_total
-		type: counter
-		labels: [ provider, status ]
-		description: Total OIDC token refreshes
+    -   name: oidc_token_refresh_total
+    type: counter
+    labels: [ provider, status ]
+    description: Total OIDC token refreshes
 
-	-   name: oidc_session_duration_seconds
-		type: histogram
-		labels: [ provider ]
-		description: OIDC session duration
+    -   name: oidc_session_duration_seconds
+    type: histogram
+    labels: [ provider ]
+    description: OIDC session duration
 ```
 
 ## Security
