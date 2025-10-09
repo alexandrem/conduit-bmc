@@ -78,12 +78,21 @@ The VNC access system uses a three-tier architecture that maintains security whi
 ### Authentication Flow
 
 1. **User → Manager**: User authenticates with username/password or API key
-2. **Manager → Gateway**: Issues JWT token or session cookie
-3. **Browser → Gateway**: Presents token to establish VNC WebSocket connection
-4. **Gateway → Agent**: Validates token, routes to agent via gRPC
-5. **Agent → BMC**: Uses stored credentials to authenticate VNC session
+2. **Manager → User**: Issues JWT token (returned in HTTP response and set as `token` cookie)
+3. **User → Gateway (HTTP)**: Browser opens VNC web UI, sends JWT cookie with request
+4. **Gateway**: Validates JWT token from cookie, verifies user has access to server
+5. **Browser → Gateway (WebSocket)**: noVNC client establishes WebSocket connection with JWT cookie
+6. **Gateway → Agent**: Creates gRPC stream with validated session context
+7. **Agent → BMC**: Uses stored credentials to authenticate VNC session
 
 **Result**: Browser gets VNC access without ever knowing BMC credentials.
+
+**Token Flow**:
+- **JWT Creation**: Manager creates and signs JWT with user identity and server access claims
+- **Cookie Storage**: JWT stored in secure HTTP-only cookie (`token`) by Manager
+- **Cookie Transmission**: Browser automatically sends cookie with all Gateway requests
+- **Token Validation**: Gateway validates JWT signature and checks authorization claims
+- **Session Context**: Gateway creates encrypted session context from validated JWT for Agent
 
 ## Detailed Protocol Flow
 
