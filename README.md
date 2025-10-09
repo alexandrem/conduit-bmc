@@ -41,7 +41,7 @@ providers who need to give customers secure access to their server consoles.
 
 - The architecture *can* support WebSocket VNC on BMCs that implement it
 - Vendor-specific endpoints, authentication, and session handling may vary
-- See [Detailed BMC Theoretical Support](docs/BMC-SUPPORT.md#theoretical-support-untested) for full notes
+- See [Detailed BMC Theoretical Support](docs/guides/BMC-SUPPORT.md#theoretical-support-untested) for full notes
 
 
 ## 🏗️ Architecture
@@ -66,7 +66,8 @@ For more details:
 - Role-based isolation for multi-tenancy
 - Audit logging (designed for SIEM integration)
 
-See [docs/SECURITY.md](docs/SECURITY.md) for broader security consideration
+See [Security Overview](docs/security/overview.md) for broader
+security consideration
 notes.
 
 ## 🛠️ Quick Start (Development)
