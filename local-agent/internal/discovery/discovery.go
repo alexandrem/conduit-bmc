@@ -56,6 +56,7 @@ type VNCEndpoint struct {
 	Endpoint string        `json:"endpoint"` // Full connection URL (e.g., "ws://novnc:6080/websockify")
 	Username string        `json:"username"`
 	Password string        `json:"password"`
+	TLS      *TLSConfig    `json:"tls"` // Optional TLS configuration for VeNCrypt/RFB-over-TLS
 }
 
 // Service handles BMC discovery in the local datacenter
@@ -143,12 +144,22 @@ func (s *Service) loadStaticServers() []*Server {
 
 		// Convert VNC endpoint
 		if host.VNCEndpoint != nil {
-			server.VNCEndpoint = &VNCEndpoint{
+			vncEndpoint := &VNCEndpoint{
 				Type:     host.VNCEndpoint.InferType(), // Infer from endpoint scheme if not specified
 				Endpoint: host.VNCEndpoint.Endpoint,
 				Username: host.VNCEndpoint.Username,
 				Password: host.VNCEndpoint.Password,
 			}
+
+			// Copy TLS configuration if present
+			if host.VNCEndpoint.TLS != nil {
+				vncEndpoint.TLS = &TLSConfig{
+					Enabled:            host.VNCEndpoint.TLS.Enabled,
+					InsecureSkipVerify: host.VNCEndpoint.TLS.InsecureSkipVerify,
+				}
+			}
+
+			server.VNCEndpoint = vncEndpoint
 		}
 
 		// If Redfish, perform API discovery if enabled

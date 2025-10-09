@@ -329,10 +329,11 @@ func (s *SOLEndpoint) InferType() types.SOLType {
 }
 
 type VNCEndpoint struct {
-	Type     string `yaml:"type,omitempty"` // Optional: inferred from endpoint scheme if not specified
-	Endpoint string `yaml:"endpoint"`       // URL with scheme (ws://, wss://, vnc://) or host:port
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Type     string     `yaml:"type,omitempty"` // Optional: inferred from endpoint scheme if not specified
+	Endpoint string     `yaml:"endpoint"`       // URL with scheme (ws://, wss://, vnc://) or host:port
+	Username string     `yaml:"username"`
+	Password string     `yaml:"password"`
+	TLS      *TLSConfig `yaml:"tls"` // Optional TLS configuration for VeNCrypt/RFB-over-TLS
 }
 
 // InferType infers the VNC transport type from the endpoint URL scheme

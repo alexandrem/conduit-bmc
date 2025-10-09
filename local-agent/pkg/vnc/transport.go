@@ -73,6 +73,14 @@ type Endpoint struct {
 	Endpoint string // URL with scheme (ws://, wss://, vnc://) or host:port (defaults to native TCP)
 	Username string
 	Password string
+	TLS      *TLSConfig // Optional TLS configuration for encrypted VNC connections
+}
+
+// TLSConfig represents TLS/SSL configuration for VNC connections
+// Used for VeNCrypt, RFB-over-TLS, and enterprise BMC VNC (Dell iDRAC, HPE iLO)
+type TLSConfig struct {
+	Enabled            bool // Enable TLS wrapping of VNC connection
+	InsecureSkipVerify bool // Skip certificate verification (for self-signed certs)
 }
 
 // NewTransport creates the appropriate VNC transport based on endpoint URL scheme
@@ -121,7 +129,13 @@ func detectTransportType(endpoint string) EndpointType {
 	return TypeUnknown
 }
 
-// ConnectTransport connects the transport to the VNC endpoint
+// ConnectTransport connects the transport to the VNC endpoint and performs authentication
+//
+// This is a convenience function that:
+// 1. Connects to the VNC server
+// 2. Performs RFB handshake and authentication (if password provided)
+//
+// After this function returns successfully, the transport is ready for data proxying.
 func ConnectTransport(ctx context.Context, transport Transport, endpoint *Endpoint) error {
 	if endpoint == nil {
 		return fmt.Errorf("VNC endpoint configuration is nil")
@@ -135,11 +149,34 @@ func ConnectTransport(ctx context.Context, transport Transport, endpoint *Endpoi
 		if err != nil {
 			return fmt.Errorf("invalid native VNC endpoint %s: %w", endpoint.Endpoint, err)
 		}
-		return t.Connect(ctx, host, port)
+
+		// Connect to VNC server with optional TLS
+		if err := t.ConnectWithTLS(ctx, host, port, endpoint.TLS); err != nil {
+			return err
+		}
+
+		// Perform RFB handshake and authentication
+		if err := t.Authenticate(ctx, endpoint.Password); err != nil {
+			t.Close() // Clean up connection on auth failure
+			return err
+		}
+
+		return nil
 
 	case *WebSocketTransport:
-		// Connect using WebSocket URL (may include credentials)
-		return t.Connect(ctx, endpoint.Endpoint, endpoint.Username, endpoint.Password)
+		// Connect using WebSocket URL (may include HTTP Basic Auth credentials)
+		if err := t.Connect(ctx, endpoint.Endpoint, endpoint.Username, endpoint.Password); err != nil {
+			return err
+		}
+
+		// Perform RFB handshake and authentication over WebSocket
+		// Note: endpoint.Password is used for VNC password, not HTTP auth
+		if err := t.Authenticate(ctx, endpoint.Password); err != nil {
+			t.Close() // Clean up connection on auth failure
+			return err
+		}
+
+		return nil
 
 	default:
 		return fmt.Errorf("unknown transport type: %T", transport)

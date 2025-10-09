@@ -53,6 +53,21 @@ func (a *LocalAgent) StreamVNCData(
 		Password: server.VNCEndpoint.Password,
 	}
 
+	// Add TLS configuration if present (for VeNCrypt, RFB-over-TLS, enterprise BMCs)
+	if server.VNCEndpoint.TLS != nil {
+		log.Debug().
+			Bool("tls_enabled", server.VNCEndpoint.TLS.Enabled).
+			Bool("insecure_skip_verify", server.VNCEndpoint.TLS.InsecureSkipVerify).
+			Msg("VNC endpoint has TLS configuration")
+
+		vncEndpoint.TLS = &vnc.TLSConfig{
+			Enabled:            server.VNCEndpoint.TLS.Enabled,
+			InsecureSkipVerify: server.VNCEndpoint.TLS.InsecureSkipVerify,
+		}
+	} else {
+		log.Debug().Msg("VNC endpoint has no TLS configuration")
+	}
+
 	// Create appropriate VNC transport based on endpoint type
 	vncTransport, err := vnc.NewTransport(vncEndpoint)
 	if err != nil {
@@ -82,9 +97,30 @@ func (a *LocalAgent) StreamVNCData(
 		Str("server_id", serverID).
 		Str("endpoint", server.VNCEndpoint.Endpoint).
 		Str("transport", transportType).
-		Msg("Connected to VNC endpoint")
+		Msg("Connected and authenticated with VNC endpoint")
 
-	// Send handshake acknowledgment back to gateway
+	// Create RFB proxy handler to manage browser-side RFB handshake
+	// The browser (noVNC) expects to do a full RFB handshake, but we've already
+	// authenticated with the BMC. The RFBProxyHandler terminates the browser's
+	// handshake and proxies to the authenticated BMC connection.
+	rfbProxy := vnc.NewRFBProxyHandler(vncTransport)
+
+	// Create a stream adapter for the RFB proxy handler
+	streamAdapter := &vncStreamAdapter{
+		stream:    stream,
+		sessionID: sessionID,
+		serverID:  serverID,
+	}
+
+	// Handle browser's RFB handshake
+	log.Debug().Msg("Handling browser RFB handshake via proxy")
+	if err := rfbProxy.HandleBrowserHandshake(ctx, streamAdapter); err != nil {
+		return fmt.Errorf("RFB proxy handshake failed: %w", err)
+	}
+
+	log.Info().Msg("Browser RFB handshake completed, starting framebuffer data proxying")
+
+	// Send handshake acknowledgment back to gateway AFTER RFB handshake completes
 	if err := helper.SendHandshakeAck(stream, sessionID, serverID); err != nil {
 		return fmt.Errorf("failed to send handshake ack: %w", err)
 	}
@@ -105,6 +141,71 @@ func (a *LocalAgent) StreamVNCData(
 	)
 
 	return proxy.ProxyFromStream(ctx, stream, vncTransport)
+}
+
+// vncStreamAdapter adapts the gRPC stream to io.ReadWriter for RFB proxy
+type vncStreamAdapter struct {
+	stream    *connect.BidiStream[gatewayv1.VNCDataChunk, gatewayv1.VNCDataChunk]
+	sessionID string
+	serverID  string
+	readBuf   []byte
+	readPos   int
+}
+
+func (v *vncStreamAdapter) Read(p []byte) (int, error) {
+	// Return buffered data first
+	if v.readPos < len(v.readBuf) {
+		n := copy(p, v.readBuf[v.readPos:])
+		v.readPos += n
+		if v.readPos >= len(v.readBuf) {
+			v.readBuf = nil
+			v.readPos = 0
+		}
+		return n, nil
+	}
+
+	// Receive next chunk from stream
+	chunk, err := v.stream.Receive()
+	if err != nil {
+		return 0, fmt.Errorf("stream receive error: %w", err)
+	}
+
+	// Skip handshake chunks
+	if chunk.IsHandshake {
+		return v.Read(p) // Recursively read next chunk
+	}
+
+	// Handle close signal
+	if chunk.CloseStream {
+		return 0, fmt.Errorf("stream closed by client")
+	}
+
+	// Copy data to output buffer
+	n := copy(p, chunk.Data)
+
+	// Buffer remaining data if any
+	if n < len(chunk.Data) {
+		v.readBuf = chunk.Data
+		v.readPos = n
+	}
+
+	return n, nil
+}
+
+func (v *vncStreamAdapter) Write(p []byte) (int, error) {
+	chunk := &gatewayv1.VNCDataChunk{
+		SessionId:   v.sessionID,
+		ServerId:    v.serverID,
+		Data:        p,
+		IsHandshake: false,
+		CloseStream: false,
+	}
+
+	if err := v.stream.Send(chunk); err != nil {
+		return 0, fmt.Errorf("stream send error: %w", err)
+	}
+
+	return len(p), nil
 }
 
 // StreamConsoleData implements bidirectional streaming for SOL/Console data
