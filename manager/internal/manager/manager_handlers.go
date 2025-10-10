@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"time"
 
+	commonv1 "core/gen/common/v1"
 	managerv1 "manager/gen/manager/v1"
 	"manager/internal/database"
 	"manager/pkg/auth"
@@ -652,14 +653,15 @@ func (h *BMCManagerServiceHandler) GetServer(
 
 	// Convert to protobuf format
 	protoServer := &managerv1.Server{
-		Id:           server.ID,
-		CustomerId:   server.CustomerID,
-		DatacenterId: server.DatacenterID,
-		Features:     server.Features,
-		Status:       server.Status,
-		CreatedAt:    timestamppb.New(server.CreatedAt),
-		UpdatedAt:    timestamppb.New(server.UpdatedAt),
-		Metadata:     server.Metadata,
+		Id:                server.ID,
+		CustomerId:        server.CustomerID,
+		DatacenterId:      server.DatacenterID,
+		Features:          server.Features,
+		Status:            server.Status,
+		CreatedAt:         timestamppb.New(server.CreatedAt),
+		UpdatedAt:         timestamppb.New(server.UpdatedAt),
+		Metadata:          server.Metadata,
+		DiscoveryMetadata: convertModelsToProtoDiscoveryMetadata(server.DiscoveryMetadata),
 	}
 
 	// Convert control endpoint
@@ -752,14 +754,15 @@ func (h *BMCManagerServiceHandler) ListServers(
 	var protoServers []*managerv1.Server
 	for _, server := range servers {
 		protoServer := &managerv1.Server{
-			Id:           server.ID,
-			CustomerId:   server.CustomerID,
-			DatacenterId: server.DatacenterID,
-			Features:     server.Features,
-			Status:       server.Status,
-			CreatedAt:    timestamppb.New(server.CreatedAt),
-			UpdatedAt:    timestamppb.New(server.UpdatedAt),
-			Metadata:     server.Metadata,
+			Id:                server.ID,
+			CustomerId:        server.CustomerID,
+			DatacenterId:      server.DatacenterID,
+			Features:          server.Features,
+			Status:            server.Status,
+			CreatedAt:         timestamppb.New(server.CreatedAt),
+			UpdatedAt:         timestamppb.New(server.UpdatedAt),
+			Metadata:          server.Metadata,
+			DiscoveryMetadata: convertModelsToProtoDiscoveryMetadata(server.DiscoveryMetadata),
 		}
 
 		// Convert control endpoint
@@ -891,14 +894,15 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 	}
 
 	server := &models.Server{
-		ID:              serverID,
-		CustomerID:      "system", // System-managed servers from gateway reports
-		DatacenterID:    endpoint.DatacenterId,
-		ControlEndpoint: controlEndpoint,
-		Features:        endpoint.Features,
-		Status:          endpoint.Status,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		ID:                serverID,
+		CustomerID:        "system", // System-managed servers from gateway reports
+		DatacenterID:      endpoint.DatacenterId,
+		ControlEndpoint:   controlEndpoint,
+		Features:          endpoint.Features,
+		Status:            endpoint.Status,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		DiscoveryMetadata: convertProtoToModelsDiscoveryMetadata(endpoint.DiscoveryMetadata),
 	}
 
 	// Populate SOL/Console endpoint if feature is present
@@ -984,4 +988,202 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 		Str("bmc_endpoint", endpoint.BmcEndpoint).
 		Msg("Created/updated server location")
 	return nil
+}
+
+// convertProtoToModelsDiscoveryMetadata converts manager proto discovery metadata to types.DiscoveryMetadata
+func convertProtoToModelsDiscoveryMetadata(proto *commonv1.DiscoveryMetadata) *types.DiscoveryMetadata {
+	if proto == nil {
+		return nil
+	}
+
+	dm := &types.DiscoveryMetadata{
+		DiscoveryMethod: convertProtoDiscoveryMethodToModels(proto.DiscoveryMethod),
+		DiscoverySource: proto.DiscoverySource,
+		ConfigSource:    proto.ConfigSource,
+		AdditionalInfo:  proto.AdditionalInfo,
+	}
+
+	if proto.DiscoveredAt != nil {
+		dm.DiscoveredAt = proto.DiscoveredAt.AsTime()
+	}
+
+	if proto.Vendor != nil {
+		dm.Vendor = &types.VendorInfo{
+			Manufacturer:    proto.Vendor.Manufacturer,
+			Model:           proto.Vendor.Model,
+			FirmwareVersion: proto.Vendor.FirmwareVersion,
+			BMCVersion:      proto.Vendor.BmcVersion,
+		}
+	}
+
+	if proto.Protocol != nil {
+		dm.Protocol = &types.ProtocolConfig{
+			PrimaryProtocol:  proto.Protocol.PrimaryProtocol,
+			PrimaryVersion:   proto.Protocol.PrimaryVersion,
+			FallbackProtocol: proto.Protocol.FallbackProtocol,
+			FallbackReason:   proto.Protocol.FallbackReason,
+			ConsoleType:      proto.Protocol.ConsoleType,
+			ConsolePath:      proto.Protocol.ConsolePath,
+			VNCTransport:     proto.Protocol.VncTransport,
+		}
+	}
+
+	if proto.Endpoints != nil {
+		dm.Endpoints = &types.EndpointDetails{
+			ControlEndpoint: proto.Endpoints.ControlEndpoint,
+			ControlScheme:   proto.Endpoints.ControlScheme,
+			ControlPort:     proto.Endpoints.ControlPort,
+			ConsoleEndpoint: proto.Endpoints.ConsoleEndpoint,
+			VNCEndpoint:     proto.Endpoints.VncEndpoint,
+			VNCDisplay:      proto.Endpoints.VncDisplay,
+		}
+	}
+
+	if proto.Security != nil {
+		dm.Security = &types.SecurityConfig{
+			TLSEnabled:        proto.Security.TlsEnabled,
+			TLSVerify:         proto.Security.TlsVerify,
+			AuthMethod:        proto.Security.AuthMethod,
+			VNCAuthType:       proto.Security.VncAuthType,
+			VNCPasswordLength: proto.Security.VncPasswordLength,
+			IPMICipherSuite:   proto.Security.IpmiCipherSuite,
+		}
+	}
+
+	if proto.Network != nil {
+		dm.Network = &types.NetworkInfo{
+			IPAddress:      proto.Network.IpAddress,
+			MACAddress:     proto.Network.MacAddress,
+			NetworkSegment: proto.Network.NetworkSegment,
+			VLANId:         proto.Network.VlanId,
+			Reachable:      proto.Network.Reachable,
+			LatencyMs:      proto.Network.LatencyMs,
+		}
+	}
+
+	if proto.Capabilities != nil {
+		dm.Capabilities = &types.CapabilityInfo{
+			SupportedFeatures:   proto.Capabilities.SupportedFeatures,
+			UnsupportedFeatures: proto.Capabilities.UnsupportedFeatures,
+			DiscoveryErrors:     proto.Capabilities.DiscoveryErrors,
+			DiscoveryWarnings:   proto.Capabilities.DiscoveryWarnings,
+		}
+	}
+
+	return dm
+}
+
+// convertProtoDiscoveryMethodToModels converts proto DiscoveryMethod to types.DiscoveryMethod
+func convertProtoDiscoveryMethodToModels(method commonv1.DiscoveryMethod) types.DiscoveryMethod {
+	switch method {
+	case commonv1.DiscoveryMethod_DISCOVERY_METHOD_STATIC_CONFIG:
+		return types.DiscoveryMethodStaticConfig
+	case commonv1.DiscoveryMethod_DISCOVERY_METHOD_NETWORK_SCAN:
+		return types.DiscoveryMethodNetworkScan
+	case commonv1.DiscoveryMethod_DISCOVERY_METHOD_API_REGISTRATION:
+		return types.DiscoveryMethodAPIRegistration
+	case commonv1.DiscoveryMethod_DISCOVERY_METHOD_MANUAL:
+		return types.DiscoveryMethodManual
+	default:
+		return types.DiscoveryMethodUnspecified
+	}
+}
+
+// convertModelsToProtoDiscoveryMetadata converts types.DiscoveryMetadata to manager proto discovery metadata
+func convertModelsToProtoDiscoveryMetadata(dm *types.DiscoveryMetadata) *commonv1.DiscoveryMetadata {
+	if dm == nil {
+		return nil
+	}
+
+	proto := &commonv1.DiscoveryMetadata{
+		DiscoveryMethod: convertModelsDiscoveryMethodToProto(dm.DiscoveryMethod),
+		DiscoverySource: dm.DiscoverySource,
+		ConfigSource:    dm.ConfigSource,
+		AdditionalInfo:  dm.AdditionalInfo,
+	}
+
+	if !dm.DiscoveredAt.IsZero() {
+		proto.DiscoveredAt = timestamppb.New(dm.DiscoveredAt)
+	}
+
+	if dm.Vendor != nil {
+		proto.Vendor = &commonv1.VendorInfo{
+			Manufacturer:    dm.Vendor.Manufacturer,
+			Model:           dm.Vendor.Model,
+			FirmwareVersion: dm.Vendor.FirmwareVersion,
+			BmcVersion:      dm.Vendor.BMCVersion,
+		}
+	}
+
+	if dm.Protocol != nil {
+		proto.Protocol = &commonv1.ProtocolConfig{
+			PrimaryProtocol:  dm.Protocol.PrimaryProtocol,
+			PrimaryVersion:   dm.Protocol.PrimaryVersion,
+			FallbackProtocol: dm.Protocol.FallbackProtocol,
+			FallbackReason:   dm.Protocol.FallbackReason,
+			ConsoleType:      dm.Protocol.ConsoleType,
+			ConsolePath:      dm.Protocol.ConsolePath,
+			VncTransport:     dm.Protocol.VNCTransport,
+		}
+	}
+
+	if dm.Endpoints != nil {
+		proto.Endpoints = &commonv1.EndpointDetails{
+			ControlEndpoint: dm.Endpoints.ControlEndpoint,
+			ControlScheme:   dm.Endpoints.ControlScheme,
+			ControlPort:     dm.Endpoints.ControlPort,
+			ConsoleEndpoint: dm.Endpoints.ConsoleEndpoint,
+			VncEndpoint:     dm.Endpoints.VNCEndpoint,
+			VncDisplay:      dm.Endpoints.VNCDisplay,
+		}
+	}
+
+	if dm.Security != nil {
+		proto.Security = &commonv1.SecurityConfig{
+			TlsEnabled:        dm.Security.TLSEnabled,
+			TlsVerify:         dm.Security.TLSVerify,
+			AuthMethod:        dm.Security.AuthMethod,
+			VncAuthType:       dm.Security.VNCAuthType,
+			VncPasswordLength: dm.Security.VNCPasswordLength,
+			IpmiCipherSuite:   dm.Security.IPMICipherSuite,
+		}
+	}
+
+	if dm.Network != nil {
+		proto.Network = &commonv1.NetworkInfo{
+			IpAddress:      dm.Network.IPAddress,
+			MacAddress:     dm.Network.MACAddress,
+			NetworkSegment: dm.Network.NetworkSegment,
+			VlanId:         dm.Network.VLANId,
+			Reachable:      dm.Network.Reachable,
+			LatencyMs:      dm.Network.LatencyMs,
+		}
+	}
+
+	if dm.Capabilities != nil {
+		proto.Capabilities = &commonv1.CapabilityInfo{
+			SupportedFeatures:   dm.Capabilities.SupportedFeatures,
+			UnsupportedFeatures: dm.Capabilities.UnsupportedFeatures,
+			DiscoveryErrors:     dm.Capabilities.DiscoveryErrors,
+			DiscoveryWarnings:   dm.Capabilities.DiscoveryWarnings,
+		}
+	}
+
+	return proto
+}
+
+// convertModelsDiscoveryMethodToProto converts types.DiscoveryMethod to proto
+func convertModelsDiscoveryMethodToProto(method types.DiscoveryMethod) commonv1.DiscoveryMethod {
+	switch method {
+	case types.DiscoveryMethodStaticConfig:
+		return commonv1.DiscoveryMethod_DISCOVERY_METHOD_STATIC_CONFIG
+	case types.DiscoveryMethodNetworkScan:
+		return commonv1.DiscoveryMethod_DISCOVERY_METHOD_NETWORK_SCAN
+	case types.DiscoveryMethodAPIRegistration:
+		return commonv1.DiscoveryMethod_DISCOVERY_METHOD_API_REGISTRATION
+	case types.DiscoveryMethodManual:
+		return commonv1.DiscoveryMethod_DISCOVERY_METHOD_MANUAL
+	default:
+		return commonv1.DiscoveryMethod_DISCOVERY_METHOD_UNSPECIFIED
+	}
 }

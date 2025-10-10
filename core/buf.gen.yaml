@@ -2,11 +2,8 @@ version: v2
 inputs:
   - directory: ../proto
     paths:
-      - ../proto/manager/v1
+      - ../proto/common/v1
 plugins:
   - local: protoc-gen-go
-    out: gen
-    opt: paths=source_relative
-  - local: protoc-gen-connect-go
     out: gen
     opt: paths=source_relative

@@ -1,8 +1,12 @@
 version: v2
+inputs:
+  - directory: ../proto
+    paths:
+      - ../proto/gateway/v1
 plugins:
-  - remote: buf.build/protocolbuffers/go
+  - local: protoc-gen-go
     out: gen
     opt: paths=source_relative
-  - remote: buf.build/connectrpc/go
+  - local: protoc-gen-connect-go
     out: gen
     opt: paths=source_relative

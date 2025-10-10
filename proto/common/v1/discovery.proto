@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package common.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "core/gen/common/v1;commonv1";
+
+// Discovery metadata messages (RFD 017)
+// These types are shared between gateway and manager services
+
+// DiscoveryMethod represents how a BMC was discovered
+enum DiscoveryMethod {
+  DISCOVERY_METHOD_UNSPECIFIED = 0;
+  DISCOVERY_METHOD_STATIC_CONFIG = 1;  // From agent config file
+  DISCOVERY_METHOD_NETWORK_SCAN = 2;   // Auto-discovered via network scan
+  DISCOVERY_METHOD_API_REGISTRATION = 3; // Registered via API
+  DISCOVERY_METHOD_MANUAL = 4;         // Manually added by admin
+}
+
+// DiscoveryMetadata contains detailed information about how a BMC was discovered and configured
+message DiscoveryMetadata {
+  // Discovery information
+  DiscoveryMethod discovery_method = 1;
+  google.protobuf.Timestamp discovered_at = 2;
+  string discovery_source = 3;        // Agent ID that discovered this BMC
+  string config_source = 4;           // Config file path or API endpoint
+
+  // Vendor information
+  VendorInfo vendor = 5;
+
+  // Protocol configuration
+  ProtocolConfig protocol = 6;
+
+  // Endpoint details
+  EndpointDetails endpoints = 7;
+
+  // Security configuration
+  SecurityConfig security = 8;
+
+  // Network information
+  NetworkInfo network = 9;
+
+  // Capability discovery
+  CapabilityInfo capabilities = 10;
+
+  // Additional metadata
+  map<string, string> additional_info = 11;
+}
+
+// VendorInfo contains BMC vendor/hardware information
+message VendorInfo {
+  string manufacturer = 1;
+  string model = 2;
+  string firmware_version = 3;
+  string bmc_version = 4;
+}
+
+// ProtocolConfig contains protocol-specific configuration
+message ProtocolConfig {
+  string primary_protocol = 1;        // "ipmi" or "redfish"
+  string primary_version = 2;         // "2.0", "1.6.0"
+  string fallback_protocol = 3;       // "ipmi" or empty
+  string fallback_reason = 4;         // Why fallback is needed
+  string console_type = 5;            // "ipmi", "redfish_serial"
+  string console_path = 6;            // Redfish path to SerialConsole
+  string vnc_transport = 7;           // "native", "websocket"
+}
+
+// EndpointDetails contains endpoint configuration information
+message EndpointDetails {
+  string control_endpoint = 1;
+  string control_scheme = 2;          // "https", "http", "ipmi"
+  int32 control_port = 3;
+  string console_endpoint = 4;
+  string vnc_endpoint = 5;
+  int32 vnc_display = 6;              // VNC display number
+}
+
+// SecurityConfig contains security-related configuration
+message SecurityConfig {
+  bool tls_enabled = 1;
+  bool tls_verify = 2;
+  string auth_method = 3;             // "basic", "session", "digest"
+  string vnc_auth_type = 4;           // "password", "vencrypt", "none"
+  int32 vnc_password_length = 5;
+  string ipmi_cipher_suite = 6;
+}
+
+// NetworkInfo contains network-related information
+message NetworkInfo {
+  string ip_address = 1;
+  string mac_address = 2;
+  string network_segment = 3;
+  string vlan_id = 4;
+  bool reachable = 5;
+  int32 latency_ms = 6;               // Ping latency from agent
+}
+
+// CapabilityInfo contains discovered capabilities
+message CapabilityInfo {
+  repeated string supported_features = 1;
+  repeated string unsupported_features = 2;
+  repeated string discovery_errors = 3;
+  repeated string discovery_warnings = 4;
+}

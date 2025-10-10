@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"core/types"
 )
 
 type BMCType string
@@ -16,17 +18,18 @@ const (
 )
 
 type Server struct {
-	ID              string              `json:"id" db:"id"`
-	CustomerID      string              `json:"customer_id" db:"customer_id"`
-	DatacenterID    string              `json:"datacenter_id" db:"datacenter_id"`
-	ControlEndpoint *BMCControlEndpoint `json:"control_endpoint" db:"control_endpoint"`
-	SOLEndpoint     *SOLEndpoint        `json:"sol_endpoint" db:"sol_endpoint"`
-	VNCEndpoint     *VNCEndpoint        `json:"vnc_endpoint" db:"vnc_endpoint"`
-	Features        []string            `json:"features" db:"features"`
-	Status          string              `json:"status" db:"status"`
-	Metadata        map[string]string   `json:"metadata" db:"metadata"`
-	CreatedAt       time.Time           `json:"created_at" db:"created_at"`
-	UpdatedAt       time.Time           `json:"updated_at" db:"updated_at"`
+	ID                string                   `json:"id" db:"id"`
+	CustomerID        string                   `json:"customer_id" db:"customer_id"`
+	DatacenterID      string                   `json:"datacenter_id" db:"datacenter_id"`
+	ControlEndpoint   *BMCControlEndpoint      `json:"control_endpoint" db:"control_endpoint"`
+	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint" db:"sol_endpoint"`
+	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint" db:"vnc_endpoint"`
+	Features          []string                 `json:"features" db:"features"`
+	Status            string                   `json:"status" db:"status"`
+	Metadata          map[string]string        `json:"metadata" db:"metadata"`
+	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata,omitempty" db:"discovery_metadata"`
+	CreatedAt         time.Time                `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time                `json:"updated_at" db:"updated_at"`
 }
 
 // BMCControlEndpoint represents BMC control API configuration

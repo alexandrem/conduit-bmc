@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+
+	"core/types"
 	"manager/pkg/models"
 	_ "modernc.org/sqlite"
 )
@@ -66,6 +68,7 @@ func (db *DB) migrate() error {
 		vnc_endpoint TEXT,
 		control_endpoint TEXT,
 		metadata TEXT,
+		discovery_metadata TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (customer_id) REFERENCES customers (id),
@@ -183,12 +186,12 @@ type legacyServerRow struct {
 
 func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 	var row legacyServerRow
-	var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON sql.NullString
+	var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON, discoveryMetadataJSON sql.NullString
 
 	err := db.conn.QueryRow(
-		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at FROM servers WHERE id = ?",
+		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, discovery_metadata, created_at, updated_at FROM servers WHERE id = ?",
 		serverID,
-	).Scan(&row.ID, &row.CustomerID, &row.DatacenterID, &row.BMCType, &row.BMCEndpoint, &row.Username, &row.Capabilities, &row.Features, &row.Status, &solEndpointJSON, &vncEndpointJSON, &controlEndpointJSON, &metadataJSON, &row.CreatedAt, &row.UpdatedAt)
+	).Scan(&row.ID, &row.CustomerID, &row.DatacenterID, &row.BMCType, &row.BMCEndpoint, &row.Username, &row.Capabilities, &row.Features, &row.Status, &solEndpointJSON, &vncEndpointJSON, &controlEndpointJSON, &metadataJSON, &discoveryMetadataJSON, &row.CreatedAt, &row.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -260,6 +263,15 @@ func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 	if metadataJSON.Valid && metadataJSON.String != "" {
 		if err := json.Unmarshal([]byte(metadataJSON.String), &server.Metadata); err != nil {
 			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal metadata")
+		}
+	}
+
+	// Deserialize discovery metadata if present
+	if discoveryMetadataJSON.Valid && discoveryMetadataJSON.String != "" {
+		server.DiscoveryMetadata = &types.DiscoveryMetadata{}
+		if err := json.Unmarshal([]byte(discoveryMetadataJSON.String), server.DiscoveryMetadata); err != nil {
+			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal discovery metadata")
+			server.DiscoveryMetadata = nil
 		}
 	}
 
@@ -761,10 +773,18 @@ func (db *DB) CreateServer(server *models.Server) error {
 		}
 	}
 
+	var discoveryMetadataJSON []byte
+	if server.DiscoveryMetadata != nil {
+		discoveryMetadataJSON, err = json.Marshal(server.DiscoveryMetadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal discovery metadata: %w", err)
+		}
+	}
+
 	// Use INSERT ... ON CONFLICT for better upsert control
 	_, err = db.conn.Exec(`
-		INSERT INTO servers (id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO servers (id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, discovery_metadata, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			customer_id = excluded.customer_id,
 			datacenter_id = excluded.datacenter_id,
@@ -778,8 +798,9 @@ func (db *DB) CreateServer(server *models.Server) error {
 			vnc_endpoint = excluded.vnc_endpoint,
 			control_endpoint = excluded.control_endpoint,
 			metadata = excluded.metadata,
+			discovery_metadata = excluded.discovery_metadata,
 			updated_at = excluded.updated_at
-	`, server.ID, server.CustomerID, server.DatacenterID, bmcType, bmcEndpoint, username, capabilities, featuresStr, server.Status, solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON, server.CreatedAt, server.UpdatedAt)
+	`, server.ID, server.CustomerID, server.DatacenterID, bmcType, bmcEndpoint, username, capabilities, featuresStr, server.Status, solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON, discoveryMetadataJSON, server.CreatedAt, server.UpdatedAt)
 
 	return err
 }

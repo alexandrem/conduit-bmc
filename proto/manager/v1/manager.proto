@@ -3,6 +3,7 @@ syntax = "proto3";
 package manager.v1;
 
 import "google/protobuf/timestamp.proto";
+import "common/v1/discovery.proto";
 
 option go_package = "manager/gen/manager/v1;managerv1";
 
@@ -297,6 +298,7 @@ message Server {
   google.protobuf.Timestamp created_at = 9;  // When the server was first registered
   google.protobuf.Timestamp updated_at = 10; // Last time server information was updated
   map<string, string> metadata = 11;         // Additional server metadata
+  common.v1.DiscoveryMetadata discovery_metadata = 12;  // Discovery metadata (RFD 017)
 }
 
 // BMC Control API endpoint (IPMI/Redfish)
@@ -378,6 +380,7 @@ message BMCEndpointAvailability {
   google.protobuf.Timestamp last_seen = 7; // When this endpoint was last verified
   string username = 8;            // BMC username
   repeated string capabilities = 9; // BMC capabilities
+  common.v1.DiscoveryMetadata discovery_metadata = 10; // Discovery metadata (RFD 017)
 }
 
 // ReportAvailableEndpointsResponse confirms endpoint registration
@@ -385,3 +388,5 @@ message ReportAvailableEndpointsResponse {
   bool success = 1;
   string message = 2;
 }
+
+// Discovery metadata is now defined in common/v1/discovery.proto (RFD 017)

@@ -7,6 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"core/types"
 	gatewayv1 "gateway/gen/gateway/v1"
 
 	"cli/pkg/config"
@@ -83,14 +84,15 @@ func (c *Client) getGatewayClient(ctx context.Context, serverID string) (*Region
 // Updated methods that use the new architecture
 
 type ServerInfo struct {
-	ID              string              `json:"id"`
-	ControlEndpoint *BMCControlEndpoint `json:"control_endpoint"`
-	SOLEndpoint     *SOLEndpoint        `json:"sol_endpoint"`
-	VNCEndpoint     *VNCEndpoint        `json:"vnc_endpoint"`
-	Features        []string            `json:"features"`
-	Status          string              `json:"status"`
-	DatacenterID    string              `json:"datacenter_id"`
-	Metadata        map[string]string   `json:"metadata"`
+	ID                string                  `json:"id"`
+	ControlEndpoint   *BMCControlEndpoint     `json:"control_endpoint"`
+	SOLEndpoint       *SOLEndpoint            `json:"sol_endpoint"`
+	VNCEndpoint       *VNCEndpoint            `json:"vnc_endpoint"`
+	Features          []string                `json:"features"`
+	Status            string                  `json:"status"`
+	DatacenterID      string                  `json:"datacenter_id"`
+	Metadata          map[string]string       `json:"metadata"`
+	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata,omitempty"`
 }
 
 type BMCControlEndpoint struct {
@@ -216,6 +218,9 @@ func (c *Client) GetServer(ctx context.Context, serverID string) (*ServerInfo, e
 			}
 		}
 	}
+
+	// Copy discovery metadata
+	serverInfo.DiscoveryMetadata = server.DiscoveryMetadata
 
 	return serverInfo, nil
 }

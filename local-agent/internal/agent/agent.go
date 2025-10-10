@@ -407,6 +407,11 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 			}
 		}
 
+		// Convert discovery metadata
+		if server.DiscoveryMetadata != nil {
+			bmcEndpoint.DiscoveryMetadata = server.DiscoveryMetadata.ConvertToProto()
+		}
+
 		bmcEndpoints = append(bmcEndpoints, bmcEndpoint)
 	}
 
@@ -510,6 +515,11 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 				Username: server.VNCEndpoint.Username,
 				Password: server.VNCEndpoint.Password,
 			}
+		}
+
+		// Convert discovery metadata
+		if server.DiscoveryMetadata != nil {
+			bmcEndpoint.DiscoveryMetadata = server.DiscoveryMetadata.ConvertToProto()
 		}
 
 		bmcEndpoints = append(bmcEndpoints, bmcEndpoint)
@@ -753,3 +763,4 @@ func (a *LocalAgent) handleSOLWebSocket(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
+

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/gen/manager/v1/managerv1connect"
 
@@ -293,6 +294,11 @@ func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Ser
 		}
 	}
 
+	// Convert discovery metadata
+	if server.DiscoveryMetadata != nil {
+		clientServer.DiscoveryMetadata = types.ConvertDiscoveryMetadataFromProto(server.DiscoveryMetadata)
+	}
+
 	return clientServer, nil
 }
 
@@ -384,18 +390,20 @@ type RegionalGateway struct {
 }
 
 type Server struct {
-	ID              string
-	CustomerID      string
-	DatacenterID    string
-	ControlEndpoint *BMCControlEndpoint
-	SOLEndpoint     *SOLEndpoint
-	VNCEndpoint     *VNCEndpoint
-	Features        []string
-	Status          string
-	Metadata        map[string]string
+	ID                string
+	CustomerID        string
+	DatacenterID      string
+	ControlEndpoint   *BMCControlEndpoint
+	SOLEndpoint       *SOLEndpoint
+	VNCEndpoint       *VNCEndpoint
+	Features          []string
+	Status            string
+	Metadata          map[string]string
+	DiscoveryMetadata *types.DiscoveryMetadata
 }
 
 type ServerTokenResult struct {
 	Token     string
 	ExpiresAt time.Time
 }
+

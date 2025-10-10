@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -12,10 +11,7 @@ import (
 	gatewayv1 "gateway/gen/gateway/v1"
 
 	"cli/pkg/client"
-)
-
-var (
-	infoOutputFormat string
+	"cli/pkg/output"
 )
 
 var infoCmd = &cobra.Command{
@@ -34,9 +30,17 @@ var infoCmd = &cobra.Command{
 			return fmt.Errorf("failed to get BMC info: %w", err)
 		}
 
+		// Get output format
+		format, err := output.GetFormatFromCmd(cmd)
+		if err != nil {
+			return err
+		}
+
+		formatter := output.New(format)
+
 		// Handle JSON output format
-		if infoOutputFormat == "json" {
-			return outputJSON(serverID, bmcInfo)
+		if formatter.IsJSON() {
+			return outputInfoJSON(formatter, serverID, bmcInfo)
 		}
 
 		// Default text output
@@ -101,9 +105,9 @@ var infoCmd = &cobra.Command{
 	},
 }
 
-func outputJSON(serverID string, bmcInfo *gatewayv1.BMCInfo) error {
+func outputInfoJSON(formatter *output.Formatter, serverID string, bmcInfo *gatewayv1.BMCInfo) error {
 	// Create a JSON-friendly structure
-	output := map[string]interface{}{
+	data := map[string]interface{}{
 		"server_id": serverID,
 		"bmc_type":  bmcInfo.BmcType,
 	}
@@ -112,7 +116,7 @@ func outputJSON(serverID string, bmcInfo *gatewayv1.BMCInfo) error {
 	switch details := bmcInfo.Details.(type) {
 	case *gatewayv1.BMCInfo_IpmiInfo:
 		ipmi := details.IpmiInfo
-		output["ipmi_info"] = map[string]interface{}{
+		data["ipmi_info"] = map[string]interface{}{
 			"device_id":                 ipmi.DeviceId,
 			"device_revision":           ipmi.DeviceRevision,
 			"firmware_revision":         ipmi.FirmwareRevision,
@@ -135,7 +139,7 @@ func outputJSON(serverID string, bmcInfo *gatewayv1.BMCInfo) error {
 				"enabled": proto.Enabled,
 			})
 		}
-		output["redfish_info"] = map[string]interface{}{
+		data["redfish_info"] = map[string]interface{}{
 			"manager_id":        redfish.ManagerId,
 			"name":              redfish.Name,
 			"model":             redfish.Model,
@@ -147,13 +151,10 @@ func outputJSON(serverID string, bmcInfo *gatewayv1.BMCInfo) error {
 		}
 	}
 
-	// Pretty print JSON
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(output)
+	return formatter.Output(data)
 }
 
 func init() {
 	serverCmd.AddCommand(infoCmd)
-	infoCmd.Flags().StringVar(&infoOutputFormat, "output", "text", "Output format (text or json)")
+	output.AddFormatFlag(infoCmd)
 }

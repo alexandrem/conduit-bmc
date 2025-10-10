@@ -11,12 +11,14 @@ help:
 	@echo "BMC Management System - Monorepo Build"
 	@echo ""
 	@echo "Available targets:"
+	@echo "  gen-all             Generate all protobuf code"
 	@echo "  build-all           Build all components"
 	@echo "  build-manager       Build Manager (Gateway + BMC Manager)"
 	@echo "  build-gateway       Build Gateway"
 	@echo "  build-local-agent   Build Local Agent"
 	@echo "  build-cli           Build CLI"
 	@echo "  clean-all           Clean all build artifacts"
+	@echo "  clean-gen           Clean all generated protobuf code"
 	@echo "  deps-all            Update dependencies for all components"
 	@echo "  lint-all            Lint all components"
 	@echo ""
@@ -29,6 +31,28 @@ help:
 	@echo "  test-smoke          Run smoke tests (quick confidence checks)"
 	@echo "  test-e2e-help       Show E2E test commands"
 
+
+# Generate all protobuf code
+gen-all:
+	@echo "Generating protobuf code for all components..."
+	@echo "→ Core protos..."
+	@cd core && $(MAKE) -s gen
+	@echo "→ Gateway protos..."
+	@cd gateway && $(MAKE) -s gen
+	@echo "→ Manager protos..."
+	@cd manager && $(MAKE) -s gen
+	@echo "✓ Proto generation complete!"
+
+# Clean all generated protobuf code
+clean-gen:
+	@echo "Cleaning generated protobuf code..."
+	@echo "→ Core protos..."
+	@cd core && $(MAKE) -s clean
+	@echo "→ Gateway protos..."
+	@cd gateway && $(MAKE) -s clean
+	@echo "→ Manager protos..."
+	@cd manager && $(MAKE) -s clean
+	@echo "✓ Cleaned all generated code"
 
 # Build all components
 build-all: build-manager build-gateway build-local-agent build-cli

@@ -7,6 +7,7 @@
 package gatewayv1
 
 import (
+	v1 "core/gen/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -742,16 +743,17 @@ func (x *AgentHeartbeatResponse) GetHeartbeatIntervalSeconds() int32 {
 // BMCEndpointRegistration describes a server with separate endpoint types
 // Agents register servers with distinct control, SOL, and VNC endpoints
 type BMCEndpointRegistration struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	ServerId        string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                                                           // Logical server identifier
-	ControlEndpoint *BMCControlEndpoint    `protobuf:"bytes,2,opt,name=control_endpoint,json=controlEndpoint,proto3" json:"control_endpoint,omitempty"`                                      // IPMI/Redfish management API
-	SolEndpoint     *SOLEndpoint           `protobuf:"bytes,3,opt,name=sol_endpoint,json=solEndpoint,proto3" json:"sol_endpoint,omitempty"`                                                  // Serial-over-LAN access (optional)
-	VncEndpoint     *VNCEndpoint           `protobuf:"bytes,4,opt,name=vnc_endpoint,json=vncEndpoint,proto3" json:"vnc_endpoint,omitempty"`                                                  // VNC/KVM access (optional)
-	Features        []string               `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                                                           // High-level features (power, sensors, etc.)
-	Status          string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`                                                                               // Overall server status
-	Metadata        map[string]string      `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional server metadata
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                                                           // Logical server identifier
+	ControlEndpoint   *BMCControlEndpoint    `protobuf:"bytes,2,opt,name=control_endpoint,json=controlEndpoint,proto3" json:"control_endpoint,omitempty"`                                      // IPMI/Redfish management API
+	SolEndpoint       *SOLEndpoint           `protobuf:"bytes,3,opt,name=sol_endpoint,json=solEndpoint,proto3" json:"sol_endpoint,omitempty"`                                                  // Serial-over-LAN access (optional)
+	VncEndpoint       *VNCEndpoint           `protobuf:"bytes,4,opt,name=vnc_endpoint,json=vncEndpoint,proto3" json:"vnc_endpoint,omitempty"`                                                  // VNC/KVM access (optional)
+	Features          []string               `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                                                           // High-level features (power, sensors, etc.)
+	Status            string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`                                                                               // Overall server status
+	Metadata          map[string]string      `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional server metadata
+	DiscoveryMetadata *v1.DiscoveryMetadata  `protobuf:"bytes,8,opt,name=discovery_metadata,json=discoveryMetadata,proto3" json:"discovery_metadata,omitempty"`                                // Discovery metadata (RFD 017)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *BMCEndpointRegistration) Reset() {
@@ -829,6 +831,13 @@ func (x *BMCEndpointRegistration) GetStatus() string {
 func (x *BMCEndpointRegistration) GetMetadata() map[string]string {
 	if x != nil {
 		return x.Metadata
+	}
+	return nil
+}
+
+func (x *BMCEndpointRegistration) GetDiscoveryMetadata() *v1.DiscoveryMetadata {
+	if x != nil {
+		return x.DiscoveryMetadata
 	}
 	return nil
 }
@@ -3016,7 +3025,7 @@ var File_gateway_v1_gateway_proto protoreflect.FileDescriptor
 const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\n" +
 	"\x18gateway/v1/gateway.proto\x12\n" +
-	"gateway.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x14\n" +
+	"gateway.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19common/v1/discovery.proto\"\x14\n" +
 	"\x12HealthCheckRequest\"g\n" +
 	"\x13HealthCheckResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x128\n" +
@@ -3044,7 +3053,7 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\rbmc_endpoints\x18\x02 \x03(\v2#.gateway.v1.BMCEndpointRegistrationR\fbmcEndpoints\"p\n" +
 	"\x16AgentHeartbeatResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12<\n" +
-	"\x1aheartbeat_interval_seconds\x18\x02 \x01(\x05R\x18heartbeatIntervalSeconds\"\xb9\x03\n" +
+	"\x1aheartbeat_interval_seconds\x18\x02 \x01(\x05R\x18heartbeatIntervalSeconds\"\x86\x04\n" +
 	"\x17BMCEndpointRegistration\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12I\n" +
 	"\x10control_endpoint\x18\x02 \x01(\v2\x1e.gateway.v1.BMCControlEndpointR\x0fcontrolEndpoint\x12:\n" +
@@ -3052,7 +3061,8 @@ const file_gateway_v1_gateway_proto_rawDesc = "" +
 	"\fvnc_endpoint\x18\x04 \x01(\v2\x17.gateway.v1.VNCEndpointR\vvncEndpoint\x12\x1a\n" +
 	"\bfeatures\x18\x05 \x03(\tR\bfeatures\x12\x16\n" +
 	"\x06status\x18\x06 \x01(\tR\x06status\x12M\n" +
-	"\bmetadata\x18\a \x03(\v21.gateway.v1.BMCEndpointRegistration.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\a \x03(\v21.gateway.v1.BMCEndpointRegistration.MetadataEntryR\bmetadata\x12K\n" +
+	"\x12discovery_metadata\x18\b \x01(\v2\x1c.common.v1.DiscoveryMetadataR\x11discoveryMetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xde\x01\n" +
@@ -3340,6 +3350,7 @@ var file_gateway_v1_gateway_proto_goTypes = []any{
 	(*NetworkProtocol)(nil),                  // 47: gateway.v1.NetworkProtocol
 	nil,                                      // 48: gateway.v1.BMCEndpointRegistration.MetadataEntry
 	(*timestamppb.Timestamp)(nil),            // 49: google.protobuf.Timestamp
+	(*v1.DiscoveryMetadata)(nil),             // 50: common.v1.DiscoveryMetadata
 }
 var file_gateway_v1_gateway_proto_depIdxs = []int32{
 	49, // 0: gateway.v1.HealthCheckResponse.timestamp:type_name -> google.protobuf.Timestamp
@@ -3350,68 +3361,69 @@ var file_gateway_v1_gateway_proto_depIdxs = []int32{
 	16, // 5: gateway.v1.BMCEndpointRegistration.sol_endpoint:type_name -> gateway.v1.SOLEndpoint
 	17, // 6: gateway.v1.BMCEndpointRegistration.vnc_endpoint:type_name -> gateway.v1.VNCEndpoint
 	48, // 7: gateway.v1.BMCEndpointRegistration.metadata:type_name -> gateway.v1.BMCEndpointRegistration.MetadataEntry
-	0,  // 8: gateway.v1.BMCControlEndpoint.type:type_name -> gateway.v1.BMCType
-	18, // 9: gateway.v1.BMCControlEndpoint.tls:type_name -> gateway.v1.TLSConfig
-	2,  // 10: gateway.v1.SOLEndpoint.type:type_name -> gateway.v1.SOLType
-	19, // 11: gateway.v1.SOLEndpoint.config:type_name -> gateway.v1.SOLConfig
-	3,  // 12: gateway.v1.VNCEndpoint.type:type_name -> gateway.v1.VNCType
-	20, // 13: gateway.v1.VNCEndpoint.config:type_name -> gateway.v1.VNCConfig
-	49, // 14: gateway.v1.CreateVNCSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
-	49, // 15: gateway.v1.VNCSession.created_at:type_name -> google.protobuf.Timestamp
-	49, // 16: gateway.v1.VNCSession.expires_at:type_name -> google.protobuf.Timestamp
-	24, // 17: gateway.v1.GetVNCSessionResponse.session:type_name -> gateway.v1.VNCSession
-	49, // 18: gateway.v1.CreateSOLSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
-	49, // 19: gateway.v1.SOLSession.created_at:type_name -> google.protobuf.Timestamp
-	49, // 20: gateway.v1.SOLSession.expires_at:type_name -> google.protobuf.Timestamp
-	31, // 21: gateway.v1.GetSOLSessionResponse.session:type_name -> gateway.v1.SOLSession
-	36, // 22: gateway.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> gateway.v1.BMCEndpointAvailability
-	0,  // 23: gateway.v1.BMCEndpointAvailability.bmc_type:type_name -> gateway.v1.BMCType
-	49, // 24: gateway.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
-	44, // 25: gateway.v1.GetBMCInfoResponse.info:type_name -> gateway.v1.BMCInfo
-	45, // 26: gateway.v1.BMCInfo.ipmi_info:type_name -> gateway.v1.IPMIInfo
-	46, // 27: gateway.v1.BMCInfo.redfish_info:type_name -> gateway.v1.RedfishInfo
-	47, // 28: gateway.v1.RedfishInfo.network_protocols:type_name -> gateway.v1.NetworkProtocol
-	4,  // 29: gateway.v1.GatewayService.HealthCheck:input_type -> gateway.v1.HealthCheckRequest
-	10, // 30: gateway.v1.GatewayService.RegisterAgent:input_type -> gateway.v1.RegisterAgentRequest
-	12, // 31: gateway.v1.GatewayService.AgentHeartbeat:input_type -> gateway.v1.AgentHeartbeatRequest
-	6,  // 32: gateway.v1.GatewayService.PowerOn:input_type -> gateway.v1.PowerOperationRequest
-	6,  // 33: gateway.v1.GatewayService.PowerOff:input_type -> gateway.v1.PowerOperationRequest
-	6,  // 34: gateway.v1.GatewayService.PowerCycle:input_type -> gateway.v1.PowerOperationRequest
-	6,  // 35: gateway.v1.GatewayService.Reset:input_type -> gateway.v1.PowerOperationRequest
-	8,  // 36: gateway.v1.GatewayService.GetPowerStatus:input_type -> gateway.v1.PowerStatusRequest
-	21, // 37: gateway.v1.GatewayService.CreateVNCSession:input_type -> gateway.v1.CreateVNCSessionRequest
-	23, // 38: gateway.v1.GatewayService.GetVNCSession:input_type -> gateway.v1.GetVNCSessionRequest
-	26, // 39: gateway.v1.GatewayService.CloseVNCSession:input_type -> gateway.v1.CloseVNCSessionRequest
-	38, // 40: gateway.v1.GatewayService.StartVNCProxy:input_type -> gateway.v1.StartVNCProxyRequest
-	28, // 41: gateway.v1.GatewayService.CreateSOLSession:input_type -> gateway.v1.CreateSOLSessionRequest
-	30, // 42: gateway.v1.GatewayService.GetSOLSession:input_type -> gateway.v1.GetSOLSessionRequest
-	33, // 43: gateway.v1.GatewayService.CloseSOLSession:input_type -> gateway.v1.CloseSOLSessionRequest
-	40, // 44: gateway.v1.GatewayService.StreamVNCData:input_type -> gateway.v1.VNCDataChunk
-	41, // 45: gateway.v1.GatewayService.StreamConsoleData:input_type -> gateway.v1.ConsoleDataChunk
-	42, // 46: gateway.v1.GatewayService.GetBMCInfo:input_type -> gateway.v1.GetBMCInfoRequest
-	5,  // 47: gateway.v1.GatewayService.HealthCheck:output_type -> gateway.v1.HealthCheckResponse
-	11, // 48: gateway.v1.GatewayService.RegisterAgent:output_type -> gateway.v1.RegisterAgentResponse
-	13, // 49: gateway.v1.GatewayService.AgentHeartbeat:output_type -> gateway.v1.AgentHeartbeatResponse
-	7,  // 50: gateway.v1.GatewayService.PowerOn:output_type -> gateway.v1.PowerOperationResponse
-	7,  // 51: gateway.v1.GatewayService.PowerOff:output_type -> gateway.v1.PowerOperationResponse
-	7,  // 52: gateway.v1.GatewayService.PowerCycle:output_type -> gateway.v1.PowerOperationResponse
-	7,  // 53: gateway.v1.GatewayService.Reset:output_type -> gateway.v1.PowerOperationResponse
-	9,  // 54: gateway.v1.GatewayService.GetPowerStatus:output_type -> gateway.v1.PowerStatusResponse
-	22, // 55: gateway.v1.GatewayService.CreateVNCSession:output_type -> gateway.v1.CreateVNCSessionResponse
-	25, // 56: gateway.v1.GatewayService.GetVNCSession:output_type -> gateway.v1.GetVNCSessionResponse
-	27, // 57: gateway.v1.GatewayService.CloseVNCSession:output_type -> gateway.v1.CloseVNCSessionResponse
-	39, // 58: gateway.v1.GatewayService.StartVNCProxy:output_type -> gateway.v1.StartVNCProxyResponse
-	29, // 59: gateway.v1.GatewayService.CreateSOLSession:output_type -> gateway.v1.CreateSOLSessionResponse
-	32, // 60: gateway.v1.GatewayService.GetSOLSession:output_type -> gateway.v1.GetSOLSessionResponse
-	34, // 61: gateway.v1.GatewayService.CloseSOLSession:output_type -> gateway.v1.CloseSOLSessionResponse
-	40, // 62: gateway.v1.GatewayService.StreamVNCData:output_type -> gateway.v1.VNCDataChunk
-	41, // 63: gateway.v1.GatewayService.StreamConsoleData:output_type -> gateway.v1.ConsoleDataChunk
-	43, // 64: gateway.v1.GatewayService.GetBMCInfo:output_type -> gateway.v1.GetBMCInfoResponse
-	47, // [47:65] is the sub-list for method output_type
-	29, // [29:47] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	50, // 8: gateway.v1.BMCEndpointRegistration.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
+	0,  // 9: gateway.v1.BMCControlEndpoint.type:type_name -> gateway.v1.BMCType
+	18, // 10: gateway.v1.BMCControlEndpoint.tls:type_name -> gateway.v1.TLSConfig
+	2,  // 11: gateway.v1.SOLEndpoint.type:type_name -> gateway.v1.SOLType
+	19, // 12: gateway.v1.SOLEndpoint.config:type_name -> gateway.v1.SOLConfig
+	3,  // 13: gateway.v1.VNCEndpoint.type:type_name -> gateway.v1.VNCType
+	20, // 14: gateway.v1.VNCEndpoint.config:type_name -> gateway.v1.VNCConfig
+	49, // 15: gateway.v1.CreateVNCSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
+	49, // 16: gateway.v1.VNCSession.created_at:type_name -> google.protobuf.Timestamp
+	49, // 17: gateway.v1.VNCSession.expires_at:type_name -> google.protobuf.Timestamp
+	24, // 18: gateway.v1.GetVNCSessionResponse.session:type_name -> gateway.v1.VNCSession
+	49, // 19: gateway.v1.CreateSOLSessionResponse.expires_at:type_name -> google.protobuf.Timestamp
+	49, // 20: gateway.v1.SOLSession.created_at:type_name -> google.protobuf.Timestamp
+	49, // 21: gateway.v1.SOLSession.expires_at:type_name -> google.protobuf.Timestamp
+	31, // 22: gateway.v1.GetSOLSessionResponse.session:type_name -> gateway.v1.SOLSession
+	36, // 23: gateway.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> gateway.v1.BMCEndpointAvailability
+	0,  // 24: gateway.v1.BMCEndpointAvailability.bmc_type:type_name -> gateway.v1.BMCType
+	49, // 25: gateway.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
+	44, // 26: gateway.v1.GetBMCInfoResponse.info:type_name -> gateway.v1.BMCInfo
+	45, // 27: gateway.v1.BMCInfo.ipmi_info:type_name -> gateway.v1.IPMIInfo
+	46, // 28: gateway.v1.BMCInfo.redfish_info:type_name -> gateway.v1.RedfishInfo
+	47, // 29: gateway.v1.RedfishInfo.network_protocols:type_name -> gateway.v1.NetworkProtocol
+	4,  // 30: gateway.v1.GatewayService.HealthCheck:input_type -> gateway.v1.HealthCheckRequest
+	10, // 31: gateway.v1.GatewayService.RegisterAgent:input_type -> gateway.v1.RegisterAgentRequest
+	12, // 32: gateway.v1.GatewayService.AgentHeartbeat:input_type -> gateway.v1.AgentHeartbeatRequest
+	6,  // 33: gateway.v1.GatewayService.PowerOn:input_type -> gateway.v1.PowerOperationRequest
+	6,  // 34: gateway.v1.GatewayService.PowerOff:input_type -> gateway.v1.PowerOperationRequest
+	6,  // 35: gateway.v1.GatewayService.PowerCycle:input_type -> gateway.v1.PowerOperationRequest
+	6,  // 36: gateway.v1.GatewayService.Reset:input_type -> gateway.v1.PowerOperationRequest
+	8,  // 37: gateway.v1.GatewayService.GetPowerStatus:input_type -> gateway.v1.PowerStatusRequest
+	21, // 38: gateway.v1.GatewayService.CreateVNCSession:input_type -> gateway.v1.CreateVNCSessionRequest
+	23, // 39: gateway.v1.GatewayService.GetVNCSession:input_type -> gateway.v1.GetVNCSessionRequest
+	26, // 40: gateway.v1.GatewayService.CloseVNCSession:input_type -> gateway.v1.CloseVNCSessionRequest
+	38, // 41: gateway.v1.GatewayService.StartVNCProxy:input_type -> gateway.v1.StartVNCProxyRequest
+	28, // 42: gateway.v1.GatewayService.CreateSOLSession:input_type -> gateway.v1.CreateSOLSessionRequest
+	30, // 43: gateway.v1.GatewayService.GetSOLSession:input_type -> gateway.v1.GetSOLSessionRequest
+	33, // 44: gateway.v1.GatewayService.CloseSOLSession:input_type -> gateway.v1.CloseSOLSessionRequest
+	40, // 45: gateway.v1.GatewayService.StreamVNCData:input_type -> gateway.v1.VNCDataChunk
+	41, // 46: gateway.v1.GatewayService.StreamConsoleData:input_type -> gateway.v1.ConsoleDataChunk
+	42, // 47: gateway.v1.GatewayService.GetBMCInfo:input_type -> gateway.v1.GetBMCInfoRequest
+	5,  // 48: gateway.v1.GatewayService.HealthCheck:output_type -> gateway.v1.HealthCheckResponse
+	11, // 49: gateway.v1.GatewayService.RegisterAgent:output_type -> gateway.v1.RegisterAgentResponse
+	13, // 50: gateway.v1.GatewayService.AgentHeartbeat:output_type -> gateway.v1.AgentHeartbeatResponse
+	7,  // 51: gateway.v1.GatewayService.PowerOn:output_type -> gateway.v1.PowerOperationResponse
+	7,  // 52: gateway.v1.GatewayService.PowerOff:output_type -> gateway.v1.PowerOperationResponse
+	7,  // 53: gateway.v1.GatewayService.PowerCycle:output_type -> gateway.v1.PowerOperationResponse
+	7,  // 54: gateway.v1.GatewayService.Reset:output_type -> gateway.v1.PowerOperationResponse
+	9,  // 55: gateway.v1.GatewayService.GetPowerStatus:output_type -> gateway.v1.PowerStatusResponse
+	22, // 56: gateway.v1.GatewayService.CreateVNCSession:output_type -> gateway.v1.CreateVNCSessionResponse
+	25, // 57: gateway.v1.GatewayService.GetVNCSession:output_type -> gateway.v1.GetVNCSessionResponse
+	27, // 58: gateway.v1.GatewayService.CloseVNCSession:output_type -> gateway.v1.CloseVNCSessionResponse
+	39, // 59: gateway.v1.GatewayService.StartVNCProxy:output_type -> gateway.v1.StartVNCProxyResponse
+	29, // 60: gateway.v1.GatewayService.CreateSOLSession:output_type -> gateway.v1.CreateSOLSessionResponse
+	32, // 61: gateway.v1.GatewayService.GetSOLSession:output_type -> gateway.v1.GetSOLSessionResponse
+	34, // 62: gateway.v1.GatewayService.CloseSOLSession:output_type -> gateway.v1.CloseSOLSessionResponse
+	40, // 63: gateway.v1.GatewayService.StreamVNCData:output_type -> gateway.v1.VNCDataChunk
+	41, // 64: gateway.v1.GatewayService.StreamConsoleData:output_type -> gateway.v1.ConsoleDataChunk
+	43, // 65: gateway.v1.GatewayService.GetBMCInfo:output_type -> gateway.v1.GetBMCInfoResponse
+	48, // [48:66] is the sub-list for method output_type
+	30, // [30:48] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_gateway_v1_gateway_proto_init() }

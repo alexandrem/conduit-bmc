@@ -7,6 +7,7 @@
 package managerv1
 
 import (
+	v1 "core/gen/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -1840,20 +1841,21 @@ func (x *ListServersResponse) GetNextPageToken() string {
 // Server represents a physical or virtual server with BMC access
 // This is the manager's view of servers, including customer ownership and BMC endpoints
 type Server struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                        // Unique server identifier (e.g., "srv-001", "rack1-server5")
-	CustomerId      string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                                                      // Customer/tenant ID that owns this server
-	DatacenterId    string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                                // Datacenter where the server is physically located
-	ControlEndpoint *BMCControlEndpoint    `protobuf:"bytes,4,opt,name=control_endpoint,json=controlEndpoint,proto3" json:"control_endpoint,omitempty"`                                       // BMC control API endpoint
-	SolEndpoint     *SOLEndpoint           `protobuf:"bytes,5,opt,name=sol_endpoint,json=solEndpoint,proto3" json:"sol_endpoint,omitempty"`                                                   // Serial-over-LAN endpoint (optional)
-	VncEndpoint     *VNCEndpoint           `protobuf:"bytes,6,opt,name=vnc_endpoint,json=vncEndpoint,proto3" json:"vnc_endpoint,omitempty"`                                                   // VNC/KVM endpoint (optional)
-	Features        []string               `protobuf:"bytes,7,rep,name=features,proto3" json:"features,omitempty"`                                                                            // Supported high-level features (e.g., "power", "console", "vnc")
-	Status          string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`                                                                                // Current server status (e.g., "online", "offline", "maintenance")
-	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                                                         // When the server was first registered
-	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                                                        // Last time server information was updated
-	Metadata        map[string]string      `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional server metadata
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                        // Unique server identifier (e.g., "srv-001", "rack1-server5")
+	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                                                      // Customer/tenant ID that owns this server
+	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                                // Datacenter where the server is physically located
+	ControlEndpoint   *BMCControlEndpoint    `protobuf:"bytes,4,opt,name=control_endpoint,json=controlEndpoint,proto3" json:"control_endpoint,omitempty"`                                       // BMC control API endpoint
+	SolEndpoint       *SOLEndpoint           `protobuf:"bytes,5,opt,name=sol_endpoint,json=solEndpoint,proto3" json:"sol_endpoint,omitempty"`                                                   // Serial-over-LAN endpoint (optional)
+	VncEndpoint       *VNCEndpoint           `protobuf:"bytes,6,opt,name=vnc_endpoint,json=vncEndpoint,proto3" json:"vnc_endpoint,omitempty"`                                                   // VNC/KVM endpoint (optional)
+	Features          []string               `protobuf:"bytes,7,rep,name=features,proto3" json:"features,omitempty"`                                                                            // Supported high-level features (e.g., "power", "console", "vnc")
+	Status            string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`                                                                                // Current server status (e.g., "online", "offline", "maintenance")
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                                                         // When the server was first registered
+	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                                                        // Last time server information was updated
+	Metadata          map[string]string      `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional server metadata
+	DiscoveryMetadata *v1.DiscoveryMetadata  `protobuf:"bytes,12,opt,name=discovery_metadata,json=discoveryMetadata,proto3" json:"discovery_metadata,omitempty"`                                // Discovery metadata (RFD 017)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Server) Reset() {
@@ -1959,6 +1961,13 @@ func (x *Server) GetUpdatedAt() *timestamppb.Timestamp {
 func (x *Server) GetMetadata() map[string]string {
 	if x != nil {
 		return x.Metadata
+	}
+	return nil
+}
+
+func (x *Server) GetDiscoveryMetadata() *v1.DiscoveryMetadata {
+	if x != nil {
+		return x.DiscoveryMetadata
 	}
 	return nil
 }
@@ -2453,18 +2462,19 @@ func (x *ReportAvailableEndpointsRequest) GetBmcEndpoints() []*BMCEndpointAvaila
 
 // BMCEndpointAvailability describes a BMC endpoint available through a gateway
 type BMCEndpointAvailability struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BmcEndpoint   string                 `protobuf:"bytes,1,opt,name=bmc_endpoint,json=bmcEndpoint,proto3" json:"bmc_endpoint,omitempty"`              // BMC endpoint (e.g., "192.168.1.100:623")
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`                          // Agent that provides access to this endpoint
-	DatacenterId  string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`           // Datacenter containing this BMC
-	BmcType       BMCType                `protobuf:"varint,4,opt,name=bmc_type,json=bmcType,proto3,enum=manager.v1.BMCType" json:"bmc_type,omitempty"` // Type of BMC interface
-	Features      []string               `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                       // Available features
-	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`                                           // Endpoint status
-	LastSeen      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`                       // When this endpoint was last verified
-	Username      string                 `protobuf:"bytes,8,opt,name=username,proto3" json:"username,omitempty"`                                       // BMC username
-	Capabilities  []string               `protobuf:"bytes,9,rep,name=capabilities,proto3" json:"capabilities,omitempty"`                               // BMC capabilities
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	BmcEndpoint       string                 `protobuf:"bytes,1,opt,name=bmc_endpoint,json=bmcEndpoint,proto3" json:"bmc_endpoint,omitempty"`                    // BMC endpoint (e.g., "192.168.1.100:623")
+	AgentId           string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`                                // Agent that provides access to this endpoint
+	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                 // Datacenter containing this BMC
+	BmcType           BMCType                `protobuf:"varint,4,opt,name=bmc_type,json=bmcType,proto3,enum=manager.v1.BMCType" json:"bmc_type,omitempty"`       // Type of BMC interface
+	Features          []string               `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                             // Available features
+	Status            string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"`                                                 // Endpoint status
+	LastSeen          *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`                             // When this endpoint was last verified
+	Username          string                 `protobuf:"bytes,8,opt,name=username,proto3" json:"username,omitempty"`                                             // BMC username
+	Capabilities      []string               `protobuf:"bytes,9,rep,name=capabilities,proto3" json:"capabilities,omitempty"`                                     // BMC capabilities
+	DiscoveryMetadata *v1.DiscoveryMetadata  `protobuf:"bytes,10,opt,name=discovery_metadata,json=discoveryMetadata,proto3" json:"discovery_metadata,omitempty"` // Discovery metadata (RFD 017)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *BMCEndpointAvailability) Reset() {
@@ -2560,6 +2570,13 @@ func (x *BMCEndpointAvailability) GetCapabilities() []string {
 	return nil
 }
 
+func (x *BMCEndpointAvailability) GetDiscoveryMetadata() *v1.DiscoveryMetadata {
+	if x != nil {
+		return x.DiscoveryMetadata
+	}
+	return nil
+}
+
 // ReportAvailableEndpointsResponse confirms endpoint registration
 type ReportAvailableEndpointsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2618,7 +2635,7 @@ var File_manager_v1_manager_proto protoreflect.FileDescriptor
 const file_manager_v1_manager_proto_rawDesc = "" +
 	"\n" +
 	"\x18manager/v1/manager.proto\x12\n" +
-	"manager.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"G\n" +
+	"manager.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19common/v1/discovery.proto\"G\n" +
 	"\x13AuthenticateRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xcb\x01\n" +
@@ -2749,7 +2766,7 @@ const file_manager_v1_manager_proto_rawDesc = "" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"k\n" +
 	"\x13ListServersResponse\x12,\n" +
 	"\aservers\x18\x01 \x03(\v2\x12.manager.v1.ServerR\aservers\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xc6\x04\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x93\x05\n" +
 	"\x06Server\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vcustomer_id\x18\x02 \x01(\tR\n" +
@@ -2765,7 +2782,8 @@ const file_manager_v1_manager_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12<\n" +
-	"\bmetadata\x18\v \x03(\v2 .manager.v1.Server.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\v \x03(\v2 .manager.v1.Server.MetadataEntryR\bmetadata\x12K\n" +
+	"\x12discovery_metadata\x18\f \x01(\v2\x1c.common.v1.DiscoveryMetadataR\x11discoveryMetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xde\x01\n" +
@@ -2805,7 +2823,7 @@ const file_manager_v1_manager_proto_rawDesc = "" +
 	"\n" +
 	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x12\x16\n" +
 	"\x06region\x18\x02 \x01(\tR\x06region\x12H\n" +
-	"\rbmc_endpoints\x18\x03 \x03(\v2#.manager.v1.BMCEndpointAvailabilityR\fbmcEndpoints\"\xd9\x02\n" +
+	"\rbmc_endpoints\x18\x03 \x03(\v2#.manager.v1.BMCEndpointAvailabilityR\fbmcEndpoints\"\xa6\x03\n" +
 	"\x17BMCEndpointAvailability\x12!\n" +
 	"\fbmc_endpoint\x18\x01 \x01(\tR\vbmcEndpoint\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12#\n" +
@@ -2815,7 +2833,9 @@ const file_manager_v1_manager_proto_rawDesc = "" +
 	"\x06status\x18\x06 \x01(\tR\x06status\x127\n" +
 	"\tlast_seen\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x12\x1a\n" +
 	"\busername\x18\b \x01(\tR\busername\x12\"\n" +
-	"\fcapabilities\x18\t \x03(\tR\fcapabilities\"V\n" +
+	"\fcapabilities\x18\t \x03(\tR\fcapabilities\x12K\n" +
+	"\x12discovery_metadata\x18\n" +
+	" \x01(\v2\x1c.common.v1.DiscoveryMetadataR\x11discoveryMetadata\"V\n" +
 	" ReportAvailableEndpointsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage*=\n" +
@@ -2901,6 +2921,7 @@ var file_manager_v1_manager_proto_goTypes = []any{
 	(*ReportAvailableEndpointsResponse)(nil), // 38: manager.v1.ReportAvailableEndpointsResponse
 	nil,                                      // 39: manager.v1.Server.MetadataEntry
 	(*timestamppb.Timestamp)(nil),            // 40: google.protobuf.Timestamp
+	(*v1.DiscoveryMetadata)(nil),             // 41: common.v1.DiscoveryMetadata
 }
 var file_manager_v1_manager_proto_depIdxs = []int32{
 	40, // 0: manager.v1.AuthenticateResponse.expires_at:type_name -> google.protobuf.Timestamp
@@ -2935,42 +2956,44 @@ var file_manager_v1_manager_proto_depIdxs = []int32{
 	40, // 29: manager.v1.Server.created_at:type_name -> google.protobuf.Timestamp
 	40, // 30: manager.v1.Server.updated_at:type_name -> google.protobuf.Timestamp
 	39, // 31: manager.v1.Server.metadata:type_name -> manager.v1.Server.MetadataEntry
-	0,  // 32: manager.v1.BMCControlEndpoint.type:type_name -> manager.v1.BMCType
-	33, // 33: manager.v1.BMCControlEndpoint.tls:type_name -> manager.v1.TLSConfig
-	1,  // 34: manager.v1.SOLEndpoint.type:type_name -> manager.v1.SOLType
-	34, // 35: manager.v1.SOLEndpoint.config:type_name -> manager.v1.SOLConfig
-	2,  // 36: manager.v1.VNCEndpoint.type:type_name -> manager.v1.VNCType
-	35, // 37: manager.v1.VNCEndpoint.config:type_name -> manager.v1.VNCConfig
-	37, // 38: manager.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> manager.v1.BMCEndpointAvailability
-	0,  // 39: manager.v1.BMCEndpointAvailability.bmc_type:type_name -> manager.v1.BMCType
-	40, // 40: manager.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
-	3,  // 41: manager.v1.BMCManagerService.Authenticate:input_type -> manager.v1.AuthenticateRequest
-	5,  // 42: manager.v1.BMCManagerService.RefreshToken:input_type -> manager.v1.RefreshTokenRequest
-	7,  // 43: manager.v1.BMCManagerService.GetServerToken:input_type -> manager.v1.GetServerTokenRequest
-	9,  // 44: manager.v1.BMCManagerService.RegisterServer:input_type -> manager.v1.RegisterServerRequest
-	11, // 45: manager.v1.BMCManagerService.GetServerLocation:input_type -> manager.v1.GetServerLocationRequest
-	13, // 46: manager.v1.BMCManagerService.RegisterGateway:input_type -> manager.v1.RegisterGatewayRequest
-	15, // 47: manager.v1.BMCManagerService.ListGateways:input_type -> manager.v1.ListGatewaysRequest
-	20, // 48: manager.v1.BMCManagerService.GetSystemStatus:input_type -> manager.v1.GetSystemStatusRequest
-	25, // 49: manager.v1.BMCManagerService.GetServer:input_type -> manager.v1.GetServerRequest
-	27, // 50: manager.v1.BMCManagerService.ListServers:input_type -> manager.v1.ListServersRequest
-	36, // 51: manager.v1.BMCManagerService.ReportAvailableEndpoints:input_type -> manager.v1.ReportAvailableEndpointsRequest
-	4,  // 52: manager.v1.BMCManagerService.Authenticate:output_type -> manager.v1.AuthenticateResponse
-	6,  // 53: manager.v1.BMCManagerService.RefreshToken:output_type -> manager.v1.RefreshTokenResponse
-	8,  // 54: manager.v1.BMCManagerService.GetServerToken:output_type -> manager.v1.GetServerTokenResponse
-	10, // 55: manager.v1.BMCManagerService.RegisterServer:output_type -> manager.v1.RegisterServerResponse
-	12, // 56: manager.v1.BMCManagerService.GetServerLocation:output_type -> manager.v1.GetServerLocationResponse
-	14, // 57: manager.v1.BMCManagerService.RegisterGateway:output_type -> manager.v1.RegisterGatewayResponse
-	16, // 58: manager.v1.BMCManagerService.ListGateways:output_type -> manager.v1.ListGatewaysResponse
-	21, // 59: manager.v1.BMCManagerService.GetSystemStatus:output_type -> manager.v1.GetSystemStatusResponse
-	26, // 60: manager.v1.BMCManagerService.GetServer:output_type -> manager.v1.GetServerResponse
-	28, // 61: manager.v1.BMCManagerService.ListServers:output_type -> manager.v1.ListServersResponse
-	38, // 62: manager.v1.BMCManagerService.ReportAvailableEndpoints:output_type -> manager.v1.ReportAvailableEndpointsResponse
-	52, // [52:63] is the sub-list for method output_type
-	41, // [41:52] is the sub-list for method input_type
-	41, // [41:41] is the sub-list for extension type_name
-	41, // [41:41] is the sub-list for extension extendee
-	0,  // [0:41] is the sub-list for field type_name
+	41, // 32: manager.v1.Server.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
+	0,  // 33: manager.v1.BMCControlEndpoint.type:type_name -> manager.v1.BMCType
+	33, // 34: manager.v1.BMCControlEndpoint.tls:type_name -> manager.v1.TLSConfig
+	1,  // 35: manager.v1.SOLEndpoint.type:type_name -> manager.v1.SOLType
+	34, // 36: manager.v1.SOLEndpoint.config:type_name -> manager.v1.SOLConfig
+	2,  // 37: manager.v1.VNCEndpoint.type:type_name -> manager.v1.VNCType
+	35, // 38: manager.v1.VNCEndpoint.config:type_name -> manager.v1.VNCConfig
+	37, // 39: manager.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> manager.v1.BMCEndpointAvailability
+	0,  // 40: manager.v1.BMCEndpointAvailability.bmc_type:type_name -> manager.v1.BMCType
+	40, // 41: manager.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
+	41, // 42: manager.v1.BMCEndpointAvailability.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
+	3,  // 43: manager.v1.BMCManagerService.Authenticate:input_type -> manager.v1.AuthenticateRequest
+	5,  // 44: manager.v1.BMCManagerService.RefreshToken:input_type -> manager.v1.RefreshTokenRequest
+	7,  // 45: manager.v1.BMCManagerService.GetServerToken:input_type -> manager.v1.GetServerTokenRequest
+	9,  // 46: manager.v1.BMCManagerService.RegisterServer:input_type -> manager.v1.RegisterServerRequest
+	11, // 47: manager.v1.BMCManagerService.GetServerLocation:input_type -> manager.v1.GetServerLocationRequest
+	13, // 48: manager.v1.BMCManagerService.RegisterGateway:input_type -> manager.v1.RegisterGatewayRequest
+	15, // 49: manager.v1.BMCManagerService.ListGateways:input_type -> manager.v1.ListGatewaysRequest
+	20, // 50: manager.v1.BMCManagerService.GetSystemStatus:input_type -> manager.v1.GetSystemStatusRequest
+	25, // 51: manager.v1.BMCManagerService.GetServer:input_type -> manager.v1.GetServerRequest
+	27, // 52: manager.v1.BMCManagerService.ListServers:input_type -> manager.v1.ListServersRequest
+	36, // 53: manager.v1.BMCManagerService.ReportAvailableEndpoints:input_type -> manager.v1.ReportAvailableEndpointsRequest
+	4,  // 54: manager.v1.BMCManagerService.Authenticate:output_type -> manager.v1.AuthenticateResponse
+	6,  // 55: manager.v1.BMCManagerService.RefreshToken:output_type -> manager.v1.RefreshTokenResponse
+	8,  // 56: manager.v1.BMCManagerService.GetServerToken:output_type -> manager.v1.GetServerTokenResponse
+	10, // 57: manager.v1.BMCManagerService.RegisterServer:output_type -> manager.v1.RegisterServerResponse
+	12, // 58: manager.v1.BMCManagerService.GetServerLocation:output_type -> manager.v1.GetServerLocationResponse
+	14, // 59: manager.v1.BMCManagerService.RegisterGateway:output_type -> manager.v1.RegisterGatewayResponse
+	16, // 60: manager.v1.BMCManagerService.ListGateways:output_type -> manager.v1.ListGatewaysResponse
+	21, // 61: manager.v1.BMCManagerService.GetSystemStatus:output_type -> manager.v1.GetSystemStatusResponse
+	26, // 62: manager.v1.BMCManagerService.GetServer:output_type -> manager.v1.GetServerResponse
+	28, // 63: manager.v1.BMCManagerService.ListServers:output_type -> manager.v1.ListServersResponse
+	38, // 64: manager.v1.BMCManagerService.ReportAvailableEndpoints:output_type -> manager.v1.ReportAvailableEndpointsResponse
+	54, // [54:65] is the sub-list for method output_type
+	43, // [43:54] is the sub-list for method input_type
+	43, // [43:43] is the sub-list for extension type_name
+	43, // [43:43] is the sub-list for extension extendee
+	0,  // [0:43] is the sub-list for field type_name
 }
 
 func init() { file_manager_v1_manager_proto_init() }

@@ -3,6 +3,7 @@ syntax = "proto3";
 package gateway.v1;
 
 import "google/protobuf/timestamp.proto";
+import "common/v1/discovery.proto";
 
 option go_package = "gateway/gen/gateway/v1;gatewayv1";
 
@@ -174,6 +175,7 @@ message BMCEndpointRegistration {
   repeated string features = 5;            // High-level features (power, sensors, etc.)
   string status = 6;                       // Overall server status
   map<string, string> metadata = 7;       // Additional server metadata
+  common.v1.DiscoveryMetadata discovery_metadata = 8; // Discovery metadata (RFD 017)
 }
 
 // BMC Control API endpoint (IPMI/Redfish)
@@ -449,3 +451,5 @@ message NetworkProtocol {
   int32 port = 2;
   bool enabled = 3;
 }
+
+// Discovery metadata is now defined in common/v1/discovery.proto (RFD 017)

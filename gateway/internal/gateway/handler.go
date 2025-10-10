@@ -212,17 +212,18 @@ func (h *RegionalGatewayHandler) RegisterAgent(
 			}
 
 			mapping := &domain.AgentBMCMapping{
-				ServerID:     bmcEndpoint.ServerId,
-				BMCEndpoint:  bmcEndpointAddr,
-				AgentID:      req.Msg.AgentId,
-				DatacenterID: req.Msg.DatacenterId,
-				BMCType:      bmcType,
-				Features:     bmcEndpoint.Features,
-				Status:       bmcEndpoint.Status,
-				LastSeen:     time.Now(),
-				Metadata:     metadata,
-				Username:     username,
-				Capabilities: capabilities,
+				ServerID:          bmcEndpoint.ServerId,
+				BMCEndpoint:       bmcEndpointAddr,
+				AgentID:           req.Msg.AgentId,
+				DatacenterID:      req.Msg.DatacenterId,
+				BMCType:           bmcType,
+				Features:          bmcEndpoint.Features,
+				Status:            bmcEndpoint.Status,
+				LastSeen:          time.Now(),
+				Metadata:          metadata,
+				Username:          username,
+				Capabilities:      capabilities,
+				DiscoveryMetadata: types.ConvertDiscoveryMetadataFromProto(bmcEndpoint.DiscoveryMetadata),
 			}
 			h.bmcEndpointMapping[bmcEndpointAddr] = mapping
 			log.Debug().Str("server_id", bmcEndpoint.ServerId).Str("bmc_endpoint", bmcEndpointAddr).Str("agent_id", req.Msg.AgentId).Str("username", username).Strs("capabilities", capabilities).Msg("Mapped BMC endpoint to agent")
@@ -298,17 +299,18 @@ func (h *RegionalGatewayHandler) AgentHeartbeat(
 			}
 
 			mapping := &domain.AgentBMCMapping{
-				ServerID:     bmcEndpoint.ServerId,
-				BMCEndpoint:  bmcEndpointAddr,
-				AgentID:      req.Msg.AgentId,
-				DatacenterID: agentInfo.DatacenterID,
-				BMCType:      bmcType,
-				Features:     bmcEndpoint.Features,
-				Status:       bmcEndpoint.Status,
-				LastSeen:     time.Now(),
-				Metadata:     metadata,
-				Username:     username,
-				Capabilities: capabilities,
+				ServerID:          bmcEndpoint.ServerId,
+				BMCEndpoint:       bmcEndpointAddr,
+				AgentID:           req.Msg.AgentId,
+				DatacenterID:      agentInfo.DatacenterID,
+				BMCType:           bmcType,
+				Features:          bmcEndpoint.Features,
+				Status:            bmcEndpoint.Status,
+				LastSeen:          time.Now(),
+				Metadata:          metadata,
+				Username:          username,
+				Capabilities:      capabilities,
+				DiscoveryMetadata: types.ConvertDiscoveryMetadataFromProto(bmcEndpoint.DiscoveryMetadata),
 			}
 			h.bmcEndpointMapping[bmcEndpointAddr] = mapping
 		}
@@ -1203,15 +1205,16 @@ func (h *RegionalGatewayHandler) reportEndpointsToManager(ctx context.Context) e
 	var endpoints []*managerv1.BMCEndpointAvailability
 	for _, mapping := range h.bmcEndpointMapping {
 		endpoints = append(endpoints, &managerv1.BMCEndpointAvailability{
-			BmcEndpoint:  mapping.BMCEndpoint,
-			AgentId:      mapping.AgentID,
-			DatacenterId: mapping.DatacenterID,
-			BmcType:      convertBMCTypeToManagerProto(mapping.BMCType),
-			Features:     mapping.Features,
-			Status:       mapping.Status,
-			LastSeen:     timestamppb.New(mapping.LastSeen),
-			Username:     mapping.Username,
-			Capabilities: mapping.Capabilities,
+			BmcEndpoint:       mapping.BMCEndpoint,
+			AgentId:           mapping.AgentID,
+			DatacenterId:      mapping.DatacenterID,
+			BmcType:           convertBMCTypeToManagerProto(mapping.BMCType),
+			Features:          mapping.Features,
+			Status:            mapping.Status,
+			LastSeen:          timestamppb.New(mapping.LastSeen),
+			Username:          mapping.Username,
+			Capabilities:      mapping.Capabilities,
+			DiscoveryMetadata: mapping.DiscoveryMetadata.ConvertToProto(),
 		})
 		log.Debug().
 			Str("bmc_endpoint", mapping.BMCEndpoint).

@@ -18,15 +18,16 @@ type Agent struct {
 
 // AgentBMCMapping represents the mapping between a BMC endpoint and its agent
 type AgentBMCMapping struct {
-	ServerID     string            `json:"server_id"` // Logical server ID
-	BMCEndpoint  string            `json:"bmc_endpoint"`
-	AgentID      string            `json:"agent_id"`
-	DatacenterID string            `json:"datacenter_id"`
-	BMCType      types.BMCType     `json:"bmc_type"`
-	Features     []string          `json:"features"`
-	Status       string            `json:"status"`
-	LastSeen     time.Time         `json:"last_seen"`
-	Metadata     map[string]string `json:"metadata"`
-	Username     string            `json:"username"`
-	Capabilities []string          `json:"capabilities"`
+	ServerID          string                   `json:"server_id"` // Logical server ID
+	BMCEndpoint       string                   `json:"bmc_endpoint"`
+	AgentID           string                   `json:"agent_id"`
+	DatacenterID      string                   `json:"datacenter_id"`
+	BMCType           types.BMCType            `json:"bmc_type"`
+	Features          []string                 `json:"features"`
+	Status            string                   `json:"status"`
+	LastSeen          time.Time                `json:"last_seen"`
+	Metadata          map[string]string        `json:"metadata"`
+	Username          string                   `json:"username"`
+	Capabilities      []string                 `json:"capabilities"`
+	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata,omitempty"` // RFD 017
 }

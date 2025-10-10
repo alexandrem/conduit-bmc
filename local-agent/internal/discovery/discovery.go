@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -17,14 +18,15 @@ import (
 
 // Server represents a discovered BMC server with separate endpoint types
 type Server struct {
-	ID              string              `json:"id"`
-	CustomerID      string              `json:"customer_id"`
-	ControlEndpoint *BMCControlEndpoint `json:"control_endpoint"` // BMC control API
-	SOLEndpoint     *SOLEndpoint        `json:"sol_endpoint"`     // Serial-over-LAN (optional)
-	VNCEndpoint     *VNCEndpoint        `json:"vnc_endpoint"`     // VNC/KVM access (optional)
-	Features        []string            `json:"features"`         // High-level features
-	Status          string              `json:"status"`           // "active", "inactive", etc.
-	Metadata        map[string]string   `json:"metadata"`         // Additional metadata
+	ID                string              `json:"id"`
+	CustomerID        string              `json:"customer_id"`
+	ControlEndpoint   *BMCControlEndpoint `json:"control_endpoint"`   // BMC control API
+	SOLEndpoint       *SOLEndpoint        `json:"sol_endpoint"`       // Serial-over-LAN (optional)
+	VNCEndpoint       *VNCEndpoint        `json:"vnc_endpoint"`       // VNC/KVM access (optional)
+	Features          []string                  `json:"features"`           // High-level features
+	Status            string                    `json:"status"`             // "active", "inactive", etc.
+	Metadata          map[string]string         `json:"metadata"`           // Additional metadata
+	DiscoveryMetadata *types.DiscoveryMetadata  `json:"discovery_metadata"` // Discovery metadata (RFD 017)
 }
 
 // BMCControlEndpoint represents BMC control API
@@ -216,6 +218,11 @@ func (s *Service) loadStaticServers() []*Server {
 				}
 			}
 		}
+
+		// Build discovery metadata for static configuration
+		discoveryMetadata := s.buildDiscoveryMetadata(server, types.DiscoveryMethodStaticConfig, "config.yaml")
+		discoveryMetadata.DiscoveredAt = time.Now()
+		server.DiscoveryMetadata = discoveryMetadata
 
 		servers = append(servers, server)
 
@@ -552,4 +559,139 @@ func (s *Service) generateIPsFromSubnet(ipnet *net.IPNet) []net.IP {
 	}
 
 	return ips
+}
+
+// buildDiscoveryMetadata constructs discovery metadata for a server
+func (s *Service) buildDiscoveryMetadata(server *Server, discoveryMethod types.DiscoveryMethod, configSource string) *types.DiscoveryMetadata {
+	metadata := &types.DiscoveryMetadata{
+		DiscoveryMethod: discoveryMethod,
+		DiscoveredAt:    time.Time{}, // Will be set by caller with time.Now()
+		DiscoverySource: s.config.Agent.ID,
+		ConfigSource:    configSource,
+		AdditionalInfo:  make(map[string]string),
+	}
+
+	// Build protocol configuration
+	if server.ControlEndpoint != nil {
+		protocol := &types.ProtocolConfig{
+			PrimaryProtocol: string(server.ControlEndpoint.Type),
+		}
+
+		// Add protocol version if known
+		if server.ControlEndpoint.Type == "ipmi" {
+			protocol.PrimaryVersion = "2.0" // Assume IPMI 2.0
+		}
+
+		// Check for fallback configuration
+		if val, ok := server.Metadata["sol_fallback"]; ok && val == "ipmi" {
+			protocol.FallbackProtocol = "ipmi"
+			protocol.FallbackReason = fmt.Sprintf("Vendor %s requires IPMI fallback for console", server.Metadata["vendor"])
+		}
+
+		// Set console type
+		if server.SOLEndpoint != nil {
+			protocol.ConsoleType = string(server.SOLEndpoint.Type)
+			// If it's a Redfish serial console, try to extract the path
+			if server.SOLEndpoint.Type == "redfish_serial" && strings.Contains(server.SOLEndpoint.Endpoint, "/redfish/") {
+				u, err := url.Parse(server.SOLEndpoint.Endpoint)
+				if err == nil {
+					protocol.ConsolePath = u.Path
+				}
+			}
+		}
+
+		// Set VNC transport
+		if server.VNCEndpoint != nil {
+			protocol.VNCTransport = string(server.VNCEndpoint.Type)
+		}
+
+		metadata.Protocol = protocol
+	}
+
+	// Build endpoint details
+	if server.ControlEndpoint != nil {
+		endpoints := &types.EndpointDetails{
+			ControlEndpoint: server.ControlEndpoint.Endpoint,
+		}
+
+		// Parse control endpoint URL to extract scheme and port
+		if u, err := url.Parse(server.ControlEndpoint.Endpoint); err == nil {
+			endpoints.ControlScheme = u.Scheme
+			if portStr := u.Port(); portStr != "" {
+				if port, err := fmt.Sscanf(portStr, "%d", &endpoints.ControlPort); err == nil && port == 1 {
+					// Port extracted successfully
+				}
+			}
+		}
+
+		if server.SOLEndpoint != nil {
+			endpoints.ConsoleEndpoint = server.SOLEndpoint.Endpoint
+		}
+
+		if server.VNCEndpoint != nil {
+			endpoints.VNCEndpoint = server.VNCEndpoint.Endpoint
+		}
+
+		metadata.Endpoints = endpoints
+	}
+
+	// Build security configuration
+	security := &types.SecurityConfig{
+		AuthMethod: "basic", // Default to basic auth
+	}
+
+	if server.ControlEndpoint != nil && server.ControlEndpoint.TLS != nil {
+		security.TLSEnabled = server.ControlEndpoint.TLS.Enabled
+		security.TLSVerify = !server.ControlEndpoint.TLS.InsecureSkipVerify
+	}
+
+	if server.VNCEndpoint != nil && server.VNCEndpoint.Password != "" {
+		security.VNCAuthType = "password"
+		security.VNCPasswordLength = int32(len(server.VNCEndpoint.Password))
+	}
+
+	metadata.Security = security
+
+	// Build network information
+	if server.ControlEndpoint != nil {
+		network := &types.NetworkInfo{
+			Reachable: true, // If we got here, it's reachable
+		}
+
+		// Try to extract IP address from endpoint
+		if u, err := url.Parse(server.ControlEndpoint.Endpoint); err == nil {
+			host := u.Hostname()
+			if host != "" {
+				network.IPAddress = host
+			}
+		} else if strings.Contains(server.ControlEndpoint.Endpoint, ":") {
+			// Might be IP:port format
+			host, _, err := net.SplitHostPort(server.ControlEndpoint.Endpoint)
+			if err == nil {
+				network.IPAddress = host
+			}
+		}
+
+		metadata.Network = network
+	}
+
+	// Build capability information
+	capabilities := &types.CapabilityInfo{
+		SupportedFeatures: server.Features,
+	}
+
+	if discoveryError, ok := server.Metadata["discovery_error"]; ok {
+		capabilities.DiscoveryErrors = []string{discoveryError}
+	}
+
+	metadata.Capabilities = capabilities
+
+	// Build vendor information from metadata if available
+	if vendor, ok := server.Metadata["vendor"]; ok && vendor != "" {
+		metadata.Vendor = &types.VendorInfo{
+			Manufacturer: vendor,
+		}
+	}
+
+	return metadata
 }
