@@ -1,5 +1,5 @@
 ---
-rfd: "019"
+rfd: "017"
 title: "BMC Discovery Metadata Display"
 state: "draft"
 breaking_changes: false
@@ -12,7 +12,7 @@ database_migrations:
 areas: [ "local-agent", "manager", "gateway", "cli" ]
 ---
 
-# RFD 019 - BMC Discovery Metadata Display
+# RFD 017 - BMC Discovery Metadata Display
 
 ## Summary
 

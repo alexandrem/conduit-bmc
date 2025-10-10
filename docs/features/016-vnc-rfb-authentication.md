@@ -1,5 +1,5 @@
 ---
-rfd: "018"
+rfd: "016"
 title: "VNC RFB Authentication Support"
 state: "implemented"
 breaking_changes: false
@@ -10,7 +10,7 @@ database_migrations: [ ]
 areas: [ "local-agent", "gateway" ]
 ---
 
-# RFD 018 - VNC RFB Authentication Support
+# RFD 016 - VNC RFB Authentication Support
 
 **Status:** 🎉 Implemented
 

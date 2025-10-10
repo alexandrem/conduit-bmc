@@ -19,7 +19,7 @@ areas: [ "manager", "gateway", "cli", "database" ]
 # RFD 004 - Server Naming and Identity Management
 
 - **Status:** ❌ Abandoned
-  - **Reason:** This manual naming approach requires too many API calls and admin effort. RFD 020 replaces it with automatic identity extraction from BMC discovery metadata.
+  - **Reason:** This manual naming approach requires too many API calls and admin effort. RFD 018 replaces it with automatic identity extraction from BMC discovery metadata.
 - **Dependencies:**
     - **RFD 003 (Server Ownership and Authorization)**: This RFD builds on the
       ownership model established in RFD 003. Server names and metadata are
