@@ -288,7 +288,7 @@ The agent supports two VNC transport types:
 #### 1. Native TCP Transport
 - Direct TCP connection to VNC port (typically 5900)
 - Used by: QEMU, VirtualBMC, native VNC servers
-- Optional TLS encryption (VeNCrypt, RFB-over-TLS)
+- Optional TLS encryption (RFB-over-TLS)
 - **File**: `local-agent/pkg/vnc/native_transport.go`
 
 ```go
