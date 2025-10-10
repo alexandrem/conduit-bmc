@@ -1,7 +1,7 @@
 ---
 rfd: "017"
 title: "BMC Discovery Metadata Display"
-state: "draft"
+state: "implemented"
 breaking_changes: false
 testing_required: true
 database_changes: true
@@ -13,6 +13,8 @@ areas: [ "local-agent", "manager", "gateway", "cli" ]
 ---
 
 # RFD 017 - BMC Discovery Metadata Display
+
+**Status:** 🎉 Implemented
 
 ## Summary
 
