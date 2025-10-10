@@ -175,32 +175,52 @@ func (s *Service) loadStaticServers() []*Server {
 				// Store vendor information
 				server.Metadata["vendor"] = string(info.Vendor)
 
+				// Log discovery results for debugging
+				log.Debug().
+					Str("endpoint", endpoint).
+					Str("vendor", string(info.Vendor)).
+					Bool("supported", info.Supported).
+					Bool("fallbackToIPMI", info.FallbackToIPMI).
+					Str("serialPath", info.SerialPath).
+					Msg("Serial console discovery results")
+
 				// Configure SOL endpoint based on discovery
-				if server.SOLEndpoint == nil { // Don't override if explicitly configured
-					if info.Supported && info.SerialPath != "" {
-						// Use Redfish serial console if supported
+				// Always override inferred/configured SOL endpoints with actual discovery results
+				// This ensures vendor-specific behavior (like iDRAC requiring IPMI fallback) is respected
+				if info.Supported && info.SerialPath != "" {
+					// Use Redfish serial console if supported
+					server.SOLEndpoint = &SOLEndpoint{
+						Type:     "redfish_serial",
+						Endpoint: endpoint + info.SerialPath,
+						Username: server.ControlEndpoint.Username,
+						Password: server.ControlEndpoint.Password,
+					}
+					log.Info().Str("endpoint", endpoint).Str("vendor", string(info.Vendor)).Msg("Using Redfish serial console")
+				} else if info.FallbackToIPMI {
+					// Fallback to IPMI SOL
+					log.Debug().Str("endpoint", endpoint).Msg("Attempting to build IPMI endpoint for fallback")
+					ipmiEndpoint, err := s.buildIPMIEndpoint(endpoint)
+					if err != nil {
+						log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to build IPMI endpoint")
+					} else {
+						log.Debug().Str("ipmiEndpoint", ipmiEndpoint).Msg("Built IPMI endpoint successfully")
 						server.SOLEndpoint = &SOLEndpoint{
-							Type:     "redfish_serial",
-							Endpoint: endpoint + info.SerialPath,
+							Type:     "ipmi",
+							Endpoint: ipmiEndpoint,
 							Username: server.ControlEndpoint.Username,
 							Password: server.ControlEndpoint.Password,
 						}
-					} else if info.FallbackToIPMI {
-						// Fallback to IPMI SOL
-						ipmiEndpoint, err := s.buildIPMIEndpoint(endpoint)
-						if err != nil {
-							log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to build IPMI endpoint")
-						} else {
-							server.SOLEndpoint = &SOLEndpoint{
-								Type:     "ipmi",
-								Endpoint: ipmiEndpoint,
-								Username: server.ControlEndpoint.Username,
-								Password: server.ControlEndpoint.Password,
-							}
-							server.Metadata["sol_fallback"] = "ipmi"
-							log.Info().Str("endpoint", endpoint).Str("vendor", string(info.Vendor)).Msg("Using IPMI SOL fallback")
-						}
+						server.Metadata["sol_fallback"] = "ipmi"
+						log.Info().
+							Str("endpoint", endpoint).
+							Str("ipmiEndpoint", ipmiEndpoint).
+							Str("vendor", string(info.Vendor)).
+							Msg("Using IPMI SOL fallback")
 					}
+				} else {
+					// No console support detected, clear any inferred SOL endpoint
+					server.SOLEndpoint = nil
+					log.Warn().Str("endpoint", endpoint).Str("vendor", string(info.Vendor)).Msg("No serial console support detected")
 				}
 
 				// Ensure FeatureConsole is included if supported or fallback

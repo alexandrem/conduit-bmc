@@ -181,6 +181,18 @@ var showCmd = &cobra.Command{
 		if server.SOLEndpoint != nil {
 			consoleType := formatSOLType(server.SOLEndpoint.Type)
 			consoleInfo := fmt.Sprintf("✓ via %s (%s)", consoleType, server.SOLEndpoint.Endpoint)
+
+			// Check if this is a fallback from the primary protocol
+			if server.DiscoveryMetadata != nil && server.DiscoveryMetadata.Protocol != nil {
+				if server.DiscoveryMetadata.Protocol.FallbackProtocol != "" {
+					// Show fallback indicator
+					consoleInfo = fmt.Sprintf("✓ via %s (%s) [fallback: %s not supported]",
+						consoleType,
+						server.SOLEndpoint.Endpoint,
+						server.DiscoveryMetadata.Protocol.PrimaryProtocol)
+				}
+			}
+
 			fmt.Fprintf(w, "  Console:\t%s\n", consoleInfo)
 		}
 
