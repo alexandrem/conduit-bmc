@@ -66,12 +66,14 @@ func (p *WebSocketToStreamProxy[T]) ProxyToStream(
 		for {
 			messageType, data, err := p.wsConn.ReadMessage()
 			if err != nil {
+				p.logger.Error().Err(err).Msg("WebSocket read error - connection may be closed")
 				errChan <- fmt.Errorf("WebSocket read error: %w", err)
 				return
 			}
 
 			// Only handle binary/text messages
 			if messageType != websocket.BinaryMessage && messageType != websocket.TextMessage {
+				p.logger.Debug().Int("message_type", messageType).Msg("Ignoring non-binary/text WebSocket message")
 				continue
 			}
 
@@ -79,9 +81,11 @@ func (p *WebSocketToStreamProxy[T]) ProxyToStream(
 
 			chunk := p.factory.NewChunk(p.sessionID, p.serverID, data, false, false)
 			if err := stream.Send(chunk); err != nil {
+				p.logger.Error().Err(err).Msg("Stream send error")
 				errChan <- fmt.Errorf("stream send error: %w", err)
 				return
 			}
+			p.logger.Debug().Msg("Successfully sent data to stream")
 		}
 	}()
 
@@ -91,6 +95,7 @@ func (p *WebSocketToStreamProxy[T]) ProxyToStream(
 		for {
 			chunk, err := stream.Receive()
 			if err != nil {
+				p.logger.Error().Err(err).Msg("Stream receive error in WebSocket proxy")
 				errChan <- fmt.Errorf("stream receive error: %w", err)
 				return
 			}
@@ -113,9 +118,11 @@ func (p *WebSocketToStreamProxy[T]) ProxyToStream(
 				p.logger.Debug().Int("bytes", len(data)).Msg("Proxying data from stream to WebSocket")
 
 				if err := p.wsConn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+					p.logger.Error().Err(err).Msg("WebSocket write error - connection may be closed")
 					errChan <- fmt.Errorf("WebSocket write error: %w", err)
 					return
 				}
+				p.logger.Debug().Msg("Successfully wrote data to WebSocket")
 			}
 		}
 	}()

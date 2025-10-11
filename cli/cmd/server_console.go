@@ -123,7 +123,8 @@ func openSOLConsole(ctx context.Context, client *client.Client, serverID string)
 	fmt.Printf("Connecting to console...\n\n")
 
 	// Open Connect bidirectional stream
-	stream, err := client.StreamConsoleData(ctx, serverID, session.ID)
+	// Note: StreamConsoleData signature is (ctx, sessionID, serverID)
+	stream, err := client.StreamConsoleData(ctx, session.ID, serverID)
 	if err != nil {
 		return fmt.Errorf("failed to open console stream: %w", err)
 	}

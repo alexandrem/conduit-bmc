@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/creack/pty"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,10 +22,11 @@ type IPMISOLSession struct {
 	password string
 
 	// Subprocess management
-	cmd    *exec.Cmd
-	stdin  io.WriteCloser
-	stdout io.ReadCloser
-	stderr io.ReadCloser
+	cmd     *exec.Cmd
+	ptyFile *os.File // PTY master for ipmiconsole
+	stdin   io.WriteCloser
+	stdout  io.ReadCloser
+	stderr  io.ReadCloser
 
 	// Streaming channels
 	inputChan  chan []byte // Client → BMC
@@ -189,40 +191,35 @@ func (s *IPMISOLSession) startProcess() error {
 		host = s.endpoint
 	}
 
+	log.Debug().
+		Str("host", host).
+		Str("username", s.username).
+		Str("password", s.password).
+		Msg("ipmiconsole starting")
+
 	// Build ipmiconsole command
-	// Use environment variables for credentials to avoid them appearing in process list
+	// Note: -u and -p flags are required (ipmiconsole doesn't support env vars)
+	// Note: Removed --dont-steal to allow taking over existing SOL sessions
 	s.cmd = exec.CommandContext(s.ctx, s.ipmiconsoleePath,
 		"-h", host,
+		"-u", s.username,
+		"-p", s.password,
 		"--serial-keepalive",
-		"--dont-steal",
 	)
 
-	// Set credentials via environment variables (more secure than command-line args)
-	s.cmd.Env = append(os.Environ(),
-		fmt.Sprintf("IPMI_USERNAME=%s", s.username),
-		fmt.Sprintf("IPMI_PASSWORD=%s", s.password),
-	)
-
-	// Setup pipes
-	s.stdin, err = s.cmd.StdinPipe()
+	// Start the process with a PTY
+	// ipmiconsole REQUIRES a PTY to work properly, otherwise it exits with
+	// "tcgetattr: Inappropriate ioctl for device" and closes the connection
+	s.ptyFile, err = pty.Start(s.cmd)
 	if err != nil {
-		return fmt.Errorf("failed to create stdin pipe: %w", err)
+		return fmt.Errorf("failed to start ipmiconsole with PTY: %w", err)
 	}
 
-	s.stdout, err = s.cmd.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("failed to create stdout pipe: %w", err)
-	}
-
-	s.stderr, err = s.cmd.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("failed to create stderr pipe: %w", err)
-	}
-
-	// Start the process
-	if err := s.cmd.Start(); err != nil {
-		return fmt.Errorf("failed to start ipmiconsole: %w", err)
-	}
+	// Use the PTY for both stdin and stdout
+	// ipmiconsole communicates through the PTY, not separate pipes
+	s.stdin = s.ptyFile
+	s.stdout = s.ptyFile
+	// We won't get stderr separately with PTY, but that's OK
 
 	s.mu.Lock()
 	s.running = true
@@ -259,83 +256,53 @@ func (s *IPMISOLSession) handleInput() {
 	}
 }
 
-// handleOutput reads from ipmiconsole stdout/stderr and sends to outputChan
+// handleOutput reads from ipmiconsole PTY and sends to outputChan
 func (s *IPMISOLSession) handleOutput() {
-	// Stdout reader
-	go func() {
-		buffer := make([]byte, s.bufferSize)
-		for {
-			if s.stdout == nil {
-				return
+	// PTY reader (stdout and stderr are merged in PTY)
+	buffer := make([]byte, s.bufferSize)
+	for {
+		if s.stdout == nil {
+			return
+		}
+
+		n, err := s.stdout.Read(buffer)
+		if n > 0 {
+			data := make([]byte, n)
+			copy(data, buffer[:n])
+
+			// Store in replay buffer
+			if s.replayBuffer != nil {
+				s.replayBuffer.Write(data)
 			}
 
-			n, err := s.stdout.Read(buffer)
-			if n > 0 {
-				data := make([]byte, n)
-				copy(data, buffer[:n])
+			s.recordRead(n)
 
-				// Store in replay buffer
-				if s.replayBuffer != nil {
-					s.replayBuffer.Write(data)
-				}
-
-				s.recordRead(n)
-
-				select {
-				case s.outputChan <- data:
-				case <-s.ctx.Done():
-					return
-				}
-			}
-
-			if err != nil {
-				if err != io.EOF {
-					log.Debug().Err(err).Msg("stdout read failed")
-					s.errorChan <- fmt.Errorf("stdout read failed: %w", err)
-				}
+			// With PTY, forward all data to the client
+			// Terminal clients expect to see control messages like "[SOL established]"
+			select {
+			case s.outputChan <- data:
+			case <-s.ctx.Done():
 				return
 			}
 		}
-	}()
 
-	// Stderr reader
-	go func() {
-		buffer := make([]byte, s.bufferSize)
-		for {
-			if s.stderr == nil {
-				return
+		if err != nil {
+			if err != io.EOF {
+				log.Debug().Err(err).Msg("PTY read failed")
+				s.errorChan <- fmt.Errorf("PTY read failed: %w", err)
 			}
-
-			n, err := s.stderr.Read(buffer)
-			if n > 0 {
-				data := make([]byte, n)
-				copy(data, buffer[:n])
-
-				// Also send stderr to output (for error messages from ipmiconsole)
-				log.Debug().Str("stderr", string(data)).Msg("ipmiconsole stderr")
-
-				select {
-				case s.outputChan <- data:
-				case <-s.ctx.Done():
-					return
-				}
-			}
-
-			if err != nil {
-				if err != io.EOF {
-					log.Debug().Err(err).Msg("stderr read failed")
-				}
-				return
-			}
+			return
 		}
-	}()
+	}
 }
 
 // Write sends data to the BMC console (client → BMC)
-func (s *IPMISOLSession) Write(data []byte) error {
+func (s *IPMISOLSession) Write(ctx context.Context, data []byte) error {
 	select {
 	case s.inputChan <- data:
 		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	case <-s.ctx.Done():
 		return s.ctx.Err()
 	case <-time.After(5 * time.Second):
@@ -344,12 +311,14 @@ func (s *IPMISOLSession) Write(data []byte) error {
 }
 
 // Read receives data from the BMC console (BMC → client)
-func (s *IPMISOLSession) Read() ([]byte, error) {
+func (s *IPMISOLSession) Read(ctx context.Context) ([]byte, error) {
 	select {
 	case data := <-s.outputChan:
 		return data, nil
 	case err := <-s.errorChan:
 		return nil, err
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	case <-s.ctx.Done():
 		return nil, s.ctx.Err()
 	}
@@ -396,6 +365,11 @@ func (s *IPMISOLSession) Close() error {
 				log.Error().Err(err).Msg("Failed to kill ipmiconsole")
 			}
 		}
+	}
+
+	// Close PTY
+	if s.ptyFile != nil {
+		s.ptyFile.Close()
 	}
 
 	// Close channels

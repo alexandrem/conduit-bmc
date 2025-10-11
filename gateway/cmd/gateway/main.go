@@ -574,20 +574,8 @@ func consoleWebSocketHandler(w http.ResponseWriter, r *http.Request, gatewayHand
 		Str("server_id", solSession.ServerID).
 		Msg("Console WebSocket connection established")
 
-	// Send initial connection message
-	welcomeMsg := map[string]interface{}{
-		"type": "welcome",
-		"data": map[string]string{
-			"message":   "Console session connected",
-			"sessionId": sessionID,
-			"serverId":  solSession.ServerID,
-		},
-	}
-
-	if err := conn.WriteJSON(welcomeMsg); err != nil {
-		log.Error().Err(err).Msg("Failed to write welcome message")
-		return
-	}
+	// NOTE: Welcome message removed - terminal expects raw binary data, not JSON
+	// The terminal client will connect and immediately start proxying SOL data
 
 	// Proxy SOL data through the agent
 	err = proxySOLThroughAgent(conn, solSession, gatewayHandler)

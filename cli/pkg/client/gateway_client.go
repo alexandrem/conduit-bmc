@@ -2,13 +2,16 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 
 	"connectrpc.com/connect"
+	"golang.org/x/net/http2"
 
 	"cli/pkg/config"
 )
@@ -23,7 +26,17 @@ type RegionalGatewayClient struct {
 }
 
 func NewRegionalGatewayClient(cfg *config.Config, endpoint, delegatedToken string) *RegionalGatewayClient {
-	httpClient := &http.Client{}
+	// Create HTTP client with HTTP/2 support for streaming RPCs
+	// Gateway uses h2c (HTTP/2 cleartext) for bidirectional streaming
+	httpClient := &http.Client{
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
+				// Use plain HTTP connection for h2c (HTTP/2 without TLS)
+				return net.Dial(network, addr)
+			},
+		},
+	}
 	client := gatewayv1connect.NewGatewayServiceClient(httpClient, endpoint)
 
 	return &RegionalGatewayClient{

@@ -64,7 +64,7 @@ func (t *IPMITransport) Read(ctx context.Context) ([]byte, error) {
 		return nil, fmt.Errorf("transport not connected")
 	}
 
-	return t.session.Read()
+	return t.session.Read(ctx)
 }
 
 // Write sends console input to the IPMI SOL session
@@ -76,7 +76,7 @@ func (t *IPMITransport) Write(ctx context.Context, data []byte) error {
 		return fmt.Errorf("transport not connected")
 	}
 
-	return t.session.Write(data)
+	return t.session.Write(ctx, data)
 }
 
 // Close terminates the IPMI SOL transport connection
