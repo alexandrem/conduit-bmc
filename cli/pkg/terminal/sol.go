@@ -93,7 +93,7 @@ func NewSOLTerminal(stream *connect.BidiStreamForClient[gatewayv1.ConsoleDataChu
 // This method sets the terminal to raw mode, starts bidirectional streaming goroutines,
 // and blocks until the session ends due to:
 //   - User exit sequence (Ctrl+] then 'q')
-//   - Interrupt signal (Ctrl+C)
+//   - Interrupt signal (Ctrl+C, detected as raw byte 0x03)
 //   - Context cancellation
 //   - Stream error
 //
@@ -108,7 +108,7 @@ func NewSOLTerminal(stream *connect.BidiStreamForClient[gatewayv1.ConsoleDataChu
 //   - Context is cancelled
 func (t *SOLTerminal) Start(ctx context.Context) error {
 	// Print initial message
-	fmt.Println("Connected to server console. Press Ctrl+] then 'q' to exit.")
+	fmt.Println("Connected to server console. Press Ctrl+C or Ctrl+] then 'q' to exit.")
 	fmt.Println("----------------------------------------")
 
 	// Set terminal to raw mode
@@ -212,6 +212,7 @@ func (t *SOLTerminal) streamToStdout(ctx context.Context) error {
 // This goroutine continuously reads from stdin and sends ConsoleDataChunk messages
 // to the Connect stream. It handles:
 //   - Exit sequence detection (Ctrl+] then 'q')
+//   - Ctrl+C interrupt signal (raw byte 0x03)
 //   - Context cancellation
 //   - Done channel signals
 //   - Stream send errors
@@ -223,38 +224,62 @@ func (t *SOLTerminal) streamToStdout(ctx context.Context) error {
 func (t *SOLTerminal) stdinToStream(ctx context.Context) error {
 	buf := make([]byte, 1024)
 
+	// Create a channel for stdin reads to make them non-blocking
+	stdinCh := make(chan []byte, 1)
+	stdinErrCh := make(chan error, 1)
+
+	// Start a goroutine to read from stdin
+	go func() {
+		for {
+			n, err := t.stdin.Read(buf)
+			if err != nil {
+				stdinErrCh <- err
+				return
+			}
+			if n > 0 {
+				// Make a copy of the data since buf is reused
+				data := make([]byte, n)
+				copy(data, buf[:n])
+				stdinCh <- data
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-t.done:
 			return io.EOF
-		default:
-			n, err := t.stdin.Read(buf)
-			if err != nil {
-				return err
-			}
-
-			if n > 0 {
-				data := buf[:n]
-
-				// Check for exit sequence
-				if t.checkExitSequence(data) {
+		case err := <-stdinErrCh:
+			return err
+		case data := <-stdinCh:
+			// Check for Ctrl+C (0x03) in raw mode
+			for _, b := range data {
+				if b == 0x03 {
 					fmt.Println("\n----------------------------------------")
-					fmt.Println("Console closed by user.")
+					fmt.Println("Console interrupted by user.")
 					close(t.done)
 					return io.EOF
 				}
+			}
 
-				// Send data to Connect stream
-				chunk := &gatewayv1.ConsoleDataChunk{
-					SessionId: t.sessionID,
-					Data:      data,
-				}
+			// Check for exit sequence
+			if t.checkExitSequence(data) {
+				fmt.Println("\n----------------------------------------")
+				fmt.Println("Console closed by user.")
+				close(t.done)
+				return io.EOF
+			}
 
-				if err := t.stream.Send(chunk); err != nil {
-					return fmt.Errorf("failed to send to stream: %w", err)
-				}
+			// Send data to Connect stream
+			chunk := &gatewayv1.ConsoleDataChunk{
+				SessionId: t.sessionID,
+				Data:      data,
+			}
+
+			if err := t.stream.Send(chunk); err != nil {
+				return fmt.Errorf("failed to send to stream: %w", err)
 			}
 		}
 	}

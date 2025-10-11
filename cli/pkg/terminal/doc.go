@@ -59,7 +59,7 @@
 //
 // Exit sequences:
 //   - Ctrl+] then 'q': Clean exit with goodbye message
-//   - Ctrl+C: Interrupt signal with graceful cleanup
+//   - Ctrl+C: Interrupt signal (detected in raw mode as byte 0x03) with graceful cleanup
 //
 // # STREAMING PROTOCOL
 //
