@@ -59,6 +59,10 @@ type SOLTerminal struct {
 
 	// exitPressed tracks whether Ctrl+] was pressed (first byte of exit sequence)
 	exitPressed bool
+
+	// rawMode controls whether to preserve terminal control sequences (true)
+	// or convert them for append-only output (false, default)
+	rawMode bool
 }
 
 // NewSOLTerminal creates a new SOL terminal handler with Connect bidirectional streaming.
@@ -68,6 +72,10 @@ type SOLTerminal struct {
 //
 // The terminal handler uses os.Stdin and os.Stdout by default. To use custom I/O streams,
 // modify the returned SOLTerminal's stdin and stdout fields before calling Start.
+//
+// By default, the terminal operates in append-only mode (rawMode=false), which converts
+// carriage returns to newlines for cleaner output. Use SetRawMode(true) to preserve all
+// terminal control sequences.
 //
 // Example:
 //
@@ -85,7 +93,21 @@ func NewSOLTerminal(stream *connect.BidiStreamForClient[gatewayv1.ConsoleDataChu
 		stdin:     os.Stdin,
 		stdout:    os.Stdout,
 		done:      make(chan struct{}),
+		rawMode:   false, // Default to append-only mode
 	}
+}
+
+// SetRawMode configures whether to preserve terminal control sequences.
+//
+// When rawMode is true, all terminal control sequences (carriage returns, ANSI codes, etc.)
+// are preserved, allowing the BMC console to overwrite lines and position the cursor.
+//
+// When rawMode is false (default), carriage returns are converted to newlines for append-only
+// output, preventing lines from being overwritten.
+//
+// This method must be called before Start().
+func (t *SOLTerminal) SetRawMode(raw bool) {
+	t.rawMode = raw
 }
 
 // Start begins the terminal streaming session.
@@ -107,9 +129,13 @@ func NewSOLTerminal(stream *connect.BidiStreamForClient[gatewayv1.ConsoleDataChu
 //   - Stream encounters a fatal error
 //   - Context is cancelled
 func (t *SOLTerminal) Start(ctx context.Context) error {
-	// Print initial message
-	fmt.Println("Connected to server console. Press Ctrl+C or Ctrl+] then 'q' to exit.")
-	fmt.Println("----------------------------------------")
+	// Clear the terminal screen before starting
+	// This ensures any previous output doesn't interfere with console display
+	clearScreen()
+
+	// Print initial message to stderr (stdout is for console data only)
+	fmt.Fprintln(os.Stderr, "Connected to server console. Press Ctrl+C or Ctrl+] then 'q' to exit.")
+	fmt.Fprintln(os.Stderr, "----------------------------------------")
 
 	// Set terminal to raw mode
 	if err := t.setRawMode(); err != nil {
@@ -151,7 +177,7 @@ func (t *SOLTerminal) Start(ctx context.Context) error {
 		wg.Wait()
 		return ctx.Err()
 	case <-sigCh:
-		fmt.Println("\nInterrupted. Closing console...")
+		fmt.Fprintln(os.Stderr, "\nInterrupted. Closing console...")
 		t.Close()
 		wg.Wait()
 		return nil
@@ -199,7 +225,13 @@ func (t *SOLTerminal) streamToStdout(ctx context.Context) error {
 
 			// Write console data to stdout
 			if len(msg.Data) > 0 {
-				if _, err := t.stdout.Write(msg.Data); err != nil {
+				// Apply CR to newline conversion if not in raw mode
+				data := msg.Data
+				if !t.rawMode {
+					data = t.convertCRtoNewline(data)
+				}
+
+				if _, err := t.stdout.Write(data); err != nil {
 					return fmt.Errorf("failed to write to stdout: %w", err)
 				}
 			}
@@ -257,8 +289,8 @@ func (t *SOLTerminal) stdinToStream(ctx context.Context) error {
 			// Check for Ctrl+C (0x03) in raw mode
 			for _, b := range data {
 				if b == 0x03 {
-					fmt.Println("\n----------------------------------------")
-					fmt.Println("Console interrupted by user.")
+					fmt.Fprintln(os.Stderr, "\n----------------------------------------")
+					fmt.Fprintln(os.Stderr, "Console interrupted by user.")
 					close(t.done)
 					return io.EOF
 				}
@@ -266,8 +298,8 @@ func (t *SOLTerminal) stdinToStream(ctx context.Context) error {
 
 			// Check for exit sequence
 			if t.checkExitSequence(data) {
-				fmt.Println("\n----------------------------------------")
-				fmt.Println("Console closed by user.")
+				fmt.Fprintln(os.Stderr, "\n----------------------------------------")
+				fmt.Fprintln(os.Stderr, "Console closed by user.")
 				close(t.done)
 				return io.EOF
 			}
@@ -384,4 +416,46 @@ func (t *SOLTerminal) Close() error {
 	}
 
 	return nil
+}
+
+// convertCRtoNewline converts standalone carriage returns to newlines for append-only output.
+//
+// This method converts bare \r characters (not followed by \n) to \n to prevent lines from
+// being overwritten in the terminal. Windows line endings (\r\n) are preserved as-is.
+//
+// This ensures append-only output where each line is added to the screen rather than
+// overwriting previous content.
+func (t *SOLTerminal) convertCRtoNewline(data []byte) []byte {
+	result := make([]byte, 0, len(data))
+
+	for i := 0; i < len(data); i++ {
+		if data[i] == '\r' {
+			// Check if this is part of \r\n (Windows line ending)
+			if i+1 < len(data) && data[i+1] == '\n' {
+				// Keep \r\n as is
+				result = append(result, '\r')
+			} else {
+				// Convert standalone \r to \n
+				result = append(result, '\n')
+			}
+		} else {
+			result = append(result, data[i])
+		}
+	}
+
+	return result
+}
+
+// clearScreen clears the terminal screen using ANSI escape sequences.
+//
+// This sends the standard ANSI clear screen escape sequence "\033[2J" followed by
+// moving the cursor to home position "\033[H". This works on all modern terminals
+// (Linux, macOS, Windows Terminal, etc.).
+//
+// The clear happens on stderr to avoid mixing with console data on stdout.
+func clearScreen() {
+	// ANSI escape sequences:
+	// \033[2J - Clear entire screen
+	// \033[H  - Move cursor to home position (0,0)
+	fmt.Fprint(os.Stderr, "\033[2J\033[H")
 }

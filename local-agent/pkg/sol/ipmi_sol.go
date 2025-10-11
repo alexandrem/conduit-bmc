@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"regexp"
 	"sync"
 	"time"
 
@@ -200,11 +201,13 @@ func (s *IPMISOLSession) startProcess() error {
 	// Build ipmiconsole command
 	// Note: -u and -p flags are required (ipmiconsole doesn't support env vars)
 	// Note: Removed --dont-steal to allow taking over existing SOL sessions
+	// Note: --lock-memory suppresses connection status messages to keep output clean
 	s.cmd = exec.CommandContext(s.ctx, s.ipmiconsoleePath,
 		"-h", host,
 		"-u", s.username,
 		"-p", s.password,
 		"--serial-keepalive",
+		"--lock-memory",
 	)
 
 	// Start the process with a PTY
@@ -270,19 +273,21 @@ func (s *IPMISOLSession) handleOutput() {
 			data := make([]byte, n)
 			copy(data, buffer[:n])
 
-			// Store in replay buffer
+			// Store in replay buffer (before filtering)
 			if s.replayBuffer != nil {
 				s.replayBuffer.Write(data)
 			}
 
 			s.recordRead(n)
 
-			// With PTY, forward all data to the client
-			// Terminal clients expect to see control messages like "[SOL established]"
-			select {
-			case s.outputChan <- data:
-			case <-s.ctx.Done():
-				return
+			// Filter out ipmiconsole status messages before sending to client
+			filtered := s.filterIPMIConsoleMessages(data)
+			if len(filtered) > 0 {
+				select {
+				case s.outputChan <- filtered:
+				case <-s.ctx.Done():
+					return
+				}
 			}
 		}
 
@@ -294,6 +299,43 @@ func (s *IPMISOLSession) handleOutput() {
 			return
 		}
 	}
+}
+
+// filterIPMIConsoleMessages removes ipmiconsole status messages from console output
+// These messages are control information from ipmiconsole itself, not from the BMC
+func (s *IPMISOLSession) filterIPMIConsoleMessages(data []byte) []byte {
+	// Filter ipmiconsole control messages that appear during connection setup
+	// These include status messages with carriage returns used for spinner animation
+
+	// Pattern 1: Lines with "establishing link..." and spinner characters
+	// This includes carriage return sequences used to update the spinner in place
+	// Match: "\restablishing link...|  " or similar with \r at start
+	establishingPattern := regexp.MustCompile(`\r?\s*establishing link\.\.\.[\|/\-\\ ]*\r?`)
+	result := establishingPattern.ReplaceAll(data, []byte{})
+
+	// Pattern 2: Carriage returns followed by "establishing" (catch animation frames)
+	crEstablishingPattern := regexp.MustCompile(`\r+establishing link\.\.\.[\|/\-\\ ]*`)
+	result = crEstablishingPattern.ReplaceAll(result, []byte{})
+
+	// Pattern 3: Standalone "Initializing" messages
+	initPattern := regexp.MustCompile(`(?m)^\r?Initializing\s*\r?$`)
+	result = initPattern.ReplaceAll(result, []byte{})
+
+	// Pattern 4: [SOL established] messages
+	solEstablishedPattern := regexp.MustCompile(`(?m)^\r?\[SOL established\]\s*\r?$`)
+	result = solEstablishedPattern.ReplaceAll(result, []byte{})
+
+	// Pattern 5: Remove orphaned carriage returns that were part of status updates
+	// Only remove multiple carriage returns or CR at start of data before real content
+	// Don't remove all CRs as they might be legitimate (e.g., Windows line endings)
+	orphanedCRPattern := regexp.MustCompile(`^\r+`)
+	result = orphanedCRPattern.ReplaceAll(result, []byte{})
+
+	// Pattern 6: Remove sequences like "\r   \r" (clear line patterns from spinner)
+	clearLinePattern := regexp.MustCompile(`\r\s+\r`)
+	result = clearLinePattern.ReplaceAll(result, []byte{})
+
+	return result
 }
 
 // Write sends data to the BMC console (client → BMC)

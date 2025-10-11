@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 
@@ -23,13 +24,14 @@ Use --terminal flag for direct terminal streaming (advanced).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		serverID := args[0]
 		terminalMode, _ := cmd.Flags().GetBool("terminal")
+		rawMode, _ := cmd.Flags().GetBool("raw")
 
 		client := client.New(GetConfig())
 		ctx := context.Background()
 
 		if terminalMode {
 			// Terminal streaming mode - direct to CLI terminal
-			return openSOLConsole(ctx, client, serverID)
+			return openSOLConsole(ctx, client, serverID, rawMode)
 		} else {
 			// Web console mode (default) - redirect to gateway
 			return openWebConsole(ctx, client, serverID)
@@ -110,8 +112,8 @@ func openWebConsole(ctx context.Context, client *client.Client, serverID string)
 	return nil
 }
 
-func openSOLConsole(ctx context.Context, client *client.Client, serverID string) error {
-	fmt.Printf("Opening SOL console for server %s...\n", serverID)
+func openSOLConsole(ctx context.Context, client *client.Client, serverID string, rawMode bool) error {
+	fmt.Fprintf(os.Stderr, "Opening SOL console for server %s...\n", serverID)
 
 	// Create SOL session
 	session, err := client.CreateSOLSession(ctx, serverID)
@@ -119,8 +121,8 @@ func openSOLConsole(ctx context.Context, client *client.Client, serverID string)
 		return fmt.Errorf("failed to create SOL session: %w", err)
 	}
 
-	fmt.Printf("SOL session created: %s\n", session.ID)
-	fmt.Printf("Connecting to console...\n\n")
+	fmt.Fprintf(os.Stderr, "SOL session created: %s\n", session.ID)
+	fmt.Fprintf(os.Stderr, "Connecting to console...\n\n")
 
 	// Open Connect bidirectional stream
 	// Note: StreamConsoleData signature is (ctx, serverID, sessionID)
@@ -131,6 +133,7 @@ func openSOLConsole(ctx context.Context, client *client.Client, serverID string)
 
 	// Create terminal handler with Connect stream
 	solTerminal := terminal.NewSOLTerminal(stream, session.ID)
+	solTerminal.SetRawMode(rawMode)
 	defer solTerminal.Close()
 
 	// Start streaming
@@ -144,6 +147,8 @@ func openSOLConsole(ctx context.Context, client *client.Client, serverID string)
 func init() {
 	// Add --terminal flag to console command
 	consoleCmd.Flags().Bool("terminal", false, "Use direct terminal streaming instead of web console (advanced)")
+	// Add --raw flag for preserving terminal control sequences
+	consoleCmd.Flags().Bool("raw", false, "Preserve terminal control sequences (allows overwriting lines). Default is append-only mode.")
 
 	serverCmd.AddCommand(consoleCmd)
 	serverCmd.AddCommand(vncCmd)
