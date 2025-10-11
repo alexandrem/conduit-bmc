@@ -20,17 +20,9 @@
         }
     </script>
 
-    <!-- XTerm.js for terminal emulation -->
-    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <!-- Page-specific libraries -->
+    {{block "libraries" .}}{{end}}
 
-    <!-- noVNC for VNC viewer -->
-    <script type="module">
-        import RFBModule from 'https://cdn.jsdelivr.net/npm/@novnc/novnc@1.4.0/core/rfb.js';
-        window.RFB = RFBModule;
-    </script>
     <style>
         {{block "styles" .}}{{end}}
     </style>

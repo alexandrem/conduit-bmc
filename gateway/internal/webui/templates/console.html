@@ -1,12 +1,20 @@
 {{template "base.html" .}}
 
+{{define "libraries"}}
+<!-- XTerm.js for terminal emulation -->
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+{{end}}
+
 {{define "styles"}}{{end}}
 
 {{define "content"}}
 <!-- Console Area -->
 <div class="flex-1 flex flex-col bg-black/20 m-3 rounded-xl overflow-hidden backdrop-blur-md border border-white/10">
     <!-- SOL Console Header -->
-    <div class="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center">
+    <div class="bg-black/40 p-4 border-b border-white/10 flex justify-between items-center flex-shrink-0">
         <div class="text-sm font-medium opacity-90 flex items-center gap-2">
             <span class="text-lg">📟</span>
             SOL Console Session
@@ -31,11 +39,30 @@
         </div>
     </div>
 
-    <!-- Terminal Container -->
-    <div id="terminal-container" class="flex-1 bg-console-bg"></div>
+    <!-- Terminal Container (with calculated height to leave room for other elements) -->
+    <div id="terminal-container" class="flex-1 min-h-0 bg-console-bg"></div>
+
+    <!-- Connection Log Panel (collapsible) -->
+    <div id="connection-log-panel" class="bg-black/50 border-t border-white/10 overflow-hidden transition-all flex-shrink-0" style="height: 0px;">
+        <div class="p-3 space-y-1 text-xs font-mono h-full overflow-y-auto" id="connection-log-content">
+            <!-- Logs will be added here -->
+        </div>
+    </div>
+
+    <!-- Connection Log Toggle Bar -->
+    <div class="bg-black/60 border-t border-white/10 px-3 py-1 flex items-center justify-between text-xs flex-shrink-0">
+        <div class="flex items-center gap-2">
+            <button onclick="toggleConnectionLog()" class="flex items-center gap-1 hover:text-blue-400 transition-colors">
+                <span id="log-toggle-icon">▶</span>
+                <span>Connection Log</span>
+            </button>
+            <span class="text-white/50" id="log-message-count">(0 messages)</span>
+        </div>
+        <button onclick="clearConnectionLog()" class="text-white/50 hover:text-red-400 transition-colors">Clear</button>
+    </div>
 
     <!-- Input Area -->
-    <div class="bg-black/40 p-3 border-t border-white/10 flex gap-2 items-center">
+    <div class="bg-black/40 p-3 border-t border-white/10 flex gap-2 items-center flex-shrink-0">
         <input type="text" id="input" placeholder="Type commands here..."
                class="flex-1 bg-white/10 border border-white/20 rounded-md px-3 py-2 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:border-blue-400 focus:bg-white/15" />
         <button onclick="sendCommand()"
@@ -133,7 +160,7 @@
                 </div>
             </button>
         </div>
-        <button onclick="refreshPowerStatus()"
+        <button onclick="refreshPowerStatus(true)"
                 class="w-full mt-2 p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-all">
             <span class="inline-block mr-2">🔍</span>Refresh Status
         </button>
@@ -205,6 +232,8 @@ let messageCounter = 0;
 let connectionStart = null;
 let powerOperationsInProgress = new Set();
 let authToken = null;
+let connectionLogCount = 0;
+let connectionLogExpanded = false;
 
 // Initialize reconnection manager
 let reconnectManager = new ReconnectionManager({
@@ -290,46 +319,106 @@ function initializeTerminal() {
 
     // Terminal input handling
     term.onData(data => {
-        // Send input data to server via WebSocket
+        // Send raw input data to server via WebSocket (SOL expects binary data, not JSON)
         if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'input',
-                data: data
-            }));
+            ws.send(data);
         } else {
             logToTerminal('WebSocket not connected - input ignored', 'warning');
         }
     });
 
-    // Initial welcome message
-    term.writeln('\\x1b[32mSOL Console Session Initialized\\x1b[0m');
-    term.writeln('\\x1b[36mServer: {{.ServerID}}\\x1b[0m');
-    term.writeln('\\x1b[36mGateway: {{.GatewayEndpoint}}\\x1b[0m');
-    term.writeln('\\x1b[36mSession: {{.SessionID}}\\x1b[0m');
-    term.writeln('\\x1b[37mSerial Over LAN (SOL) - Text-based console access\\x1b[0m');
-    term.writeln('\\x1b[37mConnecting to WebSocket...\\x1b[0m');
-    term.writeln('');
+    // Initial welcome message - now in connection log instead of terminal
+    logToConnectionLog('SOL Console Session Initialized', 'success');
+    logToConnectionLog('Server: {{.ServerID}}', 'info');
+    logToConnectionLog('Gateway: {{.GatewayEndpoint}}', 'info');
+    logToConnectionLog('Session: {{.SessionID}}', 'info');
+    logToConnectionLog('Protocol: Serial Over LAN (SOL)', 'info');
 }
 
-function logToTerminal(message, type = 'info') {
-    if (!term) return;
+// Connection log functions (separate from SOL terminal)
+function logToConnectionLog(message, type = 'info') {
+    const logContent = document.getElementById('connection-log-content');
+    const logCountElem = document.getElementById('log-message-count');
+    if (!logContent) return;
 
     const timestamp = new Date().toLocaleTimeString();
-    let colorCode = '';
+    const logEntry = document.createElement('div');
+    logEntry.className = 'flex gap-2';
 
+    let colorClass = 'text-white/70';
+    let icon = '•';
     switch(type) {
-        case 'error': colorCode = '\\x1b[31m'; break; // Red
-        case 'success': colorCode = '\\x1b[32m'; break; // Green
-        case 'warning': colorCode = '\\x1b[33m'; break; // Yellow
-        case 'info': colorCode = '\\x1b[36m'; break; // Cyan
-        case 'input': colorCode = '\\x1b[35m'; break; // Magenta
-        default: colorCode = '\\x1b[37m'; // White
+        case 'error':
+            colorClass = 'text-red-400';
+            icon = '✗';
+            break;
+        case 'success':
+            colorClass = 'text-green-400';
+            icon = '✓';
+            break;
+        case 'warning':
+            colorClass = 'text-yellow-400';
+            icon = '⚠';
+            break;
+        case 'info':
+            colorClass = 'text-cyan-400';
+            icon = 'ℹ';
+            break;
     }
 
-    term.writeln(`\\x1b[90m[${timestamp}]\\x1b[0m ${colorCode}${message}\\x1b[0m`);
+    logEntry.innerHTML = `
+        <span class="text-white/40">[${timestamp}]</span>
+        <span class="${colorClass}">${icon}</span>
+        <span class="${colorClass}">${message}</span>
+    `;
 
-    messageCounter++;
-    updateConnectionInfo();
+    logContent.appendChild(logEntry);
+
+    // Auto-scroll to bottom
+    logContent.scrollTop = logContent.scrollHeight;
+
+    // Update count
+    connectionLogCount++;
+    if (logCountElem) {
+        logCountElem.textContent = `(${connectionLogCount} messages)`;
+    }
+}
+
+function toggleConnectionLog() {
+    const panel = document.getElementById('connection-log-panel');
+    const icon = document.getElementById('log-toggle-icon');
+
+    if (connectionLogExpanded) {
+        panel.style.height = '0px';
+        icon.textContent = '▶';
+        connectionLogExpanded = false;
+    } else {
+        panel.style.height = '150px';
+        icon.textContent = '▼';
+        connectionLogExpanded = true;
+    }
+
+    // Re-fit terminal after animation
+    setTimeout(() => {
+        if (fitAddon) fitAddon.fit();
+    }, 300);
+}
+
+function clearConnectionLog() {
+    const logContent = document.getElementById('connection-log-content');
+    const logCountElem = document.getElementById('log-message-count');
+    if (logContent) {
+        logContent.innerHTML = '';
+        connectionLogCount = 0;
+        if (logCountElem) {
+            logCountElem.textContent = '(0 messages)';
+        }
+    }
+}
+
+// Redirect logToTerminal to connection log instead of SOL terminal
+function logToTerminal(message, type = 'info') {
+    logToConnectionLog(message, type);
 }
 
 // Power Operations using Connect RPC API
@@ -395,15 +484,17 @@ async function powerOperation(operation) {
     }
 }
 
-// Refresh power status using Connect RPC API
-async function refreshPowerStatus() {
+// Refresh power status using Connect RPC API (silent mode - no terminal logs)
+async function refreshPowerStatus(verbose = false) {
     const serverID = '{{.ServerID}}';
     const statusElement = document.getElementById('power-status');
     const lastCheckElement = document.getElementById('last-check');
     const serverStateDot = document.getElementById('server-state-dot');
 
     try {
-        logToTerminal('Refreshing power status...', 'info');
+        if (verbose) {
+            logToTerminal('Refreshing power status...', 'info');
+        }
 
         const response = await fetch('/gateway.v1.GatewayService/GetPowerStatus', {
             method: 'POST',
@@ -460,13 +551,19 @@ async function refreshPowerStatus() {
                 lastCheckElement.textContent = new Date().toLocaleTimeString();
             }
 
-            logToTerminal(`Power status: ${status}`, 'success');
+            if (verbose) {
+                logToTerminal(`Power status: ${status}`, 'success');
+            }
         } else {
             const error = await response.text();
-            logToTerminal(`Failed to get power status: ${error}`, 'error');
+            if (verbose) {
+                logToTerminal(`Failed to get power status: ${error}`, 'error');
+            }
         }
     } catch (error) {
-        logToTerminal(`Error getting power status: ${error.message}`, 'error');
+        if (verbose) {
+            logToTerminal(`Error getting power status: ${error.message}`, 'error');
+        }
     }
 }
 
@@ -487,18 +584,39 @@ function initializeWebSocket() {
     };
 
     ws.onmessage = function(event) {
+        // SOL console sends raw binary data, not JSON
+        // Write directly to terminal
         try {
-            const message = JSON.parse(event.data);
-            handleWebSocketMessage(message);
-        } catch (e) {
-            // Handle raw text messages
-            term.write(event.data);
+            if (event.data) {
+                console.log('WebSocket received data:', typeof event.data, 'length:', event.data.length || event.data.size);
+
+                // Handle both text and binary data
+                if (typeof event.data === 'string') {
+                    term.write(event.data);
+                    messageCounter++;
+                } else if (event.data instanceof Blob) {
+                    // Convert Blob to text
+                    event.data.text().then(text => {
+                        console.log('Converted Blob to text:', text.length, 'chars');
+                        term.write(text);
+                        messageCounter++;
+                        updateConnectionInfo();
+                    });
+                    return; // Skip updateConnectionInfo here, it will be called in the promise
+                } else {
+                    console.warn('Unknown data type received:', typeof event.data);
+                }
+            }
+            updateConnectionInfo();
+        } catch (error) {
+            console.error('Error processing WebSocket message:', error);
+            logToTerminal('Error processing message: ' + error.message, 'error');
         }
-        updateConnectionInfo();
     };
 
     ws.onclose = function(event) {
         const reason = event.reason || (event.wasClean ? 'Connection closed' : 'Connection lost');
+        console.log('WebSocket closed:', event.code, reason, 'wasClean:', event.wasClean);
         logToTerminal(`WebSocket connection closed: ${reason} (code: ${event.code})`, 'warning');
 
         // Notify reconnection manager of disconnection
@@ -506,6 +624,7 @@ function initializeWebSocket() {
     };
 
     ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
         logToTerminal('WebSocket error: ' + error, 'error');
         updateStatus('Error', 'error');
     };
@@ -668,8 +787,8 @@ document.addEventListener('DOMContentLoaded', function() {
         input.focus();
     }
 
-    // Initial power status check
-    refreshPowerStatus();
+    // Initial power status check (verbose)
+    refreshPowerStatus(true);
 
     // Fetch BMC hardware info
     fetchBMCInfo();
@@ -677,6 +796,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Update connection info every second
 setInterval(updateConnectionInfo, 1000);
-// Refresh power status every 30 seconds
-setInterval(refreshPowerStatus, 30000);
+// Refresh power status every 30 seconds (silent)
+setInterval(() => refreshPowerStatus(false), 30000);
 {{end}}

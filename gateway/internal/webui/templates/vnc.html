@@ -1,5 +1,13 @@
 {{template "base.html" .}}
 
+{{define "libraries"}}
+<!-- noVNC for VNC viewer -->
+<script type="module">
+    import RFBModule from 'https://cdn.jsdelivr.net/npm/@novnc/novnc@1.4.0/core/rfb.js';
+    window.RFB = RFBModule;
+</script>
+{{end}}
+
 {{define "styles"}}
 #noVNC_screen {
     position: relative;

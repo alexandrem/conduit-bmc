@@ -33,7 +33,7 @@ type ConsoleData struct {
 // RenderVNC renders the VNC viewer template
 func RenderVNC(data VNCData) (io.Reader, error) {
 	var buf bytes.Buffer
-	err := templates.ExecuteTemplate(&buf, "vnc.html", data)
+	err := vncTemplates.ExecuteTemplate(&buf, "vnc.html", data)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func RenderVNC(data VNCData) (io.Reader, error) {
 // RenderConsole renders the console viewer template
 func RenderConsole(data ConsoleData) (io.Reader, error) {
 	var buf bytes.Buffer
-	err := templates.ExecuteTemplate(&buf, "console.html", data)
+	err := consoleTemplates.ExecuteTemplate(&buf, "console.html", data)
 	if err != nil {
 		return nil, err
 	}
