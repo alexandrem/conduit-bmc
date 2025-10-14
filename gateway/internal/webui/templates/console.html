@@ -63,16 +63,6 @@
         </div>
         <button onclick="clearConnectionLog()" class="text-white/50 hover:text-red-400 transition-colors">Clear</button>
     </div>
-
-    <!-- Input Area -->
-    <div class="bg-black/40 p-3 border-t border-white/10 flex gap-2 items-center flex-shrink-0">
-        <input type="text" id="input" placeholder="Type commands here..."
-               class="flex-1 bg-white/10 border border-white/20 rounded-md px-3 py-2 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:border-blue-400 focus:bg-white/15" />
-        <button onclick="sendCommand()"
-                class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-600 rounded-md transition-all hover:-translate-y-px">
-            Send
-        </button>
-    </div>
 </div>
 
 <!-- Server Control Sidebar -->
@@ -674,25 +664,6 @@ function formatDuration(seconds) {
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 }
 
-// Legacy functions for compatibility
-function sendCommand() {
-    const input = document.getElementById('input');
-    const command = input.value.trim();
-    if (command) {
-        logToTerminal(`Command: ${command}`, 'input');
-
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'command',
-                data: command
-            }));
-        } else {
-            logToTerminal('[WebSocket not connected] Command would be sent to BMC via gateway', 'warning');
-        }
-
-        input.value = '';
-    }
-}
 
 function sendCtrlAltDel() {
     logToTerminal('Sent Ctrl+Alt+Del key combination', 'input');
@@ -788,17 +759,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize WebSocket connection
     initializeWebSocket();
-
-    // Setup input handler
-    const input = document.getElementById('input');
-    if (input) {
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendCommand();
-            }
-        });
-        input.focus();
-    }
 
     // Initial power status check (verbose)
     refreshPowerStatus(true);
