@@ -108,6 +108,7 @@ Every service exposes:
 In-depth technical specifications and protocol implementations:
 - **[Authentication Flow](docs/technical/auth-flow.md)** - JWT tokens, session management, and authorization
 - **[VNC Protocol Flow](docs/technical/vnc-protocol-flow.md)** - RFB proxy architecture and VNC implementation
+- **[SOL Protocol Flow](docs/technical/sol-protocol-flow.md)** - SOL streaming architecture (web & terminal)
 - **[IPMI Implementation](docs/technical/ipmi-implementation.md)** - IPMI SOL and power control details
 - **[Web Architecture](docs/technical/web-architecture.md)** - Web console and UI implementation
 - **[Protocol Overview](docs/technical/protocols.md)** - BMC protocol comparison and usage
