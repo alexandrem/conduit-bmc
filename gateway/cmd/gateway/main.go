@@ -422,9 +422,10 @@ func vncViewerHandler(w http.ResponseWriter, r *http.Request, gatewayHandler *ga
 			HeaderTitle:   "VNC Console - " + vncSession.ServerID,
 			InitialStatus: "Connecting...",
 		},
-		SessionID:    sessionID,
-		ServerID:     vncSession.ServerID,
-		WebSocketURL: wsURL,
+		SessionID:       sessionID,
+		ServerID:        vncSession.ServerID,
+		GatewayEndpoint: r.Host,
+		WebSocketURL:    wsURL,
 	}
 
 	// Render template

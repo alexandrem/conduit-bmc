@@ -50,7 +50,7 @@
     </div>
 
     <!-- noVNC Container -->
-    <div id="noVNC_container" class="flex-1 relative bg-black">
+    <div id="noVNC_container" class="flex-1 relative bg-black min-h-0">
         <div id="noVNC_screen" class="w-full h-full">
             <!-- noVNC will create the canvas dynamically inside this div -->
         </div>
@@ -68,6 +68,25 @@
             <span class="inline-block w-2 h-2 rounded-full mr-2" id="vnc-status-dot"></span>
             <span id="vnc-status-text">Connecting...</span>
         </div>
+    </div>
+
+    <!-- Connection Log Panel (collapsible) -->
+    <div id="connection-log-panel" class="bg-black/50 border-t border-white/10 overflow-hidden transition-all flex-shrink-0" style="height: 0px;">
+        <div class="p-3 space-y-1 text-xs font-mono h-full overflow-y-auto" id="connection-log-content">
+            <!-- Logs will be added here -->
+        </div>
+    </div>
+
+    <!-- Connection Log Toggle Bar -->
+    <div class="bg-black/60 border-t border-white/10 px-3 py-1 flex items-center justify-between text-xs flex-shrink-0">
+        <div class="flex items-center gap-2">
+            <button onclick="toggleConnectionLog()" class="flex items-center gap-1 hover:text-blue-400 transition-colors">
+                <span id="log-toggle-icon">▶</span>
+                <span>Connection Log</span>
+            </button>
+            <span class="text-white/50" id="log-message-count">(0 messages)</span>
+        </div>
+        <button onclick="clearConnectionLog()" class="text-white/50 hover:text-red-400 transition-colors">Clear</button>
     </div>
 </div>
 
@@ -223,6 +242,8 @@ let connectionStart = null;
 let powerOperationsInProgress = new Set();
 let viewOnly = false;
 let scaling = 'auto';
+let connectionLogCount = 0;
+let connectionLogExpanded = false;
 
 // Initialize reconnection manager
 let reconnectManager = new ReconnectionManager({
@@ -276,6 +297,82 @@ function handleReconnectionStateChange(state) {
     }
 }
 
+// Connection log functions (separate from VNC display)
+function logToConnectionLog(message, type = 'info') {
+    const logContent = document.getElementById('connection-log-content');
+    const logCountElem = document.getElementById('log-message-count');
+    if (!logContent) return;
+
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.className = 'flex gap-2';
+
+    let colorClass = 'text-white/70';
+    let icon = '•';
+    switch(type) {
+        case 'error':
+            colorClass = 'text-red-400';
+            icon = '✗';
+            break;
+        case 'success':
+            colorClass = 'text-green-400';
+            icon = '✓';
+            break;
+        case 'warning':
+            colorClass = 'text-yellow-400';
+            icon = '⚠';
+            break;
+        case 'info':
+            colorClass = 'text-cyan-400';
+            icon = 'ℹ';
+            break;
+    }
+
+    logEntry.innerHTML = `
+        <span class="text-white/40">[${timestamp}]</span>
+        <span class="${colorClass}">${icon}</span>
+        <span class="${colorClass}">${message}</span>
+    `;
+
+    logContent.appendChild(logEntry);
+
+    // Auto-scroll to bottom
+    logContent.scrollTop = logContent.scrollHeight;
+
+    // Update count
+    connectionLogCount++;
+    if (logCountElem) {
+        logCountElem.textContent = `(${connectionLogCount} messages)`;
+    }
+}
+
+function toggleConnectionLog() {
+    const panel = document.getElementById('connection-log-panel');
+    const icon = document.getElementById('log-toggle-icon');
+
+    if (connectionLogExpanded) {
+        panel.style.height = '0px';
+        icon.textContent = '▶';
+        connectionLogExpanded = false;
+    } else {
+        panel.style.height = '150px';
+        icon.textContent = '▼';
+        connectionLogExpanded = true;
+    }
+}
+
+function clearConnectionLog() {
+    const logContent = document.getElementById('connection-log-content');
+    const logCountElem = document.getElementById('log-message-count');
+    if (logContent) {
+        logContent.innerHTML = '';
+        connectionLogCount = 0;
+        if (logCountElem) {
+            logCountElem.textContent = '(0 messages)';
+        }
+    }
+}
+
 function initializeVNC() {
     const container = document.getElementById('noVNC_screen');
     const loading = document.getElementById('noVNC_loading');
@@ -289,8 +386,16 @@ function initializeVNC() {
     console.log('- WebSocket URL:', wsUrl);
     console.log('- Server ID:', '{{.ServerID}}');
 
+    // Initial welcome logs
+    logToConnectionLog('VNC Console Session Initialized', 'success');
+    logToConnectionLog('Server: {{.ServerID}}', 'info');
+    logToConnectionLog('Gateway: {{.GatewayEndpoint}}', 'info');
+    logToConnectionLog('Session: {{.SessionID}}', 'info');
+    logToConnectionLog('Protocol: RFB 3.8 (VNC)', 'info');
+
     if (!wsUrl || wsUrl === '') {
         console.error('WebSocket URL is empty or undefined!');
+        logToConnectionLog('Configuration Error: WebSocket URL is empty', 'error');
         updateVNCStatus('Configuration Error', 'error');
         return;
     }
@@ -329,6 +434,7 @@ function initializeVNC() {
 
     } catch (exc) {
         console.error('Unable to create RFB client:', exc);
+        logToConnectionLog('Failed to create RFB client: ' + exc.message, 'error');
         updateVNCStatus('Failed to connect', 'error');
         loading.style.display = 'none';
     }
@@ -347,24 +453,28 @@ function connectedToServer(e) {
     reconnectManager.onConnected();
 
     connectionStart = new Date();
+    logToConnectionLog('VNC connection established successfully', 'success');
     updateVNCStatus('Connected', 'connected');
 
     // Update display information
     if (rfb && rfb._canvas) {
         const resolution = rfb._canvas.width + 'x' + rfb._canvas.height;
         document.getElementById('display-resolution').textContent = resolution;
+        logToConnectionLog('Display resolution: ' + resolution, 'info');
         console.log('Display resolution set to:', resolution);
 
         // Force scale viewport to fit container
         rfb.scaleViewport = true;
     } else {
         console.error('Canvas not available after connection!');
+        logToConnectionLog('Warning: Canvas not available after connection', 'warning');
     }
 }
 
 function disconnectedFromServer(e) {
     console.log('Disconnected from VNC server:', e.detail.clean ? 'Clean' : 'Unclean');
     const reason = e.detail.clean ? 'Connection closed' : 'Connection lost';
+    logToConnectionLog('VNC disconnected: ' + reason, e.detail.clean ? 'warning' : 'error');
     updateVNCStatus(reason, 'error');
 
     // Notify reconnection manager of disconnection
@@ -373,12 +483,14 @@ function disconnectedFromServer(e) {
 
 function credentialsAreRequired(e) {
     console.log('Credentials required');
+    logToConnectionLog('VNC server requires credentials', 'warning');
     // For BMC VNC, usually no credentials are required
     // If needed, implement credential dialog here
 }
 
 function securityFailed(e) {
     console.error('Security negotiation failed:', e.detail);
+    logToConnectionLog('Security negotiation failed: ' + (e.detail.reason || 'Unknown error'), 'error');
     updateVNCStatus('Security Failed', 'error');
 }
 
@@ -421,6 +533,7 @@ function updateVNCStatus(text, type) {
 
 function reconnectVNC() {
     console.log('Manual VNC reconnection triggered');
+    logToConnectionLog('Manual reconnection initiated', 'info');
 
     // Disconnect existing connection if any
     if (rfb) {
@@ -447,6 +560,7 @@ function sendCtrlAltDel() {
     if (rfb) {
         rfb.sendCtrlAltDel();
         console.log('Sent Ctrl+Alt+Del');
+        logToConnectionLog('Sent Ctrl+Alt+Del key combination', 'info');
     }
 }
 
@@ -463,6 +577,7 @@ function sendKey(keySym) {
             rfb.sendKey(keyMap[keySym], true);
             rfb.sendKey(keyMap[keySym], false);
             console.log('Sent key:', keySym);
+            logToConnectionLog('Sent special key: ' + keySym, 'info');
         }
     }
 }
@@ -500,10 +615,14 @@ function screenshot() {
     if (rfb && rfb._canvas) {
         const canvas = rfb._canvas;
         const link = document.createElement('a');
-        link.download = `vnc-screenshot-${new Date().toISOString().slice(0,19)}.png`;
+        const filename = `vnc-screenshot-${new Date().toISOString().slice(0,19)}.png`;
+        link.download = filename;
         link.href = canvas.toDataURL();
         link.click();
         console.log('Screenshot saved');
+        logToConnectionLog('Screenshot saved: ' + filename, 'success');
+    } else {
+        logToConnectionLog('Failed to capture screenshot: Canvas not available', 'error');
     }
 }
 
@@ -539,6 +658,7 @@ async function powerOperation(operation) {
 
     powerOperationsInProgress.add(operation);
     console.log(`Executing power ${operation} operation...`);
+    logToConnectionLog(`Executing power ${operation} operation...`, 'info');
 
     try {
         // Map operation to Connect RPC method name
@@ -568,13 +688,16 @@ async function powerOperation(operation) {
         if (response.ok) {
             const result = await response.json();
             console.log(`Power ${operation} operation completed:`, result);
+            logToConnectionLog(`Power ${operation} operation completed: ${result.message || 'Success'}`, 'success');
             setTimeout(() => refreshPowerStatus(), 2000);
         } else {
             const error = await response.text();
             console.error(`Power ${operation} operation failed: ${error}`);
+            logToConnectionLog(`Power ${operation} operation failed: ${error}`, 'error');
         }
     } catch (error) {
         console.error(`Power ${operation} operation error: ${error.message}`);
+        logToConnectionLog(`Power ${operation} operation error: ${error.message}`, 'error');
     } finally {
         powerOperationsInProgress.delete(operation);
         if (button) {

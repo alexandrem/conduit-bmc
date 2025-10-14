@@ -16,9 +16,10 @@ type TemplateData struct {
 // VNCData represents data specific to VNC templates
 type VNCData struct {
 	TemplateData
-	SessionID    string
-	ServerID     string
-	WebSocketURL string
+	SessionID       string
+	ServerID        string
+	GatewayEndpoint string
+	WebSocketURL    string
 }
 
 // ConsoleData represents data specific to console templates
