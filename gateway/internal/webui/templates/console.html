@@ -167,18 +167,24 @@
                     class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
                 <span class="inline-block mr-2">⎋</span>Send ESC
             </button>
-            <button onclick="sendSpecialKey('F12')"
-                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
-                <span class="inline-block mr-2">🔧</span>Boot Menu (F12)
-            </button>
-            <button onclick="sendSpecialKey('DELETE')"
-                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
-                <span class="inline-block mr-2">⚙️</span>BIOS Setup
-            </button>
-            <button onclick="sendSpecialKey('BREAK')"
-                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
-                <span class="inline-block mr-2">⏸️</span>Send Break
-            </button>
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="sendSpecialKey('F1')"
+                        class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                    F1
+                </button>
+                <button onclick="sendSpecialKey('F2')"
+                        class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                    F2
+                </button>
+                <button onclick="sendSpecialKey('F10')"
+                        class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                    F10
+                </button>
+				<button onclick="sendSpecialKey('F12')"
+						class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+					F12
+				</button>
+            </div>
             <button onclick="clearTerminal()"
                     class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
                 <span class="inline-block mr-2">🧹</span>Clear Terminal
@@ -666,13 +672,35 @@ function formatDuration(seconds) {
 
 
 function sendCtrlAltDel() {
-    logToTerminal('Sent Ctrl+Alt+Del key combination', 'input');
-    logToTerminal('[PLACEHOLDER] Ctrl+Alt+Del would be sent to BMC', 'info');
+    // Send Ctrl+Alt+Del via IPMI (not supported over SOL directly)
+    // This would need to be sent as a chassis control command
+    logToTerminal('Ctrl+Alt+Del not supported over SOL - use power operations instead', 'warning');
 }
 
 function sendSpecialKey(key) {
-    logToTerminal(`Sent special key: ${key}`, 'input');
-    logToTerminal(`[PLACEHOLDER] Special key would be sent to BMC: ${key}`, 'info');
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        logToTerminal('WebSocket not connected - cannot send special key', 'error');
+        return;
+    }
+
+    // Map special keys to their ANSI escape sequences or ASCII codes
+    const keyMap = {
+        'ESC': '\x1b',           // ASCII ESC (0x1B)
+        'F1': '\x1bOP',          // ANSI escape sequence for F1
+        'F2': '\x1bOQ',          // ANSI escape sequence for F2
+        'F10': '\x1b[21~',       // ANSI escape sequence for F10
+        'F12': '\x1b[24~',       // ANSI escape sequence for F12
+        'DELETE': '\x1b[3~',     // ANSI escape sequence for Delete
+        'BREAK': '\x03'          // ASCII ETX (Ctrl+C) - common serial break
+    };
+
+    const keySequence = keyMap[key];
+    if (keySequence) {
+        ws.send(keySequence);
+        logToTerminal(`Sent special key: ${key}`, 'success');
+    } else {
+        logToTerminal(`Unknown special key: ${key}`, 'error');
+    }
 }
 
 function clearTerminal() {

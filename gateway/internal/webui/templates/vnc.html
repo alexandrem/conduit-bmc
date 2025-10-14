@@ -184,6 +184,28 @@
     <div class="mb-6">
         <h3 class="text-sm font-semibold mb-3 text-white/90">VNC Controls</h3>
         <div class="space-y-2">
+            <button onclick="sendKey('Escape')"
+                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                <span class="inline-block mr-2">⎋</span>Send ESC
+            </button>
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="sendKey('F1')"
+                        class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                    F1
+                </button>
+                <button onclick="sendKey('F2')"
+                        class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                    F2
+                </button>
+                <button onclick="sendKey('F10')"
+                        class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+                    F10
+                </button>
+				<button onclick="sendKey('F12')"
+						class="p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
+					F12
+				</button>
+            </div>
             <button onclick="toggleViewOnly()"
                     class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all"
                     id="view-only-btn">
@@ -193,18 +215,6 @@
                     class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all"
                     id="scaling-btn">
                 <span class="inline-block mr-2">📏</span>Scaling: <span id="scaling-status">Auto</span>
-            </button>
-            <button onclick="sendKey('Escape')"
-                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
-                Send ESC
-            </button>
-            <button onclick="sendKey('Tab')"
-                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
-                Send Tab
-            </button>
-            <button onclick="sendKey('F12')"
-                    class="w-full p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-md text-sm transition-all">
-                Boot Menu (F12)
             </button>
         </div>
     </div>
@@ -566,10 +576,13 @@ function sendCtrlAltDel() {
 
 function sendKey(keySym) {
     if (rfb) {
-        // Map common keys to RFB key symbols
+        // Map common keys to RFB key symbols (X11 keysyms)
         const keyMap = {
             'Escape': 0xff1b,
             'Tab': 0xff09,
+            'F1': 0xffbe,
+            'F2': 0xffbf,
+            'F10': 0xffc7,
             'F12': 0xffcd
         };
 
