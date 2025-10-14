@@ -197,7 +197,7 @@ func (p *StreamToWebSocketProxy[T]) ProxyFromStream(
 
 			data := chunk.GetData()
 			if len(data) > 0 {
-				p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from stream to WebSocket")
+				// p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from stream to WebSocket")
 
 				if err := wsConn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 					errChan <- fmt.Errorf("WebSocket write error: %w", err)
@@ -222,7 +222,7 @@ func (p *StreamToWebSocketProxy[T]) ProxyFromStream(
 				continue
 			}
 
-			p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from WebSocket to stream")
+			// p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from WebSocket to stream")
 
 			chunk := p.factory.NewChunk(p.sessionID, p.serverID, data, false, false)
 			if err := stream.Send(chunk); err != nil {

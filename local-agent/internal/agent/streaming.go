@@ -300,7 +300,7 @@ func (a *LocalAgent) proxySOLSession(
 			}
 
 			if len(data) > 0 {
-				log.Debug().Int("bytes", len(data)).Msg("Forwarding data from SOL to stream")
+				// log.Debug().Int("bytes", len(data)).Msg("Forwarding data from SOL to stream")
 
 				// Create chunk and send to stream
 				chunk := &gatewayv1.ConsoleDataChunk{
@@ -342,7 +342,7 @@ func (a *LocalAgent) proxySOLSession(
 			}
 
 			if len(chunk.Data) > 0 {
-				log.Debug().Int("bytes", len(chunk.Data)).Msg("Forwarding data from stream to SOL")
+				// log.Debug().Int("bytes", len(chunk.Data)).Msg("Forwarding data from stream to SOL")
 
 				// Write to SOL session
 				if err := solSession.Write(ctx, chunk.Data); err != nil {

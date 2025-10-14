@@ -88,7 +88,7 @@ func (p *StreamToTCPProxy[T]) ProxyFromStream(
 
 			data := chunk.GetData()
 			if len(data) > 0 {
-				p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from stream to TCP")
+				// p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from stream to TCP")
 
 				if err := transport.Write(ctx, data); err != nil {
 					errChan <- fmt.Errorf("TCP write error: %w", err)
@@ -117,7 +117,7 @@ func (p *StreamToTCPProxy[T]) ProxyFromStream(
 			}
 
 			if len(data) > 0 {
-				p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from TCP to stream")
+				// p.logger.Debug().Int("bytes", len(data)).Msg("Forwarding data from TCP to stream")
 
 				chunk := p.factory.NewChunk(p.sessionID, p.serverID, data, false, false)
 				if err := stream.Send(chunk); err != nil {
