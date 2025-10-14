@@ -20,6 +20,9 @@
             SOL Console Session
         </div>
         <div class="flex gap-2">
+            <button onclick="switchToVNC()" class="px-3 py-2 bg-gradient-to-r from-green-500 to-teal-600 rounded-md text-sm font-medium transition-all hover:-translate-y-0.5 text-white">
+                🖥️ Switch to VNC
+            </button>
             <button onclick="sendCtrlAltDel()"
                     class="px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-md transition-all hover:-translate-y-px">
                 Ctrl+Alt+Del
@@ -734,6 +737,13 @@ function toggleFullscreen() {
             logToTerminal('Entered fullscreen mode', 'info');
         }
     }
+}
+
+function switchToVNC() {
+    // Replace /console/ with /vnc/ in the current URL
+    const currentUrl = window.location.pathname;
+    const vncUrl = currentUrl.replace('/console/', '/vnc/');
+    window.location.href = vncUrl;
 }
 
 function cancelAutoReconnect() {
