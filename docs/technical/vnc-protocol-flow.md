@@ -1,6 +1,8 @@
 # VNC Protocol Flow and RFB Proxy Architecture
 
-This document describes the detailed communication flow between the browser VNC console (noVNC), Gateway, Local Agent, and BMC VNC servers in the BMC Management System.
+This document describes the detailed communication flow between the browser VNC
+console (noVNC), Gateway, Local Agent, and BMC VNC servers in the BMC Management
+System.
 
 ## Table of Contents
 
@@ -9,11 +11,11 @@ This document describes the detailed communication flow between the browser VNC 
 - [Detailed Protocol Flow](#detailed-protocol-flow)
 - [RFB Protocol Primer](#rfb-protocol-primer)
 - [Implementation Details](#implementation-details)
-- [Troubleshooting](#troubleshooting)
 
 ## Architecture Overview
 
-The VNC access system uses a three-tier architecture that maintains security while providing seamless browser-based VNC access:
+The VNC access system uses a three-tier architecture that maintains security
+while providing seamless browser-based VNC access:
 
 ```
 ┌─────────────────┐      WebSocket       ┌─────────────────┐      gRPC Stream     ┌─────────────────┐      TCP/WebSocket   ┌─────────────────┐
@@ -31,35 +33,36 @@ The VNC access system uses a three-tier architecture that maintains security whi
 ### Key Components
 
 1. **Browser (noVNC Client)**
-   - JavaScript-based VNC client running in the user's web browser
-   - Speaks standard RFB (Remote Framebuffer) protocol over WebSocket
-   - Expects to perform full RFB handshake including authentication
-   - **Never sees BMC credentials**
+    - JavaScript-based VNC client running in the user's web browser
+    - Speaks standard RFB (Remote Framebuffer) protocol over WebSocket
+    - Expects to perform full RFB handshake including authentication
+    - **Never sees BMC credentials**
 
 2. **Gateway**
-   - Authenticates users via Manager service
-   - Serves web UI with embedded noVNC client
-   - Acts as transparent WebSocket ↔ gRPC bidirectional proxy
-   - Routes VNC sessions to appropriate datacenter agents
+    - Authenticates users via Manager service
+    - Serves web UI with embedded noVNC client
+    - Acts as transparent WebSocket ↔ gRPC bidirectional proxy
+    - Routes VNC sessions to appropriate datacenter agents
 
 3. **Local Agent (RFB Proxy)**
-   - Runs in provider's private network with access to BMC devices
-   - **Stores BMC credentials securely** (never exposed to browser)
-   - Implements **RFB protocol termination proxy**:
-     - Authenticates with BMC using stored credentials
-     - Terminates browser's RFB handshake (tells browser "no auth needed")
-     - Proxies VNC framebuffer data bidirectionally
+    - Runs in provider's private network with access to BMC devices
+    - **Stores BMC credentials securely** (never exposed to browser)
+    - Implements **RFB protocol termination proxy**:
+        - Authenticates with BMC using stored credentials
+        - Terminates browser's RFB handshake (tells browser "no auth needed")
+        - Proxies VNC framebuffer data bidirectionally
 
 4. **BMC VNC Server**
-   - Native VNC server (port 5900) or WebSocket-based VNC (Redfish)
-   - Requires authentication (VNC password or no auth)
-   - Sends framebuffer updates and accepts keyboard/mouse input
+    - Native VNC server (port 5900) or WebSocket-based VNC (Redfish)
+    - Requires authentication (VNC password or no auth)
+    - Sends framebuffer updates and accepts keyboard/mouse input
 
 ## Security Model
 
 ### Credential Isolation
 
-**Critical Security Principle**: BMC credentials MUST NOT be exposed to the browser or transmitted over the internet.
+**Critical Security Principle**: BMC credentials MUST NOT be exposed to the
+browser or transmitted over the internet.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -79,27 +82,35 @@ The VNC access system uses a three-tier architecture that maintains security whi
 
 1. **CLI → Manager**: User authenticates with username/password or API key
 2. **Manager → CLI**: Issues JWT token with server access claims
-3. **CLI → Gateway**: Calls `CreateVNCSession` RPC with JWT in Authorization header
+3. **CLI → Gateway**: Calls `CreateVNCSession` RPC with JWT in Authorization
+   header
 4. **Gateway**:
-   - Validates JWT token
-   - Creates VNC session (session ID, server mapping)
-   - **Creates web session** (maps session cookie → JWT)
-   - **Sets `gateway_session` cookie** in RPC response
+    - Validates JWT token
+    - Creates VNC session (session ID, server mapping)
+    - **Creates web session** (maps session cookie → JWT)
+    - **Sets `gateway_session` cookie** in RPC response
 5. **CLI → Browser**: Opens Gateway VNC URL (`/vnc/{sessionId}`)
 6. **Browser → Gateway**: Automatically sends `gateway_session` cookie
 7. **Gateway**: Validates session cookie, serves VNC web UI
-8. **Browser → Gateway (WebSocket)**: noVNC establishes WebSocket with session cookie
+8. **Browser → Gateway (WebSocket)**: noVNC establishes WebSocket with session
+   cookie
 9. **Gateway → Agent**: Creates gRPC stream for VNC data proxying
 10. **Agent → BMC**: Uses stored credentials to authenticate VNC session
 
 **Result**: Browser gets VNC access without ever knowing JWT or BMC credentials.
 
 **Cookie Management** (Gateway's Responsibility):
-- **JWT Extraction**: Gateway extracts JWT from CLI's `Authorization` header during `CreateVNCSession`
-- **Web Session Creation**: Gateway creates web session mapping (cookie ID → JWT → server context)
-- **Cookie Issuance**: Gateway sets `gateway_session` HttpOnly cookie in `CreateVNCSession` response
-- **Cookie Validation**: When browser requests `/vnc/{sessionId}`, Gateway validates session cookie
-- **Session Lookup**: Gateway uses cookie to retrieve JWT and server context for authorization
+
+- **JWT Extraction**: Gateway extracts JWT from CLI's `Authorization` header
+  during `CreateVNCSession`
+- **Web Session Creation**: Gateway creates web session mapping (cookie ID →
+  JWT → server context)
+- **Cookie Issuance**: Gateway sets `gateway_session` HttpOnly cookie in
+  `CreateVNCSession` response
+- **Cookie Validation**: When browser requests `/vnc/{sessionId}`, Gateway
+  validates session cookie
+- **Session Lookup**: Gateway uses cookie to retrieve JWT and server context for
+  authorization
 
 ## Detailed Protocol Flow
 
@@ -138,12 +149,12 @@ Agent                                    BMC VNC Server
   └─ Agent now has authenticated VNC session ─┘
 ```
 
-**Key Implementation Detail**: The agent **sends ClientInit immediately** after authentication to:
+**Key Implementation Detail**: The agent **sends ClientInit immediately** after
+authentication to:
+
 1. Keep the BMC VNC connection alive (many servers timeout without ClientInit)
 2. Receive and cache ServerInit for later replay to the browser
 3. Maintain a ready-to-use authenticated VNC session
-
-**Code Location**: `local-agent/pkg/vnc/native_transport.go` → `Authenticate()`
 
 ### Phase 2: Browser Initiates VNC Connection
 
@@ -171,7 +182,8 @@ Browser                Gateway              Agent
 
 ### Phase 3: RFB Handshake Between Browser and Agent
 
-The browser (noVNC) initiates a standard RFB handshake, but the agent **terminates the handshake** instead of forwarding it to the BMC.
+The browser (noVNC) initiates a standard RFB handshake, but the agent *
+*terminates the handshake** instead of forwarding it to the BMC.
 
 ```
 Browser (noVNC)                          Agent (RFB Proxy)
@@ -199,16 +211,17 @@ Browser (noVNC)                          Agent (RFB Proxy)
   └── Browser RFB handshake complete ──────────┘
 ```
 
-**Key Security Feature**: Browser thinks it connected to a VNC server with "no authentication required", when in reality:
+**Key Security Feature**: Browser thinks it connected to a VNC server with "no
+authentication required", when in reality:
+
 - Agent already authenticated to the BMC with VNC password
 - Browser never sees or needs the BMC password
 - Agent is the security boundary
 
-**Code Location**: `local-agent/pkg/vnc/rfb_proxy.go` → `HandleBrowserHandshake()`
-
 ### Phase 4: Framebuffer Data Proxying
 
-After both handshakes complete, the agent transparently proxies VNC protocol messages:
+After both handshakes complete, the agent transparently proxies VNC protocol
+messages:
 
 ```
 Browser                Agent                 BMC VNC Server
@@ -241,31 +254,32 @@ Browser                Agent                 BMC VNC Server
   │                      │                         │
 ```
 
-**Code Location**: `local-agent/internal/agent/streaming.go` → `StreamVNCData()`
-
 ## RFB Protocol Primer
 
 ### RFB Protocol Versions
 
 The RFB (Remote Framebuffer) protocol has several versions:
+
 - **RFB 3.3**: Oldest, server chooses security type
 - **RFB 3.7**: Client selects from server's security type list
 - **RFB 3.8**: Most common, adds security failure reason strings
 
-This implementation supports all three versions and negotiates RFB 3.8 when possible.
+This implementation supports all three versions and negotiates RFB 3.8 when
+possible.
 
 ### Security Types
 
-| Type | Value | Description | Usage in This System |
-|------|-------|-------------|---------------------|
-| None | 1 | No authentication | **Browser → Agent** (agent already authenticated) |
-| VNC Authentication | 2 | DES challenge-response | **Agent → BMC** (using stored password) |
+| Type               | Value | Description            | Usage in This System                              |
+|--------------------|-------|------------------------|---------------------------------------------------|
+| None               | 1     | No authentication      | **Browser → Agent** (agent already authenticated) |
+| VNC Authentication | 2     | DES challenge-response | **Agent → BMC** (using stored password)           |
 
 ### Message Flow After Handshake
 
 Once the handshake completes, these message types flow bidirectionally:
 
 **Client → Server**:
+
 - `SetPixelFormat`: Tell server what pixel format to use
 - `SetEncodings`: List of supported encodings (Raw, Hextile, ZRLE, etc.)
 - `FramebufferUpdateRequest`: Request screen updates
@@ -274,6 +288,7 @@ Once the handshake completes, these message types flow bidirectionally:
 - `ClientCutText`: Clipboard data from client
 
 **Server → Client**:
+
 - `FramebufferUpdate`: Screen rectangle updates with pixel data
 - `SetColourMapEntries`: Color palette updates
 - `Bell`: System bell/beep
@@ -286,32 +301,18 @@ Once the handshake completes, these message types flow bidirectionally:
 The agent supports two VNC transport types:
 
 #### 1. Native TCP Transport
+
 - Direct TCP connection to VNC port (typically 5900)
 - Used by: QEMU, VirtualBMC, native VNC servers
 - Optional TLS encryption (RFB-over-TLS)
 - **File**: `local-agent/pkg/vnc/native_transport.go`
 
-```go
-type NativeTransport struct {
-    conn           net.Conn
-    timeout        time.Duration
-    serverInitData []byte  // Cached ServerInit for RFB proxy
-}
-```
-
 #### 2. WebSocket Transport
+
 - VNC over WebSocket (binary frames)
 - Used by: Redfish GraphicalConsole, OpenBMC KVM, Dell iDRAC
 - Supports HTTP Basic Auth for WebSocket handshake
 - **File**: `local-agent/pkg/vnc/websocket_transport.go`
-
-```go
-type WebSocketTransport struct {
-    conn           *websocket.Conn
-    timeout        time.Duration
-    serverInitData []byte  // Cached ServerInit for RFB proxy
-}
-```
 
 ### RFB Proxy Handler
 
@@ -319,19 +320,8 @@ The `RFBProxyHandler` implements the protocol termination logic:
 
 **File**: `local-agent/pkg/vnc/rfb_proxy.go`
 
-```go
-type RFBProxyHandler struct {
-    bmcTransport Transport  // Authenticated connection to BMC
-}
-
-// Handles browser's RFB handshake
-func (h *RFBProxyHandler) HandleBrowserHandshake(
-    ctx context.Context,
-    browserConn io.ReadWriter,
-) error
-```
-
 **Key Responsibilities**:
+
 1. Send RFB version to browser (act as VNC server)
 2. Read browser's version response
 3. Offer security type "None" (agent already authenticated)
@@ -341,28 +331,32 @@ func (h *RFBProxyHandler) HandleBrowserHandshake(
 
 ### Stream Adapters
 
-Since the browser connects via WebSocket → gRPC and the BMC uses native TCP or WebSocket, adapters bridge the protocols:
+Since the browser connects via WebSocket → gRPC and the BMC uses native TCP or
+WebSocket, adapters bridge the protocols:
 
 **Browser Stream Adapter**:
+
 ```go
 type vncStreamAdapter struct {
-    stream    *connect.BidiStream[VNCDataChunk, VNCDataChunk]
-    sessionID string
-    serverID  string
-    readBuf   []byte  // Buffer for partial reads
-    readPos   int
+stream    *connect.BidiStream[VNCDataChunk, VNCDataChunk]
+sessionID string
+serverID  string
+readBuf   []byte // Buffer for partial reads
+readPos   int
 }
 ```
 
-Implements `io.ReadWriter` to allow RFB proxy to read/write browser data through the gRPC stream.
+Implements `io.ReadWriter` to allow RFB proxy to read/write browser data through
+the gRPC stream.
 
 **Transport Reader/Writer Adapters**:
+
 ```go
 type transportReader struct {
-    transport Transport
-    ctx       context.Context
-    buffer    []byte
-    pos       int
+transport Transport
+ctx       context.Context
+buffer    []byte
+pos       int
 }
 ```
 
@@ -373,14 +367,18 @@ Adapts the `Transport` interface to `io.Reader` for RFB protocol handling.
 **Why Cache?**
 
 The RFB protocol requires this sequence:
+
 1. Authentication completes
 2. Client sends ClientInit
 3. **Server sends ServerInit** (only once per connection)
 4. Framebuffer updates begin
 
-**Problem**: The browser expects to send ClientInit and receive ServerInit, but the agent already sent ClientInit during authentication to keep the BMC connection alive.
+**Problem**: The browser expects to send ClientInit and receive ServerInit, but
+the agent already sent ClientInit during authentication to keep the BMC
+connection alive.
 
 **Solution**:
+
 1. Agent authenticates with BMC
 2. Agent sends ClientInit to BMC
 3. Agent reads and **caches** ServerInit
@@ -388,6 +386,7 @@ The RFB protocol requires this sequence:
 5. Both browser and BMC are now synchronized
 
 **Code**:
+
 ```go
 // During authentication
 t.serverInitData = make([]byte, 0, 20+4+len(nameBytes))
@@ -402,72 +401,7 @@ browserWriter.Write(serverInitData)
 
 ## Troubleshooting
 
-### Common Issues
-
-#### 1. Browser hangs waiting for ServerInit
-
-**Symptoms**: Browser shows "Connecting..." indefinitely, logs show authentication succeeded.
-
-**Cause**: Agent sent ClientInit during auth but didn't cache ServerInit, or ServerInit wasn't replayed to browser.
-
-**Fix**: Verify `GetServerInit()` returns non-empty data, check logs for "Replaying cached ServerInit".
-
-#### 2. BMC closes connection after authentication
-
-**Symptoms**: Logs show "connection reset by peer" immediately after authentication.
-
-**Cause**: Agent didn't send ClientInit after authentication. Many VNC servers timeout if they don't receive ClientInit within a few seconds.
-
-**Fix**: Ensure `SendClientInit()` is called in `Authenticate()` method.
-
-#### 3. Browser shows "Security negotiation failed"
-
-**Symptoms**: noVNC displays security error, connection closes immediately.
-
-**Cause**: RFB proxy isn't properly handling browser's security type selection.
-
-**Fix**: Verify `HandleBrowserHandshake()` sends correct security types list and reads browser's selection.
-
-#### 4. Black screen after connection
-
-**Symptoms**: Browser connects, handshake completes, but screen stays black.
-
-**Cause**: Transparent proxying isn't forwarding FramebufferUpdate messages correctly.
-
-**Fix**: Check `StreamToTCPProxy` is running and forwarding data bidirectionally, verify no errors in proxy goroutines.
-
-### Debug Logging
-
-Enable debug logging to see detailed protocol flow:
-
-```yaml
-# local-agent config
-log_level: debug
-```
-
-**Key Log Messages**:
-```
-DBG Starting VNC authentication handshake
-INF VNC security type negotiated security_type="VNC Authentication"
-DBG Sending ClientInit to BMC and caching ServerInit for proxy mode
-DBG VNC authentication completed and ServerInit cached server_init_size=39
-DBG Starting RFB proxy handshake with browser
-DBG Sending RFB version to browser
-DBG Replaying cached ServerInit to browser
-INF RFB proxy handshake completed - browser and BMC ready for framebuffer data
-```
-
-### Network Tracing
-
-For deep protocol debugging, capture traffic with `tcpdump`:
-
-```bash
-# Capture BMC VNC traffic
-tcpdump -i any -w vnc-bmc.pcap port 5900
-
-# Analyze in Wireshark with VNC dissector
-wireshark vnc-bmc.pcap
-```
+See [troubleshooting](troubleshooting.md#VNC)
 
 ## Related Documentation
 
@@ -478,11 +412,11 @@ wireshark vnc-bmc.pcap
 
 ## Code References
 
-| Component | File | Key Functions |
-|-----------|------|--------------|
-| RFB Proxy Handler | `local-agent/pkg/vnc/rfb_proxy.go` | `HandleBrowserHandshake()` |
-| Native Transport Auth | `local-agent/pkg/vnc/native_transport.go` | `Authenticate()`, `GetServerInit()` |
-| WebSocket Transport Auth | `local-agent/pkg/vnc/websocket_transport.go` | `Authenticate()`, `GetServerInit()` |
-| Stream Integration | `local-agent/internal/agent/streaming.go` | `StreamVNCData()` |
-| RFB Protocol Utils | `local-agent/pkg/vnc/rfb/handshake.go` | `SendClientInit()`, `NegotiateVersion()` |
-| RFB Authentication | `local-agent/pkg/vnc/rfb/auth.go` | `PerformVNCAuth()` |
+| Component                | File                                         | Key Functions                            |
+|--------------------------|----------------------------------------------|------------------------------------------|
+| RFB Proxy Handler        | `local-agent/pkg/vnc/rfb_proxy.go`           | `HandleBrowserHandshake()`               |
+| Native Transport Auth    | `local-agent/pkg/vnc/native_transport.go`    | `Authenticate()`, `GetServerInit()`      |
+| WebSocket Transport Auth | `local-agent/pkg/vnc/websocket_transport.go` | `Authenticate()`, `GetServerInit()`      |
+| Stream Integration       | `local-agent/internal/agent/streaming.go`    | `StreamVNCData()`                        |
+| RFB Protocol Utils       | `local-agent/pkg/vnc/rfb/handshake.go`       | `SendClientInit()`, `NegotiateVersion()` |
+| RFB Authentication       | `local-agent/pkg/vnc/rfb/auth.go`            | `PerformVNCAuth()`                       |
