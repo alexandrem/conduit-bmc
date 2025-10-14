@@ -8,10 +8,12 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"connectrpc.com/connect"
-	gatewayv1 "gateway/gen/gateway/v1"
 	"golang.org/x/term"
+
+	gatewayv1 "gateway/gen/gateway/v1"
 )
 
 const (
@@ -256,62 +258,66 @@ func (t *SOLTerminal) streamToStdout(ctx context.Context) error {
 func (t *SOLTerminal) stdinToStream(ctx context.Context) error {
 	buf := make([]byte, 1024)
 
-	// Create a channel for stdin reads to make them non-blocking
-	stdinCh := make(chan []byte, 1)
-	stdinErrCh := make(chan error, 1)
-
-	// Start a goroutine to read from stdin
-	go func() {
-		for {
-			n, err := t.stdin.Read(buf)
-			if err != nil {
-				stdinErrCh <- err
-				return
-			}
-			if n > 0 {
-				// Make a copy of the data since buf is reused
-				data := make([]byte, n)
-				copy(data, buf[:n])
-				stdinCh <- data
-			}
-		}
-	}()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-t.done:
 			return io.EOF
-		case err := <-stdinErrCh:
-			return err
-		case data := <-stdinCh:
-			// Check for Ctrl+C (0x03) in raw mode
-			for _, b := range data {
-				if b == 0x03 {
-					fmt.Fprintln(os.Stderr, "\n----------------------------------------")
-					fmt.Fprintln(os.Stderr, "Console interrupted by user.")
-					close(t.done)
-					return io.EOF
-				}
-			}
+		default:
+			// Set a short read deadline to make stdin reads interruptible
+			// This allows the select statement to check for cancellation
+			t.stdin.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 
-			// Check for exit sequence
-			if t.checkExitSequence(data) {
-				fmt.Fprintln(os.Stderr, "\n----------------------------------------")
-				fmt.Fprintln(os.Stderr, "Console closed by user.")
-				close(t.done)
+			n, err := t.stdin.Read(buf)
+			if err != nil {
+				// Check if it's a timeout error - this is expected and we should continue
+				if os.IsTimeout(err) {
+					continue
+				}
+				// Check for temporary errors
+				if netErr, ok := err.(interface{ Temporary() bool }); ok && netErr.Temporary() {
+					continue
+				}
+				// Real error occurred
+				if err != io.EOF {
+					return err
+				}
 				return io.EOF
 			}
 
-			// Send data to Connect stream
-			chunk := &gatewayv1.ConsoleDataChunk{
-				SessionId: t.sessionID,
-				Data:      data,
-			}
+			if n > 0 {
+				// Make a copy of the data since buf is reused
+				data := make([]byte, n)
+				copy(data, buf[:n])
 
-			if err := t.stream.Send(chunk); err != nil {
-				return fmt.Errorf("failed to send to stream: %w", err)
+				// Check for Ctrl+C (0x03) in raw mode
+				for _, b := range data {
+					if b == 0x03 {
+						fmt.Fprintln(os.Stderr, "\n----------------------------------------")
+						fmt.Fprintln(os.Stderr, "Console interrupted by user.")
+						close(t.done)
+						return io.EOF
+					}
+				}
+
+				// Check for exit sequence
+				if t.checkExitSequence(data) {
+					fmt.Fprintln(os.Stderr, "\n----------------------------------------")
+					fmt.Fprintln(os.Stderr, "Console closed by user.")
+					close(t.done)
+					return io.EOF
+				}
+
+				// Send data to Connect stream
+				chunk := &gatewayv1.ConsoleDataChunk{
+					SessionId: t.sessionID,
+					Data:      data,
+				}
+
+				if err := t.stream.Send(chunk); err != nil {
+					return fmt.Errorf("failed to send to stream: %w", err)
+				}
 			}
 		}
 	}
