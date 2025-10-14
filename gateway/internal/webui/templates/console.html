@@ -724,12 +724,15 @@ function copyOutput() {
 }
 
 function toggleFullscreen() {
+    const consoleArea = document.querySelector('.flex-1.flex.flex-col.bg-black\\/20');
     if (document.fullscreenElement) {
         document.exitFullscreen();
         logToTerminal('Exited fullscreen mode', 'info');
     } else {
-        document.documentElement.requestFullscreen();
-        logToTerminal('Entered fullscreen mode', 'info');
+        if (consoleArea) {
+            consoleArea.requestFullscreen();
+            logToTerminal('Entered fullscreen mode', 'info');
+        }
     }
 }
 
