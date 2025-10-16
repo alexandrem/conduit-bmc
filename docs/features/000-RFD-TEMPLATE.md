@@ -35,15 +35,18 @@ Detailed problem description:
 High-level approach to solving the problem:
 
 **Key Design Decisions:**
+
 - Architectural choices and rationale
 - Why this approach over alternatives
 - Trade-offs considered
 
 **Benefits:**
+
 - What this enables or improves
 - Performance/security/usability gains
 
 **Architecture Overview:**
+
 ```
 [Optional: Include ASCII diagrams showing component interactions]
 User → Manager → Gateway → Agent → BMC
@@ -54,10 +57,12 @@ User → Manager → Gateway → Agent → BMC
 Brief description of changes per component:
 
 1. **Component A** (e.g., Manager):
+
    - Key change and rationale
    - API/data flow updates
 
 2. **Component B** (e.g., Gateway):
+
    - Key change and rationale
    - Dependencies or impacts
 
@@ -66,6 +71,7 @@ Brief description of changes per component:
    - User-facing changes
 
 **Configuration Example:**
+
 ```yaml
 # Show YAML config examples where relevant
 feature:
@@ -78,21 +84,25 @@ feature:
 **IMPORTANT:** Do NOT include time estimates (weeks, hours, days). Focus on deliverable phases and concrete, testable tasks.
 
 ### Phase 1: Foundation/Database/Protocol
+
 - [ ] Define data structures and types
 - [ ] Create database migrations (if applicable)
 - [ ] Define protobuf messages and generate code
 
 ### Phase 2: Core Implementation
+
 - [ ] Implement [Component A] changes
 - [ ] Implement [Component B] changes
 - [ ] Add error handling and validation
 
 ### Phase 3: Integration & CLI
+
 - [ ] Integrate components end-to-end
 - [ ] Add CLI commands/flags
 - [ ] Update configuration handling
 
 ### Phase 4: Testing & Documentation
+
 - [ ] Add unit tests for all components
 - [ ] Add integration tests
 - [ ] Add E2E tests
@@ -147,16 +157,19 @@ Feature Result:
 **Optional section**
 
 ### Unit Tests
+
 - Component-specific test scope
 - Key scenarios to validate
 - Error handling coverage
 
 ### Integration Tests
+
 - Cross-component test scenarios
 - Test against BMC simulators (VirtualBMC, Redfish mock)
 - Verify data flow end-to-end
 
 ### E2E Tests
+
 - Full stack test scenarios
 - CLI command validation
 - Real-world usage patterns
@@ -176,6 +189,7 @@ Feature Result:
 **Optional section - include if backward compatibility is a concern**
 
 1. **Deployment Steps**:
+
    - Deploy Manager changes
    - Deploy Gateway changes
    - Deploy Agent changes
@@ -200,15 +214,18 @@ Feature Result:
 **Optional section for technical deep-dives**
 
 ### Protocol Details
+
 - Detailed protocol specifications
 - Wire formats
 - Authentication flows
 
 ### Reference Implementations
+
 - Links to similar implementations
 - Industry standards (RFCs, specifications)
 
 ### Test Configuration Examples
+
 ```yaml
 # Detailed test setup examples
 test:
@@ -220,6 +237,7 @@ test:
 ## RFD Writing Guidelines
 
 **DO:**
+
 - ✅ Focus on WHAT changes, not HOW to implement every detail
 - ✅ Include full API specifications (protobuf, REST endpoints)
 - ✅ Include configuration examples (YAML, CLI commands)
@@ -229,6 +247,7 @@ test:
 - ✅ Reference files by path only (e.g., `manager/pkg/database/database.go`)
 
 **DO NOT:**
+
 - ❌ Include time estimates (weeks, hours, days)
 - ❌ Show complete Go/Python implementations
 - ❌ Include verbose code that belongs in actual implementation
@@ -238,6 +257,7 @@ test:
 - ❌ Show function signatures for internal implementation details
 
 **What to include in API Changes:**
+
 - ✅ Protobuf messages and service definitions (the actual API contract)
 - ✅ Database schema changes (migrations, new columns/tables)
 - ✅ CLI command usage examples with expected output
@@ -246,4 +266,5 @@ test:
 - ❌ Internal database method signatures (implementation detail)
 
 **Why avoid redundant signatures:**
+
 - Protobuf already defines the API contract completely

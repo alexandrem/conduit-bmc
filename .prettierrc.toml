@@ -3,3 +3,15 @@ proseWrap = "always"
 semi = false
 singleQuote = false
 trailingComma = "all"
+useTabs = false
+tabWidth = 2
+
+# Override just for Markdown files
+[[overrides]]
+files = ["*.md"]
+
+[overrides.options]
+tabWidth = 1
+proseWrap = "preserve"
+printWidth = 80
+embeddedLanguageFormatting = "off"
