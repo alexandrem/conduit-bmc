@@ -14,7 +14,7 @@ run: build
 
 # Test
 test:
-	go test ./... -v
+	go test ./...
 
 # Clean
 clean:
