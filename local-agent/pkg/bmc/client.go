@@ -377,13 +377,14 @@ func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gat
 					Enabled: system.Boot.BootSourceOverrideEnabled,
 					Mode:    system.Boot.BootSourceOverrideMode,
 				},
-				BiosVersion:   system.BiosVersion,
-				SerialNumber:  system.SerialNumber,
-				Sku:           system.SKU,
-				Hostname:      system.HostName,
-				LastResetTime: system.LastResetTime,
-				OemHealth:     oemHealth,
-				BootOrder:     system.Boot.BootOrder,
+				BiosVersion:         system.BiosVersion,
+				SerialNumber:        system.SerialNumber,
+				Sku:                 system.SKU,
+				Hostname:            system.HostName,
+				LastResetTime:       system.LastResetTime,
+				OemHealth:           oemHealth,
+				BootOrder:           system.Boot.BootOrder,
+				ConsoleAvailability: getConsoleAvailability(system.BootProgress.LastState, system.BootProgress.OemLastState),
 			}
 		}
 		// If system info fetch fails, continue without it (graceful degradation)
@@ -449,4 +450,40 @@ func trimSpace(s string) string {
 		end--
 	}
 	return s[start:end]
+}
+
+// getConsoleAvailability determines which console types (SOL/VNC) are available
+// based on the current boot progress state
+func getConsoleAvailability(bootProgress, bootProgressOem string) gatewayv1.ConsoleAvailability {
+	// VGA-only POST phases - SOL will show nothing, only VNC works
+	if bootProgress == "MemoryInitializationStarted" ||
+		bootProgress == "PrimaryProcessorInitializationStarted" ||
+		bootProgress == "SecondaryProcessorInitializationStarted" ||
+		bootProgress == "PCIResourceConfigStarted" {
+		return gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_VNC_ONLY
+	}
+
+	// BIOS Setup - both SOL and VNC work (iDRAC 9 supports SOL in BIOS Setup)
+	if bootProgress == "SetupEntered" {
+		return gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_BOTH
+	}
+
+	// OS boot phases - both typically available
+	if bootProgress == "OSBootStarted" || bootProgress == "OSRunning" {
+		return gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_BOTH
+	}
+
+	// OEM states - usually both consoles work
+	if bootProgress == "OEM" {
+		// Dell "No bootable devices" - both consoles work, just stuck at boot device selection
+		return gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_BOTH
+	}
+
+	// POST complete and other intermediate states - both available
+	if bootProgress == "SystemHardwareInitializationComplete" {
+		return gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_BOTH
+	}
+
+	// Default: assume both available (safest assumption)
+	return gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_BOTH
 }

@@ -414,19 +414,29 @@
             return map[progress] || progress;
         }
 
-        // Get contextual hint based on boot state
+        // Get contextual hint based on boot state using console availability
         function getBootHint(systemStatus) {
             // Support both snake_case and camelCase field names
+            const availability = systemStatus.console_availability || systemStatus.consoleAvailability;
             const progress = systemStatus.boot_progress || systemStatus.bootProgress;
             const oemStatus = systemStatus.boot_progress_oem || systemStatus.bootProgressOem;
 
-            if (progress === 'SetupEntered') {
-                return '⚠ Server in BIOS Setup mode. Use VNC for graphical access.';
-            } else if (progress === 'OEM' && oemStatus && oemStatus.toLowerCase().includes('no bootable')) {
-                return '⚠ No bootable devices. Check boot config or use VNC to access BIOS.';
-            } else if (progress === 'MemoryInitializationStarted' || progress === 'PrimaryProcessorInitializationStarted' || progress === 'PCIResourceConfigStarted') {
+            // CONSOLE_AVAILABILITY_VNC_ONLY = 2
+            if (availability === 2) {
                 return 'ℹ Early POST phase. VGA only - use VNC if console is blank.';
             }
+
+            // CONSOLE_AVAILABILITY_BOTH = 1
+            if (availability === 1) {
+                // Provide context-specific hints for certain boot states
+                if (progress === 'SetupEntered') {
+                    return 'ℹ Server in BIOS Setup. Console available via SOL or VNC.';
+                }
+                if (progress === 'OEM' && oemStatus && oemStatus.toLowerCase().includes('no bootable')) {
+                    return '⚠ No bootable devices. Check boot config or use VNC to access BIOS.';
+                }
+            }
+
             return null;
         }
 

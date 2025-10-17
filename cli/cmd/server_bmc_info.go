@@ -211,17 +211,18 @@ func outputInfoJSON(formatter *output.Formatter, serverID string, bmcInfo *gatew
 		// Add system status if available (RFD 020)
 		if sys := redfish.SystemStatus; sys != nil {
 			systemStatus := map[string]interface{}{
-				"system_id":         sys.SystemId,
-				"hostname":          sys.Hostname,
-				"serial_number":     sys.SerialNumber,
-				"sku":               sys.Sku,
-				"bios_version":      sys.BiosVersion,
-				"last_reset_time":   sys.LastResetTime,
-				"boot_progress":     sys.BootProgress,
-				"boot_progress_oem": sys.BootProgressOem,
-				"post_state":        sys.PostState,
-				"boot_order":        sys.BootOrder,
-				"oem_health":        sys.OemHealth,
+				"system_id":            sys.SystemId,
+				"hostname":             sys.Hostname,
+				"serial_number":        sys.SerialNumber,
+				"sku":                  sys.Sku,
+				"bios_version":         sys.BiosVersion,
+				"last_reset_time":      sys.LastResetTime,
+				"boot_progress":        sys.BootProgress,
+				"boot_progress_oem":    sys.BootProgressOem,
+				"post_state":           sys.PostState,
+				"boot_order":           sys.BootOrder,
+				"oem_health":           sys.OemHealth,
+				"console_availability": sys.ConsoleAvailability.String(),
 			}
 			if boot := sys.BootSource; boot != nil {
 				systemStatus["boot_source"] = map[string]interface{}{
@@ -285,19 +286,25 @@ func formatHealthStatus(health map[string]string) string {
 	return "N/A"
 }
 
-// getBootStatusHint provides contextual hints based on boot status
+// getBootStatusHint provides contextual hints based on boot status using console availability
 func getBootStatusHint(sys *gatewayv1.SystemStatus) string {
-	if sys.BootProgress == "SetupEntered" {
-		return "Server is in BIOS Setup mode. Use VNC console for graphical access."
-	}
-	if sys.BootProgress == "OEM" && sys.BootProgressOem != "" {
-		if sys.BootProgressOem == "No bootable devices." {
-			return "No bootable devices detected. Check boot configuration or use VNC to access BIOS setup."
+	// Use console availability enum to determine hint
+	switch sys.ConsoleAvailability {
+	case gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_VNC_ONLY:
+		return "Server in early POST - VGA output only. Use VNC for BIOS messages."
+
+	case gatewayv1.ConsoleAvailability_CONSOLE_AVAILABILITY_BOTH:
+		// Provide context-specific hints for certain boot states
+		if sys.BootProgress == "SetupEntered" {
+			return "Server in BIOS Setup mode. Console available via SOL or VNC."
+		}
+		if sys.BootProgress == "OEM" && sys.BootProgressOem != "" {
+			if sys.BootProgressOem == "No bootable devices." {
+				return "No bootable devices detected. Check boot configuration or use VNC to access BIOS setup."
+			}
 		}
 	}
-	if sys.BootProgress == "MemoryInitializationStarted" || sys.BootProgress == "PrimaryProcessorInitializationStarted" {
-		return "Server in early POST - VGA output only. Use VNC for BIOS messages."
-	}
+
 	return ""
 }
 
