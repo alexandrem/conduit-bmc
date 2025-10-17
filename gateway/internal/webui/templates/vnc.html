@@ -813,8 +813,69 @@ setInterval(updateConnectionInfo, 1000);
 // Refresh power status every 30 seconds
 setInterval(refreshPowerStatus, 30000);
 
-// Refresh BMC info (including boot status) every 60 seconds (RFD 020)
-setInterval(fetchBMCInfo, 60000);
+// Adaptive BMC info refresh based on boot state
+let bmcRefreshTimer = null;
+let currentRefreshInterval = 30000;
+
+function setupAdaptiveBMCRefresh() {
+    if (bmcRefreshTimer) clearInterval(bmcRefreshTimer);
+
+    bmcRefreshTimer = setInterval(async () => {
+        await fetchBMCInfo();
+        const newInterval = getRefreshInterval();
+        if (newInterval !== currentRefreshInterval) {
+            console.log(`Adjusting BMC refresh interval: ${currentRefreshInterval}ms -> ${newInterval}ms`);
+            currentRefreshInterval = newInterval;
+            setupAdaptiveBMCRefresh();
+        }
+    }, currentRefreshInterval);
+}
+
+function getRefreshInterval() {
+    const bmcInfo = window.bmcInfo;
+    if (!bmcInfo) return 30000;
+
+    const systemStatus = bmcInfo.redfish_info?.system_status;
+    if (!systemStatus) return 30000;
+
+    const availability = systemStatus.console_availability;
+    const bootProgress = systemStatus.boot_progress;
+    const oemStatus = systemStatus.boot_progress_oem;
+
+    // CONSOLE_AVAILABILITY_VNC_ONLY = 2 (early POST - active boot phase)
+    if (availability === 2) {
+        return 5000; // 5 seconds - fast refresh during early POST
+    }
+
+    // CONSOLE_AVAILABILITY_BOTH = 1
+    if (availability === 1) {
+        // Active boot phases - fast refresh
+        if (bootProgress === 'SetupEntered') {
+            return 5000; // 5 seconds - user in BIOS Setup
+        }
+        if (bootProgress === 'OSBootStarted') {
+            return 5000; // 5 seconds - OS booting
+        }
+
+        // OEM errors/issues - fast refresh
+        if (bootProgress === 'OEM' && oemStatus && oemStatus !== '') {
+            return 5000; // 5 seconds - boot issues
+        }
+
+        // OS running stable - slow refresh
+        if (bootProgress === 'OSRunning') {
+            return 60000; // 60 seconds - stable state
+        }
+
+        // Other states (transitional) - medium refresh
+        return 15000; // 15 seconds
+    }
+
+    // Default: moderate refresh
+    return 15000; // 15 seconds
+}
+
+setupAdaptiveBMCRefresh();
 
 // Initialize VNC when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {

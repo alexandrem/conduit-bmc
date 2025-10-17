@@ -795,12 +795,73 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch BMC hardware info
     fetchBMCInfo();
+
+    // Start adaptive BMC info refresh
+    setupAdaptiveBMCRefresh();
 });
 
 // Update connection info every second
 setInterval(updateConnectionInfo, 1000);
 // Refresh power status every 30 seconds (silent)
 setInterval(() => refreshPowerStatus(false), 30000);
-// Refresh BMC info (including boot status) every 60 seconds (RFD 020)
-setInterval(fetchBMCInfo, 60000);
+
+// Adaptive BMC refresh - adjusts interval based on boot state
+let bmcRefreshTimer = null;
+let currentRefreshInterval = 60000; // Start with 60s
+
+function setupAdaptiveBMCRefresh() {
+    // Clear any existing timer
+    if (bmcRefreshTimer) {
+        clearInterval(bmcRefreshTimer);
+    }
+
+    // Set up the refresh with current interval
+    bmcRefreshTimer = setInterval(async () => {
+        await fetchBMCInfo();
+
+        // After fetch, determine new interval based on boot status
+        const newInterval = getRefreshInterval();
+        if (newInterval !== currentRefreshInterval) {
+            console.log(`Adjusting BMC refresh interval: ${currentRefreshInterval}ms -> ${newInterval}ms`);
+            currentRefreshInterval = newInterval;
+            setupAdaptiveBMCRefresh(); // Recreate timer with new interval
+        }
+    }, currentRefreshInterval);
+}
+
+function getRefreshInterval() {
+    // Extract system status from bmcInfoData (set by fetchBMCInfo in base.html)
+    if (!bmcInfoData) {
+        return 60000; // No data - slow refresh
+    }
+
+    const redfishInfo = bmcInfoData.redfish_info || bmcInfoData.redfishInfo;
+    if (!redfishInfo) {
+        return 60000; // IPMI or no redfish info - slow refresh
+    }
+
+    const systemStatus = redfishInfo.system_status || redfishInfo.systemStatus;
+    if (!systemStatus) {
+        return 60000; // No system status - slow refresh
+    }
+
+    const progress = systemStatus.boot_progress || systemStatus.bootProgress;
+    const availability = systemStatus.console_availability || systemStatus.consoleAvailability;
+
+    // Fast refresh (5s) during active boot phases
+    if (availability === 2 ||  // CONSOLE_AVAILABILITY_VNC_ONLY (early POST)
+        progress === 'SetupEntered' ||
+        progress === 'OSBootStarted' ||
+        (progress === 'OEM' && (systemStatus.boot_progress_oem || systemStatus.bootProgressOem))) {
+        return 5000;  // 5 seconds - active boot phase
+    }
+
+    // Slow refresh (60s) when OS is running (stable state)
+    if (progress === 'OSRunning') {
+        return 60000;  // 60 seconds - OS stable
+    }
+
+    // Medium refresh (15s) for transitional states
+    return 15000;  // 15 seconds - transitional
+}
 {{end}}

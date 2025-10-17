@@ -453,6 +453,15 @@ message NetworkProtocol {
   bool enabled = 3;
 }
 
+// ConsoleAvailability indicates which console types are available in the current boot phase
+enum ConsoleAvailability {
+  CONSOLE_AVAILABILITY_UNKNOWN = 0;     // Unknown or not determined
+  CONSOLE_AVAILABILITY_BOTH = 1;        // Both SOL and VNC available (normal operation, OS running, BIOS setup)
+  CONSOLE_AVAILABILITY_VNC_ONLY = 2;    // VGA-only phase (early POST, memory init), SOL will be blank
+  CONSOLE_AVAILABILITY_SOL_ONLY = 3;    // SOL available, VNC may not work (rare)
+  CONSOLE_AVAILABILITY_NONE = 4;        // Neither console available (very rare, BMC issue)
+}
+
 // SystemStatus contains boot and system state information from Redfish Systems endpoint (RFD 020)
 message SystemStatus {
   string system_id = 1;                    // e.g., "System.Embedded.1"
@@ -467,6 +476,7 @@ message SystemStatus {
   string last_reset_time = 10;             // Last reset/reboot timestamp (RFC3339)
   map<string, string> oem_health = 11;     // Vendor-specific health status (Dell: CPURollupStatus, StorageRollupStatus, etc.)
   repeated string boot_order = 12;         // Boot device order
+  ConsoleAvailability console_availability = 13;  // Which console types work in current boot phase
 }
 
 // BootSourceOverride contains boot source override information (RFD 020)
