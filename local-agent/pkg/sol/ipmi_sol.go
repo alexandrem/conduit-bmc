@@ -39,6 +39,7 @@ type IPMISOLSession struct {
 	cancel  context.CancelFunc
 	mu      sync.Mutex
 	running bool
+	closed  bool
 
 	// Configuration
 	bufferSize       int
@@ -378,6 +379,14 @@ func (s *IPMISOLSession) WriteChannel() chan<- []byte {
 
 // Close terminates the SOL session
 func (s *IPMISOLSession) Close() error {
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return nil // Already closed
+	}
+	s.closed = true
+	s.mu.Unlock()
+
 	s.cancel() // Trigger context cancellation
 
 	s.mu.Lock()
