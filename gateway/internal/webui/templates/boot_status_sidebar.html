@@ -1,0 +1,35 @@
+{{define "boot_status_sidebar"}}
+<!-- Boot Status (Redfish only - RFD 020) -->
+<div class="mb-6" id="boot-status-section">
+    <h3 class="text-sm font-semibold mb-3 text-white/90 flex items-center gap-2">
+        Boot Status
+        <div class="w-2 h-2 bg-blue-400 rounded-full pulse-animation" id="boot-status-dot"></div>
+    </h3>
+    <div class="space-y-2 text-sm" id="boot-status-content">
+        <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-white/70">Boot Progress</span>
+            <span id="boot-progress" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-600 text-white">--</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-white/10" id="boot-progress-oem-row" style="display: none;">
+            <span class="text-white/70">OEM Status</span>
+            <span id="boot-progress-oem" class="text-xs text-yellow-400">--</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-white/10" id="post-state-row" style="display: none;">
+            <span class="text-white/70">POST State</span>
+            <span id="post-state" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-600 text-white">--</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-white/70">Boot Source</span>
+            <span id="boot-source" class="text-xs">--</span>
+        </div>
+        <div class="py-2" id="boot-hint" style="display: none;">
+            <div class="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded p-2">
+                <span id="boot-hint-text"></span>
+            </div>
+        </div>
+    </div>
+    <div class="py-3 text-xs text-white/50 text-center" id="boot-status-unavailable" style="display: none;">
+        Boot status not available for this server
+    </div>
+</div>
+{{end}}

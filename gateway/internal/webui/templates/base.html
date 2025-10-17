@@ -274,17 +274,160 @@
                     (type === 'ipmi' ? 'bg-blue-600/50' : type === 'redfish' ? 'bg-purple-600/50' : 'bg-gray-600/50');
             }
 
-            if (type === 'ipmi' && bmcInfoData.ipmi_info) {
-                const info = bmcInfoData.ipmi_info;
-                if (bmcFirmware) bmcFirmware.textContent = info.firmware_revision || 'Unknown';
-                if (bmcManufacturer) bmcManufacturer.textContent = info.manufacturer_name || info.manufacturer_id || 'Unknown';
-                if (bmcVersion) bmcVersion.textContent = info.ipmi_version || 'Unknown';
-            } else if (type === 'redfish' && bmcInfoData.redfish_info) {
-                const info = bmcInfoData.redfish_info;
-                if (bmcFirmware) bmcFirmware.textContent = info.firmware_version || 'Unknown';
-                if (bmcManufacturer) bmcManufacturer.textContent = info.manufacturer || 'Unknown';
-                if (bmcVersion) bmcVersion.textContent = info.model || 'Unknown';
+            // Support both snake_case and camelCase field names (protobuf JSON uses camelCase)
+            const ipmiInfo = bmcInfoData.ipmi_info || bmcInfoData.ipmiInfo;
+            const redfishInfo = bmcInfoData.redfish_info || bmcInfoData.redfishInfo;
+
+            if (type === 'ipmi' && ipmiInfo) {
+                if (bmcFirmware) bmcFirmware.textContent = ipmiInfo.firmware_revision || ipmiInfo.firmwareRevision || 'Unknown';
+                if (bmcManufacturer) bmcManufacturer.textContent = ipmiInfo.manufacturer_name || ipmiInfo.manufacturerName || ipmiInfo.manufacturer_id || ipmiInfo.manufacturerId || 'Unknown';
+                if (bmcVersion) bmcVersion.textContent = ipmiInfo.ipmi_version || ipmiInfo.ipmiVersion || 'Unknown';
+
+                // IPMI doesn't support boot status - show unavailable message
+                updateBootStatusDisplay(null);
+            } else if (type === 'redfish' && redfishInfo) {
+                if (bmcFirmware) bmcFirmware.textContent = redfishInfo.firmware_version || redfishInfo.firmwareVersion || 'Unknown';
+                if (bmcManufacturer) bmcManufacturer.textContent = redfishInfo.manufacturer || 'Unknown';
+                if (bmcVersion) bmcVersion.textContent = redfishInfo.model || 'Unknown';
+
+                // Update boot status if available (RFD 020) - support both naming conventions
+                const systemStatus = redfishInfo.system_status || redfishInfo.systemStatus;
+                updateBootStatusDisplay(systemStatus);
+            } else {
+                // Unknown BMC type - show unavailable message
+                updateBootStatusDisplay(null);
             }
+        }
+
+        // Boot Status Display (RFD 020 - Redfish only)
+        function updateBootStatusDisplay(systemStatus) {
+            const bootStatusSection = document.getElementById('boot-status-section');
+            const bootStatusContent = document.getElementById('boot-status-content');
+            const bootStatusUnavailable = document.getElementById('boot-status-unavailable');
+
+            // Support both snake_case and camelCase field names
+            const bootProgressValue = systemStatus?.boot_progress || systemStatus?.bootProgress;
+
+            if (!systemStatus || !bootProgressValue) {
+                // Show unavailable message, hide content
+                if (bootStatusContent) bootStatusContent.style.display = 'none';
+                if (bootStatusUnavailable) bootStatusUnavailable.style.display = 'block';
+                return;
+            }
+
+            // Show content, hide unavailable message
+            if (bootStatusContent) bootStatusContent.style.display = 'block';
+            if (bootStatusUnavailable) bootStatusUnavailable.style.display = 'none';
+
+            const bootProgress = document.getElementById('boot-progress');
+            const bootProgressOem = document.getElementById('boot-progress-oem');
+            const bootProgressOemRow = document.getElementById('boot-progress-oem-row');
+            const postState = document.getElementById('post-state');
+            const postStateRow = document.getElementById('post-state-row');
+            const bootSource = document.getElementById('boot-source');
+            const bootHint = document.getElementById('boot-hint');
+            const bootHintText = document.getElementById('boot-hint-text');
+            const bootStatusDot = document.getElementById('boot-status-dot');
+
+            // Update boot progress with color coding
+            if (bootProgress && bootProgressValue) {
+                const progress = bootProgressValue;
+                bootProgress.textContent = formatBootProgress(progress);
+                bootProgress.className = 'px-2 py-1 text-xs font-medium rounded-full';
+
+                if (progress === 'OSRunning' || progress === 'OSBootStarted') {
+                    bootProgress.classList.add('bg-green-600', 'text-white');
+                    if (bootStatusDot) bootStatusDot.className = 'w-2 h-2 bg-green-400 rounded-full';
+                } else if (progress === 'SetupEntered' || progress === 'OEM') {
+                    bootProgress.classList.add('bg-yellow-600', 'text-white');
+                    if (bootStatusDot) bootStatusDot.className = 'w-2 h-2 bg-yellow-400 rounded-full pulse-animation';
+                } else if (progress === 'None' || !progress) {
+                    bootProgress.classList.add('bg-gray-600', 'text-white');
+                    if (bootStatusDot) bootStatusDot.className = 'w-2 h-2 bg-gray-400 rounded-full';
+                } else {
+                    bootProgress.classList.add('bg-blue-600', 'text-white');
+                    if (bootStatusDot) bootStatusDot.className = 'w-2 h-2 bg-blue-400 rounded-full pulse-animation';
+                }
+            }
+
+            // Show OEM boot progress if present (Dell iDRAC) - support both naming conventions
+            const bootProgressOemValue = systemStatus.boot_progress_oem || systemStatus.bootProgressOem;
+            if (bootProgressOem && bootProgressOemRow && bootProgressOemValue) {
+                bootProgressOem.textContent = bootProgressOemValue;
+                bootProgressOemRow.style.display = 'flex';
+            } else if (bootProgressOemRow) {
+                bootProgressOemRow.style.display = 'none';
+            }
+
+            // Show POST state if present - support both naming conventions
+            const postStateValue = systemStatus.post_state || systemStatus.postState;
+            if (postState && postStateRow && postStateValue) {
+                postState.textContent = postStateValue;
+                postState.className = 'px-2 py-1 text-xs font-medium rounded-full';
+                if (postStateValue === 'Completed') {
+                    postState.classList.add('bg-green-600', 'text-white');
+                } else if (postStateValue === 'Failed') {
+                    postState.classList.add('bg-red-600', 'text-white');
+                } else {
+                    postState.classList.add('bg-blue-600', 'text-white');
+                }
+                postStateRow.style.display = 'flex';
+            } else if (postStateRow) {
+                postStateRow.style.display = 'none';
+            }
+
+            // Update boot source - support both naming conventions
+            const bootSourceValue = systemStatus.boot_source || systemStatus.bootSource;
+            if (bootSource && bootSourceValue) {
+                const target = bootSourceValue.target || 'None';
+                const mode = bootSourceValue.mode || 'Unknown';
+                const enabled = bootSourceValue.enabled || 'Disabled';
+                bootSource.textContent = `${target} (${mode}, ${enabled})`;
+            }
+
+            // Show contextual hints
+            if (bootHint && bootHintText) {
+                const hint = getBootHint(systemStatus);
+                if (hint) {
+                    bootHintText.textContent = hint;
+                    bootHint.style.display = 'block';
+                } else {
+                    bootHint.style.display = 'none';
+                }
+            }
+        }
+
+        // Format boot progress for display
+        function formatBootProgress(progress) {
+            const map = {
+                'None': 'None',
+                'PrimaryProcessorInitializationStarted': 'CPU Init',
+                'MemoryInitializationStarted': 'Memory Init',
+                'SecondaryProcessorInitializationStarted': 'Multi-CPU Init',
+                'PCIResourceConfigStarted': 'PCIe Config',
+                'SystemHardwareInitializationComplete': 'POST Complete',
+                'SetupEntered': 'BIOS Setup',
+                'OSBootStarted': 'OS Booting',
+                'OSRunning': 'OS Running',
+                'OEM': 'OEM Status'
+            };
+            return map[progress] || progress;
+        }
+
+        // Get contextual hint based on boot state
+        function getBootHint(systemStatus) {
+            // Support both snake_case and camelCase field names
+            const progress = systemStatus.boot_progress || systemStatus.bootProgress;
+            const oemStatus = systemStatus.boot_progress_oem || systemStatus.bootProgressOem;
+
+            if (progress === 'SetupEntered') {
+                return '⚠ Server in BIOS Setup mode. Use VNC for graphical access.';
+            } else if (progress === 'OEM' && oemStatus && oemStatus.toLowerCase().includes('no bootable')) {
+                return '⚠ No bootable devices. Check boot config or use VNC to access BIOS.';
+            } else if (progress === 'MemoryInitializationStarted' || progress === 'PrimaryProcessorInitializationStarted' || progress === 'PCIResourceConfigStarted') {
+                return 'ℹ Early POST phase. VGA only - use VNC if console is blank.';
+            }
+            return null;
         }
 
         function updateBMCInfoError() {
@@ -317,57 +460,61 @@
             const type = bmcInfoData.bmc_type || bmcInfoData.bmcType;
             let detailsHTML = '';
 
-            if (type === 'ipmi' && bmcInfoData.ipmi_info) {
-                const info = bmcInfoData.ipmi_info;
+            // Support both snake_case and camelCase field names
+            const ipmiInfo = bmcInfoData.ipmi_info || bmcInfoData.ipmiInfo;
+            const redfishInfo = bmcInfoData.redfish_info || bmcInfoData.redfishInfo;
+
+            if (type === 'ipmi' && ipmiInfo) {
+                const info = ipmiInfo;
                 detailsHTML = `
                     <div class="space-y-3">
                         <h4 class="font-semibold text-lg mb-3">IPMI Hardware Details</h4>
                         <div class="grid grid-cols-2 gap-2 text-sm">
                             <div class="text-white/70">Device ID:</div>
-                            <div class="font-mono">${info.device_id || 'N/A'}</div>
+                            <div class="font-mono">${info.device_id || info.deviceId || 'N/A'}</div>
 
                             <div class="text-white/70">Device Revision:</div>
-                            <div class="font-mono">${info.device_revision || 'N/A'}</div>
+                            <div class="font-mono">${info.device_revision || info.deviceRevision || 'N/A'}</div>
 
                             <div class="text-white/70">Firmware Revision:</div>
-                            <div class="font-mono">${info.firmware_revision || 'N/A'}</div>
+                            <div class="font-mono">${info.firmware_revision || info.firmwareRevision || 'N/A'}</div>
 
                             <div class="text-white/70">IPMI Version:</div>
-                            <div class="font-mono">${info.ipmi_version || 'N/A'}</div>
+                            <div class="font-mono">${info.ipmi_version || info.ipmiVersion || 'N/A'}</div>
 
                             <div class="text-white/70">Manufacturer ID:</div>
-                            <div class="font-mono">${info.manufacturer_id || 'N/A'}</div>
+                            <div class="font-mono">${info.manufacturer_id || info.manufacturerId || 'N/A'}</div>
 
                             <div class="text-white/70">Manufacturer Name:</div>
-                            <div class="font-mono">${info.manufacturer_name || 'Unknown'}</div>
+                            <div class="font-mono">${info.manufacturer_name || info.manufacturerName || 'Unknown'}</div>
 
                             <div class="text-white/70">Product ID:</div>
-                            <div class="font-mono">${info.product_id || 'N/A'}</div>
+                            <div class="font-mono">${info.product_id || info.productId || 'N/A'}</div>
 
                             <div class="text-white/70">Device Available:</div>
-                            <div>${info.device_available ? '✓ Yes' : '✗ No'}</div>
+                            <div>${(info.device_available !== undefined ? info.device_available : info.deviceAvailable) ? '✓ Yes' : '✗ No'}</div>
 
                             <div class="text-white/70">Provides SDRs:</div>
-                            <div>${info.provides_device_sdrs ? '✓ Yes' : '✗ No'}</div>
+                            <div>${(info.provides_device_sdrs !== undefined ? info.provides_device_sdrs : info.providesDeviceSdrs) ? '✓ Yes' : '✗ No'}</div>
                         </div>
-                        ${info.additional_device_support && info.additional_device_support.length > 0 ? `
+                        ${(info.additional_device_support || info.additionalDeviceSupport || []).length > 0 ? `
                             <div class="mt-4">
                                 <div class="text-white/70 mb-2">Additional Device Support:</div>
                                 <ul class="list-disc list-inside text-sm space-y-1">
-                                    ${info.additional_device_support.map(s => `<li>${s}</li>`).join('')}
+                                    ${(info.additional_device_support || info.additionalDeviceSupport).map(s => `<li>${s}</li>`).join('')}
                                 </ul>
                             </div>
                         ` : ''}
                     </div>
                 `;
-            } else if (type === 'redfish' && bmcInfoData.redfish_info) {
-                const info = bmcInfoData.redfish_info;
+            } else if (type === 'redfish' && redfishInfo) {
+                const info = redfishInfo;
                 detailsHTML = `
                     <div class="space-y-3">
                         <h4 class="font-semibold text-lg mb-3">Redfish Manager Details</h4>
                         <div class="grid grid-cols-2 gap-2 text-sm">
                             <div class="text-white/70">Manager ID:</div>
-                            <div class="font-mono">${info.manager_id || 'N/A'}</div>
+                            <div class="font-mono">${info.manager_id || info.managerId || 'N/A'}</div>
 
                             <div class="text-white/70">Name:</div>
                             <div>${info.name || 'N/A'}</div>
@@ -379,19 +526,19 @@
                             <div>${info.manufacturer || 'N/A'}</div>
 
                             <div class="text-white/70">Firmware Version:</div>
-                            <div class="font-mono">${info.firmware_version || 'N/A'}</div>
+                            <div class="font-mono">${info.firmware_version || info.firmwareVersion || 'N/A'}</div>
 
                             <div class="text-white/70">Status:</div>
                             <div>${info.status || 'N/A'}</div>
 
                             <div class="text-white/70">Power State:</div>
-                            <div>${info.power_state || 'N/A'}</div>
+                            <div>${info.power_state || info.powerState || 'N/A'}</div>
                         </div>
-                        ${info.network_protocols && info.network_protocols.length > 0 ? `
+                        ${(info.network_protocols || info.networkProtocols || []).length > 0 ? `
                             <div class="mt-4">
                                 <div class="text-white/70 mb-2">Network Protocols:</div>
                                 <ul class="list-disc list-inside text-sm space-y-1">
-                                    ${info.network_protocols.map(p => `<li>${p.name} (port ${p.port})${p.enabled ? '' : ' - Disabled'}</li>`).join('')}
+                                    ${(info.network_protocols || info.networkProtocols).map(p => `<li>${p.name} (port ${p.port})${p.enabled ? '' : ' - Disabled'}</li>`).join('')}
                                 </ul>
                             </div>
                         ` : ''}

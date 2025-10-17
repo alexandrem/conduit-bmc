@@ -116,6 +116,8 @@
         </div>
     </div>
 
+    {{template "boot_status_sidebar" .}}
+
     <!-- Power Operations -->
     <div class="mb-6">
         <h3 class="text-sm font-semibold mb-3 text-white/90">Power Control</h3>
@@ -799,4 +801,6 @@ document.addEventListener('DOMContentLoaded', function() {
 setInterval(updateConnectionInfo, 1000);
 // Refresh power status every 30 seconds (silent)
 setInterval(() => refreshPowerStatus(false), 30000);
+// Refresh BMC info (including boot status) every 60 seconds (RFD 020)
+setInterval(fetchBMCInfo, 60000);
 {{end}}

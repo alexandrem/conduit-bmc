@@ -3,6 +3,7 @@ package bmc
 import (
 	"context"
 	"fmt"
+	"time"
 
 	gatewayv1 "gateway/gen/gateway/v1"
 
@@ -285,7 +286,11 @@ func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gat
 			return nil, fmt.Errorf("Redfish client is nil")
 		}
 
-		manager, netProto, err := c.redfishClient.GetManagerInfo(ctx, endpoint, username, password)
+		// Add timeout wrapper to prevent hanging on slow/unresponsive BMCs
+		infoCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		manager, netProto, err := c.redfishClient.GetManagerInfo(infoCtx, endpoint, username, password)
 		if err != nil {
 			return nil, fmt.Errorf("Redfish GetManagerInfo failed: %w", err)
 		}
@@ -329,6 +334,60 @@ func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gat
 			status = status + " (" + manager.Status.Health + ")"
 		}
 
+		// Fetch system information with timeout to prevent hanging
+		var systemStatus *gatewayv1.SystemStatus
+		systemCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		system, err := c.redfishClient.GetSystemInfo(systemCtx, endpoint, username, password)
+		if err == nil && system != nil {
+			// Build OEM health map (Dell-specific)
+			oemHealth := make(map[string]string)
+			if system.Oem.Dell.DellSystem.CPURollupStatus != "" {
+				oemHealth["cpu_rollup_status"] = system.Oem.Dell.DellSystem.CPURollupStatus
+			}
+			if system.Oem.Dell.DellSystem.StorageRollupStatus != "" {
+				oemHealth["storage_rollup_status"] = system.Oem.Dell.DellSystem.StorageRollupStatus
+			}
+			if system.Oem.Dell.DellSystem.TempRollupStatus != "" {
+				oemHealth["temp_rollup_status"] = system.Oem.Dell.DellSystem.TempRollupStatus
+			}
+			if system.Oem.Dell.DellSystem.VoltRollupStatus != "" {
+				oemHealth["volt_rollup_status"] = system.Oem.Dell.DellSystem.VoltRollupStatus
+			}
+			if system.Oem.Dell.DellSystem.FanRollupStatus != "" {
+				oemHealth["fan_rollup_status"] = system.Oem.Dell.DellSystem.FanRollupStatus
+			}
+			if system.Oem.Dell.DellSystem.PSRollupStatus != "" {
+				oemHealth["ps_rollup_status"] = system.Oem.Dell.DellSystem.PSRollupStatus
+			}
+			if system.Oem.Dell.DellSystem.BatteryRollupStatus != "" {
+				oemHealth["battery_rollup_status"] = system.Oem.Dell.DellSystem.BatteryRollupStatus
+			}
+			if system.Oem.Dell.DellSystem.SystemHealthRollupStatus != "" {
+				oemHealth["system_health_rollup_status"] = system.Oem.Dell.DellSystem.SystemHealthRollupStatus
+			}
+
+			systemStatus = &gatewayv1.SystemStatus{
+				SystemId:        system.ID,
+				BootProgress:    system.BootProgress.LastState,
+				BootProgressOem: system.BootProgress.OemLastState,
+				PostState:       system.PostState,
+				BootSource: &gatewayv1.BootSourceOverride{
+					Target:  system.Boot.BootSourceOverrideTarget,
+					Enabled: system.Boot.BootSourceOverrideEnabled,
+					Mode:    system.Boot.BootSourceOverrideMode,
+				},
+				BiosVersion:   system.BiosVersion,
+				SerialNumber:  system.SerialNumber,
+				Sku:           system.SKU,
+				Hostname:      system.HostName,
+				LastResetTime: system.LastResetTime,
+				OemHealth:     oemHealth,
+				BootOrder:     system.Boot.BootOrder,
+			}
+		}
+		// If system info fetch fails, continue without it (graceful degradation)
+
 		redfishInfo := &gatewayv1.RedfishInfo{
 			ManagerId:        manager.ID,
 			Name:             manager.Name,
@@ -338,6 +397,7 @@ func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gat
 			Status:           status,
 			PowerState:       string(manager.PowerState),
 			NetworkProtocols: networkProtocols,
+			SystemStatus:     systemStatus,
 		}
 
 		return &gatewayv1.BMCInfo{

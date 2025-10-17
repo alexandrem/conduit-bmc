@@ -351,6 +351,73 @@ func (c *Client) GetManagerInfo(ctx context.Context, endpoint, username, passwor
 	return &manager, netProto, nil
 }
 
+// GetSystemInfo retrieves detailed system information from Redfish Systems endpoint
+func (c *Client) GetSystemInfo(ctx context.Context, endpoint, username, password string) (*ComputerSystem, error) {
+	log.Debug().Str("endpoint", endpoint).Msg("Getting system info")
+
+	serviceRoot, err := c.getServiceRoot(ctx, endpoint, username, password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get service root: %w", err)
+	}
+
+	// Get systems collection
+	systemsURL := BuildRedfishURL(endpoint, serviceRoot.Systems.ODataID)
+	req, err := http.NewRequestWithContext(ctx, "GET", systemsURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	if username != "" && password != "" {
+		req.SetBasicAuth(username, password)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var systemsCollection struct {
+		Members []struct {
+			ODataID string `json:"@odata.id"`
+		} `json:"Members"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&systemsCollection); err != nil {
+		return nil, fmt.Errorf("failed to decode systems collection: %w", err)
+	}
+
+	if len(systemsCollection.Members) == 0 {
+		return nil, fmt.Errorf("no computer systems found")
+	}
+
+	// Get the first system
+	systemURL := BuildRedfishURL(endpoint, systemsCollection.Members[0].ODataID)
+	req, err = http.NewRequestWithContext(ctx, "GET", systemURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	if username != "" && password != "" {
+		req.SetBasicAuth(username, password)
+	}
+
+	resp, err = c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var system ComputerSystem
+	if err := json.NewDecoder(resp.Body).Decode(&system); err != nil {
+		return nil, fmt.Errorf("failed to decode computer system: %w", err)
+	}
+
+	return &system, nil
+}
+
 func (c *Client) GetSensors(ctx context.Context, endpoint, username, password string) (map[string]interface{}, error) {
 	log.Debug().Str("endpoint", endpoint).Msg("Getting sensors")
 

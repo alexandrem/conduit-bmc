@@ -443,6 +443,7 @@ message RedfishInfo {
   string status = 6;
   string power_state = 7;
   repeated NetworkProtocol network_protocols = 8;
+  SystemStatus system_status = 9;  // Optional system status information (RFD 020)
 }
 
 // NetworkProtocol represents a network service provided by the BMC
@@ -450,6 +451,29 @@ message NetworkProtocol {
   string name = 1;
   int32 port = 2;
   bool enabled = 3;
+}
+
+// SystemStatus contains boot and system state information from Redfish Systems endpoint (RFD 020)
+message SystemStatus {
+  string system_id = 1;                    // e.g., "System.Embedded.1"
+  string boot_progress = 2;                // e.g., "SystemHardwareInitializationComplete", "OSBootStarted", "OSRunning", "OEM"
+  string boot_progress_oem = 3;            // OEM-specific boot state (Dell: OemLastState, e.g., "No bootable devices.")
+  string post_state = 4;                   // e.g., "Completed", "InProgress", "Failed" (may be empty on Dell)
+  BootSourceOverride boot_source = 5;      // Boot source override settings
+  string bios_version = 6;                 // BIOS/UEFI firmware version
+  string serial_number = 7;                // System serial number
+  string sku = 8;                          // System SKU
+  string hostname = 9;                     // System hostname
+  string last_reset_time = 10;             // Last reset/reboot timestamp (RFC3339)
+  map<string, string> oem_health = 11;     // Vendor-specific health status (Dell: CPURollupStatus, StorageRollupStatus, etc.)
+  repeated string boot_order = 12;         // Boot device order
+}
+
+// BootSourceOverride contains boot source override information (RFD 020)
+message BootSourceOverride {
+  string target = 1;                       // e.g., "None", "Pxe", "Hdd", "Usb", "BiosSetup"
+  string enabled = 2;                      // e.g., "Once", "Continuous", "Disabled"
+  string mode = 3;                         // e.g., "UEFI", "Legacy"
 }
 
 // Discovery metadata is now defined in common/v1/discovery.proto (RFD 017)
