@@ -25,13 +25,47 @@ type ServiceRoot struct {
 
 // ComputerSystem represents a Redfish computer system
 type ComputerSystem struct {
-	ID           string     `json:"Id"`
-	Name         string     `json:"Name"`
-	Manufacturer string     `json:"Manufacturer"`
-	Model        string     `json:"Model"`
-	SerialNumber string     `json:"SerialNumber"`
-	PowerState   PowerState `json:"PowerState"`
-	Actions      struct {
+	ID            string     `json:"Id"`
+	Name          string     `json:"Name"`
+	Manufacturer  string     `json:"Manufacturer"`
+	Model         string     `json:"Model"`
+	SerialNumber  string     `json:"SerialNumber"`
+	SKU           string     `json:"SKU"`
+	HostName      string     `json:"HostName"`
+	BiosVersion   string     `json:"BiosVersion"`
+	PowerState    PowerState `json:"PowerState"`
+	LastResetTime string     `json:"LastResetTime"`
+	Status        struct {
+		State        string `json:"State"`
+		Health       string `json:"Health"`
+		HealthRollup string `json:"HealthRollup"`
+	} `json:"Status"`
+	Boot struct {
+		BootSourceOverrideTarget  string   `json:"BootSourceOverrideTarget"`
+		BootSourceOverrideEnabled string   `json:"BootSourceOverrideEnabled"`
+		BootSourceOverrideMode    string   `json:"BootSourceOverrideMode"`
+		BootOrder                 []string `json:"BootOrder"`
+	} `json:"Boot"`
+	BootProgress struct {
+		LastState    string `json:"LastState"`
+		OemLastState string `json:"OemLastState"`
+	} `json:"BootProgress"`
+	PostState string `json:"PostState"`
+	Oem       struct {
+		Dell struct {
+			DellSystem struct {
+				CPURollupStatus          string `json:"CPURollupStatus"`
+				StorageRollupStatus      string `json:"StorageRollupStatus"`
+				TempRollupStatus         string `json:"TempRollupStatus"`
+				VoltRollupStatus         string `json:"VoltRollupStatus"`
+				FanRollupStatus          string `json:"FanRollupStatus"`
+				PSRollupStatus           string `json:"PSRollupStatus"`
+				BatteryRollupStatus      string `json:"BatteryRollupStatus"`
+				SystemHealthRollupStatus string `json:"SystemHealthRollupStatus"`
+			} `json:"DellSystem"`
+		} `json:"Dell"`
+	} `json:"Oem"`
+	Actions struct {
 		ComputerSystemReset struct {
 			Target                   string   `json:"target"`
 			ResetTypeAllowableValues []string `json:"ResetType@Redfish.AllowableValues"`

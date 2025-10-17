@@ -97,6 +97,64 @@ var infoCmd = &cobra.Command{
 					fmt.Fprintf(w, "    - %s (port %d)\n", proto.Name, proto.Port)
 				}
 			}
+
+			// Display System Status if available (RFD 020)
+			if sys := redfish.SystemStatus; sys != nil {
+				fmt.Fprintln(w)
+				fmt.Fprintf(w, "System Status:\n")
+				if sys.SystemId != "" {
+					fmt.Fprintf(w, "  System ID:\t%s\n", sys.SystemId)
+				}
+				if sys.Hostname != "" {
+					fmt.Fprintf(w, "  Hostname:\t%s\n", sys.Hostname)
+				}
+				if sys.SerialNumber != "" {
+					fmt.Fprintf(w, "  Serial Number:\t%s\n", sys.SerialNumber)
+				}
+				if sys.Sku != "" {
+					fmt.Fprintf(w, "  SKU:\t%s\n", sys.Sku)
+				}
+				if sys.BiosVersion != "" {
+					fmt.Fprintf(w, "  BIOS Version:\t%s\n", sys.BiosVersion)
+				}
+				if sys.LastResetTime != "" {
+					fmt.Fprintf(w, "  Last Reset:\t%s\n", sys.LastResetTime)
+				}
+				if sys.BootProgress != "" {
+					bootIndicator := getBootProgressIndicator(sys.BootProgress)
+					if sys.BootProgress == "OEM" && sys.BootProgressOem != "" {
+						fmt.Fprintf(w, "  Boot Progress:\t%s - %s %s\n", sys.BootProgress, sys.BootProgressOem, bootIndicator)
+					} else {
+						fmt.Fprintf(w, "  Boot Progress:\t%s %s\n", sys.BootProgress, bootIndicator)
+					}
+				}
+				if sys.PostState != "" {
+					fmt.Fprintf(w, "  POST State:\t%s\n", sys.PostState)
+				}
+				if boot := sys.BootSource; boot != nil {
+					bootStr := fmt.Sprintf("%s (%s, %s)", boot.Target, boot.Mode, boot.Enabled)
+					fmt.Fprintf(w, "  Boot Source:\t%s\n", bootStr)
+				}
+				if len(sys.BootOrder) > 0 {
+					fmt.Fprintf(w, "  Boot Order:\t%s", sys.BootOrder[0])
+					for i := 1; i < len(sys.BootOrder) && i < 3; i++ {
+						fmt.Fprintf(w, ", %s", sys.BootOrder[i])
+					}
+					if len(sys.BootOrder) > 3 {
+						fmt.Fprintf(w, " (%d more)", len(sys.BootOrder)-3)
+					}
+					fmt.Fprintln(w)
+				}
+				if len(sys.OemHealth) > 0 {
+					healthStr := formatHealthStatus(sys.OemHealth)
+					fmt.Fprintf(w, "  Health Status:\t%s\n", healthStr)
+				}
+				// Add contextual hints
+				if hint := getBootStatusHint(sys); hint != "" {
+					fmt.Fprintln(w)
+					fmt.Fprintf(w, "  Note: %s\n", hint)
+				}
+			}
 		}
 
 		w.Flush()
@@ -139,7 +197,7 @@ func outputInfoJSON(formatter *output.Formatter, serverID string, bmcInfo *gatew
 				"enabled": proto.Enabled,
 			})
 		}
-		data["redfish_info"] = map[string]interface{}{
+		redfishData := map[string]interface{}{
 			"manager_id":        redfish.ManagerId,
 			"name":              redfish.Name,
 			"model":             redfish.Model,
@@ -149,9 +207,110 @@ func outputInfoJSON(formatter *output.Formatter, serverID string, bmcInfo *gatew
 			"power_state":       redfish.PowerState,
 			"network_protocols": protocols,
 		}
+
+		// Add system status if available (RFD 020)
+		if sys := redfish.SystemStatus; sys != nil {
+			systemStatus := map[string]interface{}{
+				"system_id":         sys.SystemId,
+				"hostname":          sys.Hostname,
+				"serial_number":     sys.SerialNumber,
+				"sku":               sys.Sku,
+				"bios_version":      sys.BiosVersion,
+				"last_reset_time":   sys.LastResetTime,
+				"boot_progress":     sys.BootProgress,
+				"boot_progress_oem": sys.BootProgressOem,
+				"post_state":        sys.PostState,
+				"boot_order":        sys.BootOrder,
+				"oem_health":        sys.OemHealth,
+			}
+			if boot := sys.BootSource; boot != nil {
+				systemStatus["boot_source"] = map[string]interface{}{
+					"target":  boot.Target,
+					"enabled": boot.Enabled,
+					"mode":    boot.Mode,
+				}
+			}
+			redfishData["system_status"] = systemStatus
+		}
+
+		data["redfish_info"] = redfishData
 	}
 
 	return formatter.Output(data)
+}
+
+// getBootProgressIndicator returns a visual indicator for boot progress state
+func getBootProgressIndicator(bootProgress string) string {
+	switch bootProgress {
+	case "OSRunning":
+		return "\u2713" // ✓
+	case "SetupEntered", "OEM":
+		return "\u26A0" // ⚠
+	case "None", "":
+		return "\u2717" // ✗
+	default:
+		return ""
+	}
+}
+
+// formatHealthStatus formats OEM health status map into a readable string
+func formatHealthStatus(health map[string]string) string {
+	if len(health) == 0 {
+		return "N/A"
+	}
+
+	// Check system health rollup first
+	if systemHealth, ok := health["system_health_rollup_status"]; ok && systemHealth != "" {
+		result := systemHealth
+		// Add key subsystem status
+		details := []string{}
+		if cpu, ok := health["cpu_rollup_status"]; ok && cpu != "" {
+			details = append(details, fmt.Sprintf("CPU: %s", cpu))
+		}
+		if storage, ok := health["storage_rollup_status"]; ok && storage != "" {
+			details = append(details, fmt.Sprintf("Storage: %s", storage))
+		}
+		if temp, ok := health["temp_rollup_status"]; ok && temp != "" {
+			details = append(details, fmt.Sprintf("Temp: %s", temp))
+		}
+		if fans, ok := health["fan_rollup_status"]; ok && fans != "" {
+			details = append(details, fmt.Sprintf("Fans: %s", fans))
+		}
+		if len(details) > 0 {
+			result = fmt.Sprintf("%s (%s)", result, joinStrings(details, ", "))
+		}
+		return result
+	}
+
+	return "N/A"
+}
+
+// getBootStatusHint provides contextual hints based on boot status
+func getBootStatusHint(sys *gatewayv1.SystemStatus) string {
+	if sys.BootProgress == "SetupEntered" {
+		return "Server is in BIOS Setup mode. Use VNC console for graphical access."
+	}
+	if sys.BootProgress == "OEM" && sys.BootProgressOem != "" {
+		if sys.BootProgressOem == "No bootable devices." {
+			return "No bootable devices detected. Check boot configuration or use VNC to access BIOS setup."
+		}
+	}
+	if sys.BootProgress == "MemoryInitializationStarted" || sys.BootProgress == "PrimaryProcessorInitializationStarted" {
+		return "Server in early POST - VGA output only. Use VNC for BIOS messages."
+	}
+	return ""
+}
+
+// joinStrings joins string slices (helper to avoid importing strings)
+func joinStrings(parts []string, sep string) string {
+	if len(parts) == 0 {
+		return ""
+	}
+	result := parts[0]
+	for i := 1; i < len(parts); i++ {
+		result += sep + parts[i]
+	}
+	return result
 }
 
 func init() {

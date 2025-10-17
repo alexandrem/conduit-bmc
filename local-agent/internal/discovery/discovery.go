@@ -18,15 +18,15 @@ import (
 
 // Server represents a discovered BMC server with separate endpoint types
 type Server struct {
-	ID                string              `json:"id"`
-	CustomerID        string              `json:"customer_id"`
-	ControlEndpoint   *BMCControlEndpoint `json:"control_endpoint"`   // BMC control API
-	SOLEndpoint       *SOLEndpoint        `json:"sol_endpoint"`       // Serial-over-LAN (optional)
-	VNCEndpoint       *VNCEndpoint        `json:"vnc_endpoint"`       // VNC/KVM access (optional)
-	Features          []string                  `json:"features"`           // High-level features
-	Status            string                    `json:"status"`             // "active", "inactive", etc.
-	Metadata          map[string]string         `json:"metadata"`           // Additional metadata
-	DiscoveryMetadata *types.DiscoveryMetadata  `json:"discovery_metadata"` // Discovery metadata (RFD 017)
+	ID                string                   `json:"id"`
+	CustomerID        string                   `json:"customer_id"`
+	ControlEndpoint   *BMCControlEndpoint      `json:"control_endpoint"`   // BMC control API
+	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint"`       // Serial-over-LAN (optional)
+	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint"`       // VNC/KVM access (optional)
+	Features          []string                 `json:"features"`           // High-level features
+	Status            string                   `json:"status"`             // "active", "inactive", etc.
+	Metadata          map[string]string        `json:"metadata"`           // Additional metadata
+	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata"` // Discovery metadata (RFD 017)
 }
 
 // BMCControlEndpoint represents BMC control API
@@ -115,12 +115,18 @@ func (s *Service) loadStaticServers() []*Server {
 	var servers []*Server
 
 	for _, host := range s.config.Static.Hosts {
+		// Initialize metadata map if not present
+		metadata := host.Metadata
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+
 		server := &Server{
 			ID:         host.ID,
 			CustomerID: host.CustomerID,
 			Features:   host.Features,
 			Status:     "configured", // Mark as configured vs discovered
-			Metadata:   host.Metadata,
+			Metadata:   metadata,
 		}
 
 		// Convert control endpoint

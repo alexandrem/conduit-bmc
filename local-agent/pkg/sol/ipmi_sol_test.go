@@ -144,7 +144,7 @@ func TestIPMISOLSession_WriteRead(t *testing.T) {
 
 	// Test write
 	testData := []byte("test command\n")
-	err = session.Write(testData)
+	err = session.Write(ctx, testData)
 	if err != nil {
 		t.Errorf("Write failed: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestIPMISOLSession_WriteRead(t *testing.T) {
 
 	done := make(chan bool)
 	go func() {
-		_, err := session.Read()
+		_, err := session.Read(readCtx)
 		if err != nil && err != context.Canceled {
 			t.Logf("Read returned error (expected if no BMC): %v", err)
 		}
