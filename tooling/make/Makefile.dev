@@ -202,14 +202,14 @@ local-env-setup:
 	@echo "✅ Local environment directories created"
 
 # Start test BMC servers (synthetic Redfish endpoints)
-local-env-start-test-servers: local-env-setup
+local-env-start-test-servers:
 	@echo "🔄 Starting test BMC servers..."
 	@cd cli && nohup go run . test setup start --daemon > ../tmp/logs/test-servers.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
 	@sleep 3
 	@echo "✅ Test BMC servers started on ports $(LOCAL_TEST_PORTS)"
 
 # Start Manager service with Air
-local-env-start-manager: local-env-setup
+local-env-start-manager:
 	@echo "🔄 Starting Manager service with Air..."
 	@cd manager && DB_PATH=../$(LOCAL_DB_PATH) JWT_SECRET=$(LOCAL_JWT_SECRET) PORT=$(LOCAL_MANAGER_PORT) \
 		nohup air -c .air.toml > ../tmp/logs/manager.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
@@ -217,7 +217,7 @@ local-env-start-manager: local-env-setup
 	@echo "✅ Manager service started on port $(LOCAL_MANAGER_PORT)"
 
 # Start Gateway service with Air
-local-env-start-gateway: local-env-setup
+local-env-start-gateway:
 	@echo "🔄 Starting Gateway service with Air..."
 	@cd gateway && BMC_MANAGER_ENDPOINT=http://localhost:$(LOCAL_MANAGER_PORT) JWT_SECRET=$(LOCAL_JWT_SECRET) \
 		PORT=$(LOCAL_GATEWAY_PORT) GATEWAY_ID=local-gateway-1 REGION=local-dev \
@@ -226,7 +226,7 @@ local-env-start-gateway: local-env-setup
 	@echo "✅ Gateway service started on port $(LOCAL_GATEWAY_PORT)"
 
 # Start Local Agent service with Air
-local-env-start-agent: local-env-setup
+local-env-start-agent:
 	@echo "🔄 Starting Local Agent service with Air..."
 	@cd local-agent && BMC_REGIONAL_GATEWAY_ENDPOINT=http://localhost:$(LOCAL_GATEWAY_PORT) \
 		BMC_AGENT_ENDPOINT=http://localhost:$(LOCAL_AGENT_PORT) \
@@ -236,7 +236,7 @@ local-env-start-agent: local-env-setup
 	@echo "✅ Local Agent service started on port $(LOCAL_AGENT_PORT)"
 
 # Start all services in the correct order
-local-env-up: local-env-deps
+local-env-up: local-env-deps local-env-setup
 	@echo "🚀 Starting BMC Management System - Local Air Environment"
 	@echo "=========================================================="
 	@make -s local-env-start-test-servers
