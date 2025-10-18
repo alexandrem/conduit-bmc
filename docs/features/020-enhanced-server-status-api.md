@@ -1,20 +1,14 @@
 ---
 rfd: "020"
 title: "Enhanced Server Status API"
-state: "approved"
-priority: "medium"
-breaking_changes: false
-testing_required: true
-database_changes: false
+state: "implemented"
 api_changes: true
-dependencies: []
-database_migrations: []
 areas: ["cli", "gateway", "local-agent", "webui"]
 ---
 
 # RFD 020 - Enhanced Server Status API
 
-**Status:** ✅ Approved
+**Status:** 🎉 Implemented
 
 ## Summary
 
