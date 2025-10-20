@@ -18,6 +18,23 @@ providers who need to give customers secure access to their server consoles.
 - 🚀 NAT-friendly outbound connections
 - 🔌 Dual APIs: REST + gRPC
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="docs/images/SOL-idrac9-terminal.png" alt="Serial-over-LAN Console" width="600"/>
+  <p><em>Serial-over-LAN terminal session with iDRAC9</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/VNC-idrac9-system-bios.png" alt="VNC Graphical Console" width="600"/>
+  <p><em>VNC graphical console - BIOS configuration</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/SOL-idrac9-system-bios.png" alt="SOL Graphical Console" width="600"/>
+  <p><em>SOL graphical console - BIOS configuration</em></p>
+</div>
+
 ## 🖥️ Supported BMC Protocols
 
 **Control Protocols:**
@@ -36,6 +53,7 @@ providers who need to give customers secure access to their server consoles.
 
 **Verified Implementations:**
 
+- ✅ **Dell iDRAC 9** — IPMI v2.0, Redfish, SOL, and native VNC tested on PowerEdge R640
 - ✅ **OpenBMC** — IPMI v2.0, Redfish, SOL, and VNC access tested (including WebSocket VNC)
 - ✅ **VirtualBMC** — Basic IPMI commands verified; console via QEMU VNC
 - ✅ **QEMU** — Native VNC server (RFB TCP) for guest framebuffer

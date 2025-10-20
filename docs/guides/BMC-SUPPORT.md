@@ -5,6 +5,7 @@
 | Implementation | IPMI v2.0 | Redfish | SOL | Native VNC (TCP) | WebSocket VNC |
 |----------------|------------|---------|-----|-----------------|----------------|
 | **OpenBMC**    | ✅         | ✅      | ✅  | (via AST daemon / vendor build) | ✅ (via websockify + noVNC) |
+| **Dell iDRAC 9** | ✅       | ✅      | ✅  | ✅              | ❌ |
 | **VirtualBMC** | ✅         | ❌      | ❌ (not functional) | QEMU-provided | QEMU + websockify |
 | **QEMU**       | ❌         | ❌      | ❌  | ✅ (RFB TCP)    | ✅ (via websockify + noVNC) |
 
@@ -16,6 +17,15 @@
 	- WebSocket VNC via `websockify` + noVNC
 - Tested on QEMU ARM target (`qemuarm` / AST2500 SoC emulation)
 - Notes: WebSocket VNC requires vendor build; not part of upstream OpenBMC core
+
+### Dell iDRAC 9
+
+- Verified IPMI v2.0, Redfish, and SOL (Serial-over-LAN)
+- Graphical access:
+	- Native VNC (RFB TCP, port 5900) ✅ Tested
+	- WebSocket VNC not available (uses proprietary HTML5 console)
+- Full power management (power on, off, reset, cycle)
+- Tested on Dell PowerEdge R640 with iDRAC 9 firmware
 
 ### VirtualBMC
 
@@ -37,7 +47,6 @@ The architecture *can* support WebSocket VNC, but **vendor-specific implementati
 
 - **Authentication** — WebSocket endpoints often require BMC session cookies/tokens
 - **URL Discovery** — Vendor-specific paths not standardized:
-	- Dell iDRAC: `wss://<bmc>/remoteconsole/websocket` (requires session auth)
 	- Supermicro: `wss://<bmc>/KVMWS/<sessionid>` (requires session auth)
 	- Lenovo XCC: `wss://<bmc>/redfish/v1/Systems/1/GraphicalConsole` (untested)
 - **Protocol Variations** — Some vendors wrap RFB in proprietary framing
@@ -45,7 +54,6 @@ The architecture *can* support WebSocket VNC, but **vendor-specific implementati
 
 ### Vendors Requiring Additional Integration Work
 
-- 🔶 **Dell iDRAC** — WebSocket endpoint exists; requires session authentication
 - 🔶 **Supermicro** — WebSocket KVM available; session management required
 - 🔶 **Lenovo XCC** — Redfish GraphicalConsole untested
 
