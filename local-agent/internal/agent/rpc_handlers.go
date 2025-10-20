@@ -3,9 +3,12 @@ package agent
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"connectrpc.com/connect"
+
 	gatewayv1 "gateway/gen/gateway/v1"
+	"local-agent/internal/metrics"
 )
 
 // RPC Handler Methods
@@ -46,16 +49,26 @@ func (a *LocalAgent) PowerOn(
 	ctx context.Context,
 	req *connect.Request[gatewayv1.PowerOperationRequest],
 ) (*connect.Response[gatewayv1.PowerOperationResponse], error) {
+	start := time.Now()
+
 	// Find the server by ID
 	server := a.discoveredServers[req.Msg.ServerId]
 	if server == nil {
+		metrics.BMCOperationsTotal.WithLabelValues("unknown", "power_on", "not_found").Inc()
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
+	bmcType := string(server.ControlEndpoint.Type)
+
 	// Execute power on operation
 	if err := a.bmcClient.PowerOn(ctx, server); err != nil {
+		metrics.BMCOperationsTotal.WithLabelValues(bmcType, "power_on", "failure").Inc()
+		metrics.BMCOperationDuration.WithLabelValues(bmcType, "power_on").Observe(time.Since(start).Seconds())
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("power on failed: %w", err))
 	}
+
+	metrics.BMCOperationsTotal.WithLabelValues(bmcType, "power_on", "success").Inc()
+	metrics.BMCOperationDuration.WithLabelValues(bmcType, "power_on").Observe(time.Since(start).Seconds())
 
 	resp := &gatewayv1.PowerOperationResponse{
 		Success: true,
@@ -68,16 +81,26 @@ func (a *LocalAgent) PowerOff(
 	ctx context.Context,
 	req *connect.Request[gatewayv1.PowerOperationRequest],
 ) (*connect.Response[gatewayv1.PowerOperationResponse], error) {
+	start := time.Now()
+
 	// Find the server by ID
 	server := a.discoveredServers[req.Msg.ServerId]
 	if server == nil {
+		metrics.BMCOperationsTotal.WithLabelValues("unknown", "power_off", "not_found").Inc()
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
+	bmcType := string(server.ControlEndpoint.Type)
+
 	// Execute power off operation
 	if err := a.bmcClient.PowerOff(ctx, server); err != nil {
+		metrics.BMCOperationsTotal.WithLabelValues(bmcType, "power_off", "failure").Inc()
+		metrics.BMCOperationDuration.WithLabelValues(bmcType, "power_off").Observe(time.Since(start).Seconds())
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("power off failed: %w", err))
 	}
+
+	metrics.BMCOperationsTotal.WithLabelValues(bmcType, "power_off", "success").Inc()
+	metrics.BMCOperationDuration.WithLabelValues(bmcType, "power_off").Observe(time.Since(start).Seconds())
 
 	resp := &gatewayv1.PowerOperationResponse{
 		Success: true,
@@ -90,16 +113,26 @@ func (a *LocalAgent) PowerCycle(
 	ctx context.Context,
 	req *connect.Request[gatewayv1.PowerOperationRequest],
 ) (*connect.Response[gatewayv1.PowerOperationResponse], error) {
+	start := time.Now()
+
 	// Find the server by ID
 	server := a.discoveredServers[req.Msg.ServerId]
 	if server == nil {
+		metrics.BMCOperationsTotal.WithLabelValues("unknown", "power_cycle", "not_found").Inc()
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
+	bmcType := string(server.ControlEndpoint.Type)
+
 	// Execute power cycle operation
 	if err := a.bmcClient.PowerCycle(ctx, server); err != nil {
+		metrics.BMCOperationsTotal.WithLabelValues(bmcType, "power_cycle", "failure").Inc()
+		metrics.BMCOperationDuration.WithLabelValues(bmcType, "power_cycle").Observe(time.Since(start).Seconds())
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("power cycle failed: %w", err))
 	}
+
+	metrics.BMCOperationsTotal.WithLabelValues(bmcType, "power_cycle", "success").Inc()
+	metrics.BMCOperationDuration.WithLabelValues(bmcType, "power_cycle").Observe(time.Since(start).Seconds())
 
 	resp := &gatewayv1.PowerOperationResponse{
 		Success: true,
@@ -112,16 +145,26 @@ func (a *LocalAgent) Reset(
 	ctx context.Context,
 	req *connect.Request[gatewayv1.PowerOperationRequest],
 ) (*connect.Response[gatewayv1.PowerOperationResponse], error) {
+	start := time.Now()
+
 	// Find the server by ID
 	server := a.discoveredServers[req.Msg.ServerId]
 	if server == nil {
+		metrics.BMCOperationsTotal.WithLabelValues("unknown", "reset", "not_found").Inc()
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
+	bmcType := string(server.ControlEndpoint.Type)
+
 	// Execute reset operation
 	if err := a.bmcClient.Reset(ctx, server); err != nil {
+		metrics.BMCOperationsTotal.WithLabelValues(bmcType, "reset", "failure").Inc()
+		metrics.BMCOperationDuration.WithLabelValues(bmcType, "reset").Observe(time.Since(start).Seconds())
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("reset failed: %w", err))
 	}
+
+	metrics.BMCOperationsTotal.WithLabelValues(bmcType, "reset", "success").Inc()
+	metrics.BMCOperationDuration.WithLabelValues(bmcType, "reset").Observe(time.Since(start).Seconds())
 
 	resp := &gatewayv1.PowerOperationResponse{
 		Success: true,
@@ -134,17 +177,27 @@ func (a *LocalAgent) GetPowerStatus(
 	ctx context.Context,
 	req *connect.Request[gatewayv1.PowerStatusRequest],
 ) (*connect.Response[gatewayv1.PowerStatusResponse], error) {
+	start := time.Now()
+
 	// Find the server by ID
 	server := a.discoveredServers[req.Msg.ServerId]
 	if server == nil {
+		metrics.BMCOperationsTotal.WithLabelValues("unknown", "get_status", "not_found").Inc()
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
+
+	bmcType := string(server.ControlEndpoint.Type)
 
 	// Get power state
 	stateStr, err := a.bmcClient.GetPowerState(ctx, server)
 	if err != nil {
+		metrics.BMCOperationsTotal.WithLabelValues(bmcType, "get_status", "failure").Inc()
+		metrics.BMCOperationDuration.WithLabelValues(bmcType, "get_status").Observe(time.Since(start).Seconds())
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("get power state failed: %w", err))
 	}
+
+	metrics.BMCOperationsTotal.WithLabelValues(bmcType, "get_status", "success").Inc()
+	metrics.BMCOperationDuration.WithLabelValues(bmcType, "get_status").Observe(time.Since(start).Seconds())
 
 	// Convert string state to protobuf enum
 	var state gatewayv1.PowerState

@@ -14,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
@@ -23,6 +24,7 @@ import (
 	"core/streaming"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 	"gateway/internal/gateway"
+	"gateway/internal/metrics"
 	"gateway/internal/session"
 	gatewaystreaming "gateway/internal/streaming"
 	"gateway/internal/webui"
@@ -87,6 +89,11 @@ func main() {
 
 	corsHandler := setupRouter(path, cfg.Gateway.Region, cfg.Gateway.ManagerEndpoint, handler, gatewayHandler)
 
+	// Start metrics collector for gauge metrics
+	metricsCollector := metrics.NewCollector(gatewayHandler, 15*time.Second)
+	go metricsCollector.Start(ctx)
+	defer metricsCollector.Stop()
+
 	// Create server with HTTP/2 support
 	server := &http.Server{
 		Addr:    cfg.GetListenAddress(),
@@ -103,6 +110,7 @@ func main() {
 		Msg("Starting gateway server")
 	log.Info().Msgf("Health check: http://%s/health", cfg.GetListenAddress())
 	log.Info().Msgf("Gateway status: http://%s/status", cfg.GetListenAddress())
+	log.Info().Msgf("Metrics: http://%s/metrics", cfg.GetListenAddress())
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("Server failed to start")
@@ -168,12 +176,8 @@ func setupRouter(path, region, managerEndpoint string, handler http.Handler, gat
 		}
 	}).Methods("GET")
 
-	// Add metrics endpoint for monitoring
-	r.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("# Gateway Metrics\n# TODO: Implement Prometheus metrics\n"))
-	}).Methods("GET")
+	// Add Prometheus metrics endpoint
+	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	// Create WebSocket upgrader
 	upgrader := websocket.Upgrader{
@@ -202,8 +206,8 @@ func setupRouter(path, region, managerEndpoint string, handler http.Handler, gat
 		consoleWebSocketHandler(w, r, gatewayHandler, &upgrader)
 	}).Methods("GET")
 
-	// Add CORS middleware for web clients
-	corsHandler := addCORS(r)
+	// Add CORS and metrics middleware for web clients
+	corsHandler := addCORS(metrics.HTTPMetricsMiddleware(r))
 
 	return corsHandler
 }

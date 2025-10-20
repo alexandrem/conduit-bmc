@@ -11,6 +11,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
@@ -21,6 +22,7 @@ import (
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
 	"local-agent/internal/discovery"
+	"local-agent/internal/metrics"
 	solservice "local-agent/internal/sol"
 	"local-agent/pkg/bmc"
 	"local-agent/pkg/config"
@@ -142,11 +144,19 @@ func (a *LocalAgent) Start(ctx context.Context) error {
 		return fmt.Errorf("dependency validation failed: %w", err)
 	}
 
+	// Start metrics collector for gauge metrics
+	metricsCollector := metrics.NewCollector(a, 15*time.Second)
+	go metricsCollector.Start(ctx)
+	defer metricsCollector.Stop()
+
 	// Start HTTP server in goroutine
 	go func() {
 		log.Info().
 			Int("port", a.config.Agent.HTTPPort).
 			Msg("Starting HTTP server for agent endpoints")
+		log.Info().Msgf("Health check: http://localhost:%d/health", a.config.Agent.HTTPPort)
+		log.Info().Msgf("Agent status: http://localhost:%d/status", a.config.Agent.HTTPPort)
+		log.Info().Msgf("Metrics: http://localhost:%d/metrics", a.config.Agent.HTTPPort)
 		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error().Err(err).Msg("HTTP server error")
 		}
@@ -569,10 +579,13 @@ func (a *LocalAgent) setupServer(port int) {
 	// Setup legacy HTTP routes
 	a.setupHTTPRoutes(router)
 
+	// Add metrics middleware
+	handlerWithMetrics := metrics.HTTPMetricsMiddleware(router)
+
 	// Enable HTTP/2 support for Connect RPC streaming
 	a.httpServer = &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: h2c.NewHandler(router, &http2.Server{}),
+		Handler: h2c.NewHandler(handlerWithMetrics, &http2.Server{}),
 	}
 }
 
@@ -588,6 +601,9 @@ func (a *LocalAgent) setupHTTPRoutes(router *mux.Router) {
 
 	// Agent status endpoint
 	router.HandleFunc("/status", a.handleStatus).Methods("GET")
+
+	// Prometheus metrics endpoint
+	router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	// VNC sessions now handled via gRPC streaming (no HTTP endpoint needed)
 
@@ -763,4 +779,3 @@ func (a *LocalAgent) handleSOLWebSocket(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
-

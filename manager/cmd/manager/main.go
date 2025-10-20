@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -13,6 +15,7 @@ import (
 	"manager/gen/manager/v1/managerv1connect"
 	"manager/internal/database"
 	"manager/internal/manager"
+	"manager/internal/metrics"
 	"manager/pkg/auth"
 	"manager/pkg/config"
 
@@ -116,8 +119,17 @@ func main() {
 		w.Write(jsonBytes)
 	})
 
-	// Add CORS middleware for web clients
-	corsHandler := addCORS(mux)
+	// Add Prometheus metrics endpoint
+	mux.Handle("/metrics", promhttp.Handler())
+
+	// Add CORS and metrics middleware for web clients
+	corsHandler := addCORS(metrics.HTTPMetricsMiddleware(mux))
+
+	// Start metrics collector for gauge metrics
+	metricsCollector := metrics.NewCollector(db, 30*time.Second)
+	ctx := context.Background()
+	go metricsCollector.Start(ctx)
+	defer metricsCollector.Stop()
 
 	// Create server with HTTP/2 support
 	server := &http.Server{
@@ -137,6 +149,7 @@ func main() {
 		Msg("Starting manager server")
 	log.Info().Msgf("Health check: http://%s/health", cfg.GetListenAddress())
 	log.Info().Msgf("System status: http://%s/status", cfg.GetListenAddress())
+	log.Info().Msgf("Metrics: http://%s/metrics", cfg.GetListenAddress())
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("Server failed to start")
