@@ -165,7 +165,7 @@ Request for Discussion documents for upcoming features:
 
 Contributions welcome for:
 
-- Vendor-specific session authentication (iDRAC, Supermicro, etc.)
+- Vendor-specific session authentication (Supermicro, etc.)
 - Protocol adapters for non-standard RFB implementations
 - Hardware KVM-over-IP device support
 
