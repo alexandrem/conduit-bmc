@@ -114,8 +114,8 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full instructions.
 
 Every service exposes:
 
-- `GET /health` – readiness/liveness indicator.
-- `GET /metrics` – Prometheus metrics (latency, error rates, queue depth, etc.). - TODO
+- `GET /health` – readiness/liveness indicator
+- `GET /metrics` – Prometheus metrics
 
 ## 📚 Documentation
 
