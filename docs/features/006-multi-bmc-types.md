@@ -1,16 +1,16 @@
 ---
 rfd: "006"
 title: "Multi-Protocol BMC Representation"
-state: "approved"
+state: "implemented"
 testing_required: true
 database_changes: true
 api_changes: true
 areas: [ "manager", "gateway", "local-agent", "tests" ]
 ---
 
-    # RFD 006 - Multi-Protocol BMC Representation
+# RFD 006 - Multi-Protocol BMC Representation
 
-**Status:** ✅ Approved
+**Status:** 🎉 Implemented
 
 ## Summary
 
@@ -96,7 +96,6 @@ type BMCControlEndpoint struct {
     Username     string
     Password     string
     Capabilities []string
-    Priority     int // Lower = higher priority (0 = highest)
 }
 ```
 
@@ -133,17 +132,20 @@ static:
                     type: "ipmi"
                     username: "admin"
                     password: "ipmi_password"
-                    priority: 0  # Try IPMI first
                 -   endpoint: "https://10.0.1.42:8000"
                     type: "redfish"
                     username: "admin"
                     password: "redfish_password"
-                    priority: 1  # Fallback to Redfish
             features: [ "power", "console" ]
 ```
 
 **Breaking Change:** The old `control_endpoint` field (singular) is no longer supported.
 All configurations must use `control_endpoints` (plural) array format.
+
+**Endpoint Selection:** The system uses the `PrimaryProtocol` field to select which endpoint
+to use. If `PrimaryProtocol` is set, the system finds the endpoint matching that protocol type.
+If `PrimaryProtocol` is not set or no match is found, the first endpoint in the array is used.
+This means array order matters - place the preferred endpoint first.
 
 ### Protocol Selection Strategy
 
@@ -156,10 +158,10 @@ operation type and protocol capabilities:
 
 - **Power Operations** (power on/off, reset): Prefer IPMI for speed and
   reliability
-- **SOL/Console**: Use highest priority available protocol
+- **SOL/Console**: Use primary protocol (PrimaryProtocol or first in array)
 - **Information Queries** (server info, sensors): Prefer Redfish for richer
   metadata (no fallback)
-- **Default**: Use primary protocol (highest priority)
+- **Default**: Use primary protocol (PrimaryProtocol or first in array)
 
 **Selective Fallback Strategy:**
 
@@ -220,7 +222,6 @@ message BMCControlEndpoint {
     string password = 4;
     TLSConfig tls = 5;
     repeated string capabilities = 6;
-    int32 priority = 7;  // Lower value = higher priority (0 = highest)
 }
 
 message RegisterServerRequest {
@@ -298,7 +299,6 @@ CREATE TABLE IF NOT EXISTS server_bmc_protocols
     port INTEGER,
     username VARCHAR(255),
     password VARCHAR(255),
-    priority INTEGER DEFAULT 0,
     capabilities TEXT, -- JSON array
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
@@ -348,7 +348,6 @@ type BMCControlEndpoint struct {
     Password     string     `json:"password"`
     TLS          *TLSConfig `json:"tls"`
     Capabilities []string   `json:"capabilities"`
-    Priority     int        `json:"priority"`  // Lower = higher priority (0 = highest)
 }
 ```
 
@@ -422,12 +421,10 @@ static:
                     type: "ipmi"
                     username: "admin"
                     password: "ipmi_password"
-                    priority: 0  # Try IPMI first
                 -   endpoint: "https://10.0.1.42:8000"
                     type: "redfish"
                     username: "admin"
                     password: "redfish_password"
-                    priority: 1  # Fallback to Redfish
 
             features: [ "power", "console", "vnc" ]
 ```
