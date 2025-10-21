@@ -677,14 +677,19 @@ func (a *LocalAgent) handleStatus(w http.ResponseWriter, r *http.Request) {
 			"metadata":    server.Metadata,
 		}
 
-		// Add control endpoint info
-		if server.GetPrimaryControlEndpoint() != nil {
-			serverInfo["control_endpoint"] = map[string]interface{}{
-				"endpoint":     server.GetPrimaryControlEndpoint().Endpoint,
-				"type":         server.GetPrimaryControlEndpoint().Type,
-				"username":     server.GetPrimaryControlEndpoint().Username,
-				"capabilities": server.GetPrimaryControlEndpoint().Capabilities,
+		// Add all control endpoints (RFD 006 multi-protocol support)
+		if len(server.ControlEndpoints) > 0 {
+			controlEndpoints := make([]map[string]interface{}, len(server.ControlEndpoints))
+			for i, endpoint := range server.ControlEndpoints {
+				controlEndpoints[i] = map[string]interface{}{
+					"endpoint":     endpoint.Endpoint,
+					"type":         endpoint.Type,
+					"username":     endpoint.Username,
+					"capabilities": endpoint.Capabilities,
+				}
 			}
+			serverInfo["control_endpoints"] = controlEndpoints
+			serverInfo["primary_protocol"] = server.PrimaryProtocol
 		}
 
 		// Add SOL endpoint info
