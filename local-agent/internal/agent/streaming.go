@@ -252,8 +252,8 @@ func (a *LocalAgent) StreamConsoleData(
 
 	// Prepare SOL config, inheriting TLS settings from control endpoint
 	solConfig := sol.DefaultSOLConfig()
-	if server.ControlEndpoint != nil && server.ControlEndpoint.TLS != nil {
-		solConfig.InsecureSkipVerify = server.ControlEndpoint.TLS.InsecureSkipVerify
+	if server.GetPrimaryControlEndpoint() != nil && server.GetPrimaryControlEndpoint().TLS != nil {
+		solConfig.InsecureSkipVerify = server.GetPrimaryControlEndpoint().TLS.InsecureSkipVerify
 	} else {
 		// Default to true for BMCs (they typically use self-signed certs)
 		solConfig.InsecureSkipVerify = true

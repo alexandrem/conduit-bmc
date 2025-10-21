@@ -36,16 +36,16 @@ static:
         location: "rack-1"
         model: "Test Server 1"
 
-      # Redfish Control API
-      control_endpoint:
-        endpoint: "http://localhost:9001"
-        type: "redfish"
-        username: "admin"
-        password: "password"
-        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
-        tls:
-          enabled: false
-          insecure_skip_verify: true
+      # Redfish Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "http://localhost:9001"
+          type: "redfish"
+          username: "admin"
+          password: "password"
+          capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
+          tls:
+            enabled: false
+            insecure_skip_verify: true
 
       # Redfish Serial Console (if available)
       sol_endpoint:
@@ -67,16 +67,16 @@ static:
         location: "rack-1"
         model: "Test Server 2"
 
-      # Redfish Control API
-      control_endpoint:
-        endpoint: "http://localhost:9002"
-        type: "redfish"
-        username: "admin"
-        password: "password"
-        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
-        tls:
-          enabled: false
-          insecure_skip_verify: true
+      # Redfish Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "http://localhost:9002"
+          type: "redfish"
+          username: "admin"
+          password: "password"
+          capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
+          tls:
+            enabled: false
+            insecure_skip_verify: true
 
       # Redfish Serial Console (if available)
       sol_endpoint:
@@ -98,16 +98,16 @@ static:
         location: "rack-1"
         model: "Test Server 3"
 
-      # Redfish Control API
-      control_endpoint:
-        endpoint: "http://localhost:9003"
-        type: "redfish"
-        username: "admin"
-        password: "password"
-        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
-        tls:
-          enabled: false
-          insecure_skip_verify: true
+      # Redfish Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "http://localhost:9003"
+          type: "redfish"
+          username: "admin"
+          password: "password"
+          capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
+          tls:
+            enabled: false
+            insecure_skip_verify: true
 
       # Redfish Serial Console (if available)
       sol_endpoint:

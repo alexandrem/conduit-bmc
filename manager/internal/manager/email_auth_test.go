@@ -85,8 +85,13 @@ func TestRegisterServer_WithEmailCustomerID(t *testing.T) {
 		ServerId:          "server-01",
 		DatacenterId:      "dc-test-01",
 		RegionalGatewayId: "test-gateway-1",
-		BmcType:           managerv1.BMCType_BMC_REDFISH,
-		BmcEndpoint:       "http://localhost:9001",
+		BmcProtocols: []*managerv1.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     managerv1.BMCType_BMC_REDFISH,
+			},
+		},
+		PrimaryProtocol: managerv1.BMCType_BMC_REDFISH,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -103,7 +108,7 @@ func TestRegisterServer_WithEmailCustomerID(t *testing.T) {
 	server, err := handler.db.Servers.Get(context.Background(), "server-01")
 	require.NoError(t, err)
 	assert.Equal(t, customerEmail, server.CustomerID)
-	assert.Equal(t, "http://localhost:9001", server.ControlEndpoint.Endpoint)
+	assert.Equal(t, "http://localhost:9001", server.GetPrimaryControlEndpoint().Endpoint)
 }
 
 func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
@@ -119,10 +124,13 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		ID:           "server-alice-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -136,10 +144,13 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		ID:           "server-bob-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9002",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9002",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -153,10 +164,13 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		ID:           "server-alice-02",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9003",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9003",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -275,10 +289,13 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 		ID:           "server-alice-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -292,10 +309,13 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 		ID:           "server-bob-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9002",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9002",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -380,8 +400,13 @@ func TestEmailBasedCustomerID_EndToEndFlow(t *testing.T) {
 		ServerId:          "test-server-01",
 		DatacenterId:      "dc-test-01",
 		RegionalGatewayId: "test-gateway-1",
-		BmcType:           managerv1.BMCType_BMC_REDFISH,
-		BmcEndpoint:       "http://localhost:9001",
+		BmcProtocols: []*managerv1.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     managerv1.BMCType_BMC_REDFISH,
+			},
+		},
+		PrimaryProtocol: managerv1.BMCType_BMC_REDFISH,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -402,7 +427,7 @@ func TestEmailBasedCustomerID_EndToEndFlow(t *testing.T) {
 	require.Len(t, servers, 1)
 	assert.Equal(t, "test-server-01", servers[0].Id)
 	assert.Equal(t, "testuser@company.com", servers[0].CustomerId)
-	assert.Equal(t, "http://localhost:9001", servers[0].ControlEndpoint.Endpoint)
+	assert.Equal(t, "http://localhost:9001", servers[0].ControlEndpoints[0].Endpoint)
 
 	// Step 5: Get specific server and verify ownership
 	getReq := connect.NewRequest(&managerv1.GetServerRequest{

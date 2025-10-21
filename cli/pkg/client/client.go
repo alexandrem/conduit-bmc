@@ -84,15 +84,36 @@ func (c *Client) getGatewayClient(ctx context.Context, serverID string) (*Region
 // Updated methods that use the new architecture
 
 type ServerInfo struct {
-	ID                string                  `json:"id"`
-	ControlEndpoint   *BMCControlEndpoint     `json:"control_endpoint"`
-	SOLEndpoint       *SOLEndpoint            `json:"sol_endpoint"`
-	VNCEndpoint       *VNCEndpoint            `json:"vnc_endpoint"`
-	Features          []string                `json:"features"`
-	Status            string                  `json:"status"`
-	DatacenterID      string                  `json:"datacenter_id"`
-	Metadata          map[string]string       `json:"metadata"`
+	ID                string                   `json:"id"`
+	ControlEndpoint   *BMCControlEndpoint      `json:"control_endpoint"` // Deprecated: use ControlEndpoints
+	ControlEndpoints  []*BMCControlEndpoint    `json:"control_endpoints"`
+	PrimaryProtocol   string                   `json:"primary_protocol"`
+	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint"`
+	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint"`
+	Features          []string                 `json:"features"`
+	Status            string                   `json:"status"`
+	DatacenterID      string                   `json:"datacenter_id"`
+	Metadata          map[string]string        `json:"metadata"`
 	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata,omitempty"`
+}
+
+// GetPrimaryControlEndpoint returns the primary control endpoint.
+// Looks for endpoint matching PrimaryProtocol, otherwise returns first endpoint or the deprecated ControlEndpoint.
+func (s *ServerInfo) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+	if len(s.ControlEndpoints) > 0 {
+		// Try to find endpoint matching PrimaryProtocol
+		if s.PrimaryProtocol != "" {
+			for _, ep := range s.ControlEndpoints {
+				if ep.Type == s.PrimaryProtocol {
+					return ep
+				}
+			}
+		}
+		// Fallback to first endpoint
+		return s.ControlEndpoints[0]
+	}
+	// Fallback to deprecated ControlEndpoint field
+	return s.ControlEndpoint
 }
 
 type BMCControlEndpoint struct {
@@ -166,22 +187,30 @@ func (c *Client) GetServer(ctx context.Context, serverID string) (*ServerInfo, e
 		Metadata:     server.Metadata,
 	}
 
-	// Convert control endpoint
-	if server.ControlEndpoint != nil {
-		serverInfo.ControlEndpoint = &BMCControlEndpoint{
-			Endpoint:     server.ControlEndpoint.Endpoint,
-			Type:         server.ControlEndpoint.Type,
-			Username:     server.ControlEndpoint.Username,
-			Password:     server.ControlEndpoint.Password,
-			Capabilities: server.ControlEndpoint.Capabilities,
+	// Convert control endpoints
+	serverInfo.ControlEndpoints = make([]*BMCControlEndpoint, 0, len(server.ControlEndpoints))
+	for _, endpoint := range server.ControlEndpoints {
+		bmcEndpoint := &BMCControlEndpoint{
+			Endpoint:     endpoint.Endpoint,
+			Type:         endpoint.Type,
+			Username:     endpoint.Username,
+			Password:     endpoint.Password,
+			Capabilities: endpoint.Capabilities,
 		}
-		if server.ControlEndpoint.TLS != nil {
-			serverInfo.ControlEndpoint.TLS = &TLSConfig{
-				Enabled:            server.ControlEndpoint.TLS.Enabled,
-				InsecureSkipVerify: server.ControlEndpoint.TLS.InsecureSkipVerify,
-				CACert:             server.ControlEndpoint.TLS.CACert,
+		if endpoint.TLS != nil {
+			bmcEndpoint.TLS = &TLSConfig{
+				Enabled:            endpoint.TLS.Enabled,
+				InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
+				CACert:             endpoint.TLS.CACert,
 			}
 		}
+		serverInfo.ControlEndpoints = append(serverInfo.ControlEndpoints, bmcEndpoint)
+	}
+	serverInfo.PrimaryProtocol = server.PrimaryProtocol
+
+	// For backwards compatibility, also set the deprecated ControlEndpoint field
+	if server.GetPrimaryControlEndpoint() != nil {
+		serverInfo.ControlEndpoint = serverInfo.GetPrimaryControlEndpoint()
 	}
 
 	// Convert SOL endpoint
@@ -248,20 +277,20 @@ func (c *Client) ListServers(ctx context.Context) ([]ServerInfo, error) {
 			Metadata:     server.Metadata,
 		}
 
-		// Convert control endpoint
-		if server.ControlEndpoint != nil {
+		// Convert control endpoint (use primary/first endpoint for backwards compatibility)
+		if server.GetPrimaryControlEndpoint() != nil {
 			serverInfo.ControlEndpoint = &BMCControlEndpoint{
-				Endpoint:     server.ControlEndpoint.Endpoint,
-				Type:         server.ControlEndpoint.Type,
-				Username:     server.ControlEndpoint.Username,
-				Password:     server.ControlEndpoint.Password,
-				Capabilities: server.ControlEndpoint.Capabilities,
+				Endpoint:     server.GetPrimaryControlEndpoint().Endpoint,
+				Type:         server.GetPrimaryControlEndpoint().Type,
+				Username:     server.GetPrimaryControlEndpoint().Username,
+				Password:     server.GetPrimaryControlEndpoint().Password,
+				Capabilities: server.GetPrimaryControlEndpoint().Capabilities,
 			}
-			if server.ControlEndpoint.TLS != nil {
+			if server.GetPrimaryControlEndpoint().TLS != nil {
 				serverInfo.ControlEndpoint.TLS = &TLSConfig{
-					Enabled:            server.ControlEndpoint.TLS.Enabled,
-					InsecureSkipVerify: server.ControlEndpoint.TLS.InsecureSkipVerify,
-					CACert:             server.ControlEndpoint.TLS.CACert,
+					Enabled:            server.GetPrimaryControlEndpoint().TLS.Enabled,
+					InsecureSkipVerify: server.GetPrimaryControlEndpoint().TLS.InsecureSkipVerify,
+					CACert:             server.GetPrimaryControlEndpoint().TLS.CACert,
 				}
 			}
 		}

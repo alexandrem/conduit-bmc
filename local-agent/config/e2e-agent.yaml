@@ -40,13 +40,13 @@ static:
         external_port: 7230
         server_container: "e2e-server-01"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "e2e-virtualbmc-01:623"
-        type: "ipmi"
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "e2e-virtualbmc-01:623"
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -68,13 +68,13 @@ static:
         external_port: 7231
         server_container: "e2e-server-02"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "e2e-virtualbmc-02:623"
-        type: "ipmi"
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "e2e-virtualbmc-02:623"
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -96,13 +96,13 @@ static:
         external_port: 7232
         server_container: "e2e-server-03"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "e2e-virtualbmc-03:623"
-        type: "ipmi"
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "e2e-virtualbmc-03:623"
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:

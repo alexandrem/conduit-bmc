@@ -94,7 +94,8 @@ func main() {
 	go metricsCollector.Start(ctx)
 	defer metricsCollector.Stop()
 
-	// Create server with HTTP/2 support
+	// Create server with HTTP/2 support for Connect RPC (agents use HTTP/2)
+	// WebSocket endpoints bypass h2c via direct registration on the router
 	server := &http.Server{
 		Addr:    cfg.GetListenAddress(),
 		Handler: h2c.NewHandler(corsHandler, &http2.Server{}),

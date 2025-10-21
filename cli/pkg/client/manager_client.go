@@ -105,7 +105,7 @@ func (c *BMCManagerClient) GetServerLocation(ctx context.Context, serverID strin
 		RegionalGatewayID:       resp.Msg.RegionalGatewayId,
 		RegionalGatewayEndpoint: resp.Msg.RegionalGatewayEndpoint,
 		DatacenterID:            resp.Msg.DatacenterId,
-		BMCType:                 resp.Msg.BmcType.String(),
+		PrimaryProtocol:         resp.Msg.PrimaryProtocol.String(),
 		Features:                resp.Msg.Features,
 	}, nil
 }
@@ -160,23 +160,26 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
 			Metadata:     server.Metadata,
 		}
 
-		// Convert control endpoint
-		if server.ControlEndpoint != nil {
-			clientServer.ControlEndpoint = &BMCControlEndpoint{
-				Endpoint:     server.ControlEndpoint.Endpoint,
-				Type:         server.ControlEndpoint.Type.String(),
-				Username:     server.ControlEndpoint.Username,
-				Password:     server.ControlEndpoint.Password,
-				Capabilities: server.ControlEndpoint.Capabilities,
+		// Convert control endpoints
+		clientServer.ControlEndpoints = make([]*BMCControlEndpoint, 0, len(server.ControlEndpoints))
+		for _, endpoint := range server.ControlEndpoints {
+			bmcEndpoint := &BMCControlEndpoint{
+				Endpoint:     endpoint.Endpoint,
+				Type:         endpoint.Type.String(),
+				Username:     endpoint.Username,
+				Password:     endpoint.Password,
+				Capabilities: endpoint.Capabilities,
 			}
-			if server.ControlEndpoint.Tls != nil {
-				clientServer.ControlEndpoint.TLS = &TLSConfig{
-					Enabled:            server.ControlEndpoint.Tls.Enabled,
-					InsecureSkipVerify: server.ControlEndpoint.Tls.InsecureSkipVerify,
-					CACert:             server.ControlEndpoint.Tls.CaCert,
+			if endpoint.Tls != nil {
+				bmcEndpoint.TLS = &TLSConfig{
+					Enabled:            endpoint.Tls.Enabled,
+					InsecureSkipVerify: endpoint.Tls.InsecureSkipVerify,
+					CACert:             endpoint.Tls.CaCert,
 				}
 			}
+			clientServer.ControlEndpoints = append(clientServer.ControlEndpoints, bmcEndpoint)
 		}
+		clientServer.PrimaryProtocol = server.PrimaryProtocol.String()
 
 		// Convert SOL endpoint
 		if server.SolEndpoint != nil {
@@ -241,23 +244,26 @@ func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Ser
 		Metadata:     server.Metadata,
 	}
 
-	// Convert control endpoint
-	if server.ControlEndpoint != nil {
-		clientServer.ControlEndpoint = &BMCControlEndpoint{
-			Endpoint:     server.ControlEndpoint.Endpoint,
-			Type:         server.ControlEndpoint.Type.String(),
-			Username:     server.ControlEndpoint.Username,
-			Password:     server.ControlEndpoint.Password,
-			Capabilities: server.ControlEndpoint.Capabilities,
+	// Convert control endpoints
+	clientServer.ControlEndpoints = make([]*BMCControlEndpoint, 0, len(server.ControlEndpoints))
+	for _, endpoint := range server.ControlEndpoints {
+		bmcEndpoint := &BMCControlEndpoint{
+			Endpoint:     endpoint.Endpoint,
+			Type:         endpoint.Type.String(),
+			Username:     endpoint.Username,
+			Password:     endpoint.Password,
+			Capabilities: endpoint.Capabilities,
 		}
-		if server.ControlEndpoint.Tls != nil {
-			clientServer.ControlEndpoint.TLS = &TLSConfig{
-				Enabled:            server.ControlEndpoint.Tls.Enabled,
-				InsecureSkipVerify: server.ControlEndpoint.Tls.InsecureSkipVerify,
-				CACert:             server.ControlEndpoint.Tls.CaCert,
+		if endpoint.Tls != nil {
+			bmcEndpoint.TLS = &TLSConfig{
+				Enabled:            endpoint.Tls.Enabled,
+				InsecureSkipVerify: endpoint.Tls.InsecureSkipVerify,
+				CACert:             endpoint.Tls.CaCert,
 			}
 		}
+		clientServer.ControlEndpoints = append(clientServer.ControlEndpoints, bmcEndpoint)
 	}
+	clientServer.PrimaryProtocol = server.PrimaryProtocol.String()
 
 	// Convert SOL endpoint
 	if server.SolEndpoint != nil {
@@ -376,7 +382,7 @@ type ServerLocation struct {
 	RegionalGatewayID       string
 	RegionalGatewayEndpoint string
 	DatacenterID            string
-	BMCType                 string
+	PrimaryProtocol         string
 	Features                []string
 }
 
@@ -393,13 +399,34 @@ type Server struct {
 	ID                string
 	CustomerID        string
 	DatacenterID      string
-	ControlEndpoint   *BMCControlEndpoint
+	ControlEndpoints  []*BMCControlEndpoint
+	PrimaryProtocol   string
 	SOLEndpoint       *SOLEndpoint
 	VNCEndpoint       *VNCEndpoint
 	Features          []string
 	Status            string
 	Metadata          map[string]string
 	DiscoveryMetadata *types.DiscoveryMetadata
+}
+
+// GetPrimaryControlEndpoint returns the primary control endpoint.
+// Looks for endpoint matching PrimaryProtocol, otherwise returns first endpoint.
+func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+	if len(s.ControlEndpoints) == 0 {
+		return nil
+	}
+
+	// Try to find endpoint matching PrimaryProtocol
+	if s.PrimaryProtocol != "" {
+		for _, ep := range s.ControlEndpoints {
+			if ep.Type == s.PrimaryProtocol {
+				return ep
+			}
+		}
+	}
+
+	// Fallback to first endpoint
+	return s.ControlEndpoints[0]
 }
 
 type ServerTokenResult struct {

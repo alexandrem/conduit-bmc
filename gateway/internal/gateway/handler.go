@@ -186,6 +186,7 @@ func (h *RegionalGatewayHandler) RegisterAgent(
 	h.agentRegistry.Register(agentInfo)
 
 	// Update BMC endpoint mappings (no more server concepts at gateway level)
+	// Process ALL control endpoints for each server (RFD 006 multi-protocol support)
 	for _, bmcEndpoint := range req.Msg.BmcEndpoints {
 		// Convert protobuf metadata map to Go map
 		metadata := make(map[string]string)
@@ -193,40 +194,40 @@ func (h *RegionalGatewayHandler) RegisterAgent(
 			metadata[key] = value
 		}
 
-		// Extract primary BMC endpoint from control endpoint
-		bmcEndpointAddr := ""
-		bmcType := types.BMCTypeIPMI // Default
-
-		if bmcEndpoint.ControlEndpoint != nil {
-			bmcEndpointAddr = bmcEndpoint.ControlEndpoint.Endpoint
-			bmcType = convertProtoBMCTypeToModels(bmcEndpoint.ControlEndpoint.Type)
-		}
-
-		if bmcEndpointAddr != "" {
-			// Extract credentials and capabilities from control endpoint
-			var username string
-			var capabilities []string
-			if bmcEndpoint.ControlEndpoint != nil {
-				username = bmcEndpoint.ControlEndpoint.Username
-				capabilities = bmcEndpoint.ControlEndpoint.Capabilities
+		// Process each control endpoint (server may have multiple protocols)
+		for _, controlEndpoint := range bmcEndpoint.ControlEndpoints {
+			if controlEndpoint == nil {
+				continue
 			}
 
-			mapping := &domain.AgentBMCMapping{
-				ServerID:          bmcEndpoint.ServerId,
-				BMCEndpoint:       bmcEndpointAddr,
-				AgentID:           req.Msg.AgentId,
-				DatacenterID:      req.Msg.DatacenterId,
-				BMCType:           bmcType,
-				Features:          bmcEndpoint.Features,
-				Status:            bmcEndpoint.Status,
-				LastSeen:          time.Now(),
-				Metadata:          metadata,
-				Username:          username,
-				Capabilities:      capabilities,
-				DiscoveryMetadata: types.ConvertDiscoveryMetadataFromProto(bmcEndpoint.DiscoveryMetadata),
+			bmcEndpointAddr := controlEndpoint.Endpoint
+			bmcType := convertProtoBMCTypeToModels(controlEndpoint.Type)
+
+			if bmcEndpointAddr != "" {
+				mapping := &domain.AgentBMCMapping{
+					ServerID:          bmcEndpoint.ServerId,
+					BMCEndpoint:       bmcEndpointAddr,
+					AgentID:           req.Msg.AgentId,
+					DatacenterID:      req.Msg.DatacenterId,
+					BMCType:           bmcType,
+					Features:          bmcEndpoint.Features,
+					Status:            bmcEndpoint.Status,
+					LastSeen:          time.Now(),
+					Metadata:          metadata,
+					Username:          controlEndpoint.Username,
+					Capabilities:      controlEndpoint.Capabilities,
+					DiscoveryMetadata: types.ConvertDiscoveryMetadataFromProto(bmcEndpoint.DiscoveryMetadata),
+				}
+				h.bmcEndpointMapping[bmcEndpointAddr] = mapping
+				log.Debug().
+					Str("server_id", bmcEndpoint.ServerId).
+					Str("bmc_endpoint", bmcEndpointAddr).
+					Str("bmc_type", string(bmcType)).
+					Str("agent_id", req.Msg.AgentId).
+					Str("username", controlEndpoint.Username).
+					Strs("capabilities", controlEndpoint.Capabilities).
+					Msg("Mapped BMC endpoint to agent")
 			}
-			h.bmcEndpointMapping[bmcEndpointAddr] = mapping
-			log.Debug().Str("server_id", bmcEndpoint.ServerId).Str("bmc_endpoint", bmcEndpointAddr).Str("agent_id", req.Msg.AgentId).Str("username", username).Strs("capabilities", capabilities).Msg("Mapped BMC endpoint to agent")
 		}
 	}
 
@@ -273,6 +274,7 @@ func (h *RegionalGatewayHandler) AgentHeartbeat(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("agent not found: %s", req.Msg.AgentId))
 	}
 
+	// Process ALL control endpoints for each server (RFD 006 multi-protocol support)
 	for _, bmcEndpoint := range req.Msg.BmcEndpoints {
 		// Convert protobuf metadata map to Go map
 		metadata := make(map[string]string)
@@ -280,39 +282,32 @@ func (h *RegionalGatewayHandler) AgentHeartbeat(
 			metadata[key] = value
 		}
 
-		// Extract primary BMC endpoint from control endpoint
-		bmcEndpointAddr := ""
-		bmcType := types.BMCTypeIPMI // Default
-
-		if bmcEndpoint.ControlEndpoint != nil {
-			bmcEndpointAddr = bmcEndpoint.ControlEndpoint.Endpoint
-			bmcType = convertProtoBMCTypeToModels(bmcEndpoint.ControlEndpoint.Type)
-		}
-
-		if bmcEndpointAddr != "" {
-			// Extract credentials and capabilities from control endpoint
-			var username string
-			var capabilities []string
-			if bmcEndpoint.ControlEndpoint != nil {
-				username = bmcEndpoint.ControlEndpoint.Username
-				capabilities = bmcEndpoint.ControlEndpoint.Capabilities
+		// Process each control endpoint (server may have multiple protocols)
+		for _, controlEndpoint := range bmcEndpoint.ControlEndpoints {
+			if controlEndpoint == nil {
+				continue
 			}
 
-			mapping := &domain.AgentBMCMapping{
-				ServerID:          bmcEndpoint.ServerId,
-				BMCEndpoint:       bmcEndpointAddr,
-				AgentID:           req.Msg.AgentId,
-				DatacenterID:      agentInfo.DatacenterID,
-				BMCType:           bmcType,
-				Features:          bmcEndpoint.Features,
-				Status:            bmcEndpoint.Status,
-				LastSeen:          time.Now(),
-				Metadata:          metadata,
-				Username:          username,
-				Capabilities:      capabilities,
-				DiscoveryMetadata: types.ConvertDiscoveryMetadataFromProto(bmcEndpoint.DiscoveryMetadata),
+			bmcEndpointAddr := controlEndpoint.Endpoint
+			bmcType := convertProtoBMCTypeToModels(controlEndpoint.Type)
+
+			if bmcEndpointAddr != "" {
+				mapping := &domain.AgentBMCMapping{
+					ServerID:          bmcEndpoint.ServerId,
+					BMCEndpoint:       bmcEndpointAddr,
+					AgentID:           req.Msg.AgentId,
+					DatacenterID:      agentInfo.DatacenterID,
+					BMCType:           bmcType,
+					Features:          bmcEndpoint.Features,
+					Status:            bmcEndpoint.Status,
+					LastSeen:          time.Now(),
+					Metadata:          metadata,
+					Username:          controlEndpoint.Username,
+					Capabilities:      controlEndpoint.Capabilities,
+					DiscoveryMetadata: types.ConvertDiscoveryMetadataFromProto(bmcEndpoint.DiscoveryMetadata),
+				}
+				h.bmcEndpointMapping[bmcEndpointAddr] = mapping
 			}
-			h.bmcEndpointMapping[bmcEndpointAddr] = mapping
 		}
 	}
 

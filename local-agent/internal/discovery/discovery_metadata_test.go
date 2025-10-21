@@ -35,16 +35,19 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-1",
 				CustomerID: "customer-1",
-				ControlEndpoint: &BMCControlEndpoint{
-					Endpoint: "https://192.168.1.100:8000",
-					Type:     types.BMCTypeRedfish,
-					Username: "admin",
-					Password: "password",
-					TLS: &TLSConfig{
-						Enabled:            true,
-						InsecureSkipVerify: true,
+				ControlEndpoints: []*BMCControlEndpoint{
+					{
+						Endpoint: "https://192.168.1.100:8000",
+						Type:     types.BMCTypeRedfish,
+						Username: "admin",
+						Password: "password",
+						TLS: &TLSConfig{
+							Enabled:            true,
+							InsecureSkipVerify: true,
+						},
 					},
 				},
+				PrimaryProtocol: types.BMCTypeRedfish,
 				SOLEndpoint: &SOLEndpoint{
 					Type:     types.SOLTypeRedfishSerial,
 					Endpoint: "https://192.168.1.100:8000/redfish/v1/Systems/1/SerialConsole",
@@ -77,12 +80,15 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-2",
 				CustomerID: "customer-1",
-				ControlEndpoint: &BMCControlEndpoint{
-					Endpoint: "192.168.1.101:623",
-					Type:     types.BMCTypeIPMI,
-					Username: "admin",
-					Password: "password",
+				ControlEndpoints: []*BMCControlEndpoint{
+					{
+						Endpoint: "192.168.1.101:623",
+						Type:     types.BMCTypeIPMI,
+						Username: "admin",
+						Password: "password",
+					},
 				},
+				PrimaryProtocol: types.BMCTypeIPMI,
 				SOLEndpoint: &SOLEndpoint{
 					Type:     types.SOLTypeIPMI,
 					Endpoint: "192.168.1.101:623",
@@ -107,16 +113,19 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-3",
 				CustomerID: "customer-1",
-				ControlEndpoint: &BMCControlEndpoint{
-					Endpoint: "https://192.168.1.102:8000",
-					Type:     types.BMCTypeRedfish,
-					Username: "admin",
-					Password: "password",
-					TLS: &TLSConfig{
-						Enabled:            true,
-						InsecureSkipVerify: false,
+				ControlEndpoints: []*BMCControlEndpoint{
+					{
+						Endpoint: "https://192.168.1.102:8000",
+						Type:     types.BMCTypeRedfish,
+						Username: "admin",
+						Password: "password",
+						TLS: &TLSConfig{
+							Enabled:            true,
+							InsecureSkipVerify: false,
+						},
 					},
 				},
+				PrimaryProtocol: types.BMCTypeRedfish,
 				SOLEndpoint: &SOLEndpoint{
 					Type:     types.SOLTypeIPMI,
 					Endpoint: "192.168.1.102:623",
@@ -144,14 +153,17 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-4",
 				CustomerID: "customer-1",
-				ControlEndpoint: &BMCControlEndpoint{
-					Endpoint: "https://192.168.1.103:8000",
-					Type:     types.BMCTypeRedfish,
-					Username: "admin",
-					Password: "password",
+				ControlEndpoints: []*BMCControlEndpoint{
+					{
+						Endpoint: "https://192.168.1.103:8000",
+						Type:     types.BMCTypeRedfish,
+						Username: "admin",
+						Password: "password",
+					},
 				},
-				Features: []string{"power"},
-				Status:   "active",
+				PrimaryProtocol: types.BMCTypeRedfish,
+				Features:        []string{"power"},
+				Status:          "active",
 				Metadata: map[string]string{
 					"discovery_error": "failed to connect to BMC",
 				},
@@ -189,8 +201,8 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 				if metadata.Protocol == nil {
 					t.Error("Expected Protocol to be non-nil")
 				} else {
-					if metadata.Protocol.PrimaryProtocol != string(tt.server.ControlEndpoint.Type) {
-						t.Errorf("Protocol.PrimaryProtocol = %v, want %v", metadata.Protocol.PrimaryProtocol, tt.server.ControlEndpoint.Type)
+					if metadata.Protocol.PrimaryProtocol != string(tt.server.GetPrimaryControlEndpoint().Type) {
+						t.Errorf("Protocol.PrimaryProtocol = %v, want %v", metadata.Protocol.PrimaryProtocol, tt.server.GetPrimaryControlEndpoint().Type)
 					}
 
 					if tt.server.SOLEndpoint != nil {
@@ -222,8 +234,8 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 				if metadata.Endpoints == nil {
 					t.Error("Expected Endpoints to be non-nil")
 				} else {
-					if metadata.Endpoints.ControlEndpoint != tt.server.ControlEndpoint.Endpoint {
-						t.Errorf("Endpoints.ControlEndpoint = %v, want %v", metadata.Endpoints.ControlEndpoint, tt.server.ControlEndpoint.Endpoint)
+					if metadata.Endpoints.ControlEndpoint != tt.server.GetPrimaryControlEndpoint().Endpoint {
+						t.Errorf("Endpoints.ControlEndpoint = %v, want %v", metadata.Endpoints.ControlEndpoint, tt.server.GetPrimaryControlEndpoint().Endpoint)
 					}
 
 					if tt.server.SOLEndpoint != nil {
@@ -245,12 +257,12 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 				if metadata.Security == nil {
 					t.Error("Expected Security to be non-nil")
 				} else {
-					if tt.server.ControlEndpoint != nil && tt.server.ControlEndpoint.TLS != nil {
-						if metadata.Security.TLSEnabled != tt.server.ControlEndpoint.TLS.Enabled {
-							t.Errorf("Security.TLSEnabled = %v, want %v", metadata.Security.TLSEnabled, tt.server.ControlEndpoint.TLS.Enabled)
+					if len(tt.server.ControlEndpoints) > 0 && tt.server.GetPrimaryControlEndpoint().TLS != nil {
+						if metadata.Security.TLSEnabled != tt.server.GetPrimaryControlEndpoint().TLS.Enabled {
+							t.Errorf("Security.TLSEnabled = %v, want %v", metadata.Security.TLSEnabled, tt.server.GetPrimaryControlEndpoint().TLS.Enabled)
 						}
-						if metadata.Security.TLSVerify == tt.server.ControlEndpoint.TLS.InsecureSkipVerify {
-							t.Errorf("Security.TLSVerify = %v, want %v", metadata.Security.TLSVerify, !tt.server.ControlEndpoint.TLS.InsecureSkipVerify)
+						if metadata.Security.TLSVerify == tt.server.GetPrimaryControlEndpoint().TLS.InsecureSkipVerify {
+							t.Errorf("Security.TLSVerify = %v, want %v", metadata.Security.TLSVerify, !tt.server.GetPrimaryControlEndpoint().TLS.InsecureSkipVerify)
 						}
 					}
 
@@ -329,12 +341,12 @@ func TestDiscoveryMetadata_Integration(t *testing.T) {
 				{
 					ID:         "test-server-static",
 					CustomerID: "customer-1",
-					ControlEndpoint: &config.BMCControlEndpoint{
+					ControlEndpoints: []*config.BMCControlEndpoint{{
 						Endpoint: "192.168.1.100:623", // Use IPMI to avoid Redfish client call
 						Type:     "ipmi",
 						Username: "admin",
 						Password: "password",
-					},
+					}},
 					SOLEndpoint: &config.SOLEndpoint{
 						Endpoint: "192.168.1.100:623",
 						Type:     "ipmi",

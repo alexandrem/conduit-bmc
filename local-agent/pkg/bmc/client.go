@@ -33,23 +33,25 @@ func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (s
 		return "", fmt.Errorf("server is nil")
 	}
 
-	if server.ControlEndpoint == nil {
+	if len(server.ControlEndpoints) == 0 {
 		return "", fmt.Errorf("server has no control endpoint")
 	}
 
-	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+
+	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return "", fmt.Errorf("IPMI client is nil")
 	}
 
-	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
 		return "", fmt.Errorf("Redfish client is nil")
 	}
 
-	endpoint := server.ControlEndpoint.Endpoint
-	username := server.ControlEndpoint.Username
-	password := server.ControlEndpoint.Password
+	endpoint := controlEndpoint.Endpoint
+	username := controlEndpoint.Username
+	password := controlEndpoint.Password
 
-	switch server.ControlEndpoint.Type {
+	switch controlEndpoint.Type {
 	case types.BMCTypeIPMI:
 		state, err := c.ipmiClient.GetPowerState(ctx, endpoint, username, password)
 		if err != nil {
@@ -65,7 +67,7 @@ func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (s
 		return string(state), nil
 
 	default:
-		return "", fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+		return "", fmt.Errorf("unsupported BMC type: %s", controlEndpoint.Type)
 	}
 }
 
@@ -75,23 +77,25 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 		return fmt.Errorf("server is nil")
 	}
 
-	if server.ControlEndpoint == nil {
+	if len(server.ControlEndpoints) == 0 {
 		return fmt.Errorf("server has no control endpoint")
 	}
 
-	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+
+	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
 	}
 
-	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
 		return fmt.Errorf("Redfish client is nil")
 	}
 
-	endpoint := server.ControlEndpoint.Endpoint
-	username := server.ControlEndpoint.Username
-	password := server.ControlEndpoint.Password
+	endpoint := controlEndpoint.Endpoint
+	username := controlEndpoint.Username
+	password := controlEndpoint.Password
 
-	switch server.ControlEndpoint.Type {
+	switch controlEndpoint.Type {
 	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.PowerOn(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI PowerOn failed: %w", err)
@@ -105,7 +109,7 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 		return nil
 
 	default:
-		return fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+		return fmt.Errorf("unsupported BMC type: %s", controlEndpoint.Type)
 	}
 }
 
@@ -115,23 +119,25 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 		return fmt.Errorf("server is nil")
 	}
 
-	if server.ControlEndpoint == nil {
+	if len(server.ControlEndpoints) == 0 {
 		return fmt.Errorf("server has no control endpoint")
 	}
 
-	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+
+	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
 	}
 
-	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
 		return fmt.Errorf("Redfish client is nil")
 	}
 
-	endpoint := server.ControlEndpoint.Endpoint
-	username := server.ControlEndpoint.Username
-	password := server.ControlEndpoint.Password
+	endpoint := controlEndpoint.Endpoint
+	username := controlEndpoint.Username
+	password := controlEndpoint.Password
 
-	switch server.ControlEndpoint.Type {
+	switch controlEndpoint.Type {
 	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.PowerOff(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI PowerOff failed: %w", err)
@@ -145,7 +151,7 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 		return nil
 
 	default:
-		return fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+		return fmt.Errorf("unsupported BMC type: %s", controlEndpoint.Type)
 	}
 }
 
@@ -155,23 +161,25 @@ func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error
 		return fmt.Errorf("server is nil")
 	}
 
-	if server.ControlEndpoint == nil {
+	if len(server.ControlEndpoints) == 0 {
 		return fmt.Errorf("server has no control endpoint")
 	}
 
-	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+
+	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
 	}
 
-	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
 		return fmt.Errorf("Redfish client is nil")
 	}
 
-	endpoint := server.ControlEndpoint.Endpoint
-	username := server.ControlEndpoint.Username
-	password := server.ControlEndpoint.Password
+	endpoint := controlEndpoint.Endpoint
+	username := controlEndpoint.Username
+	password := controlEndpoint.Password
 
-	switch server.ControlEndpoint.Type {
+	switch controlEndpoint.Type {
 	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.PowerCycle(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI PowerCycle failed: %w", err)
@@ -185,7 +193,7 @@ func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error
 		return nil
 
 	default:
-		return fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+		return fmt.Errorf("unsupported BMC type: %s", controlEndpoint.Type)
 	}
 }
 
@@ -195,23 +203,25 @@ func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
 		return fmt.Errorf("server is nil")
 	}
 
-	if server.ControlEndpoint == nil {
+	if len(server.ControlEndpoints) == 0 {
 		return fmt.Errorf("server has no control endpoint")
 	}
 
-	if c.ipmiClient == nil && server.ControlEndpoint.Type == types.BMCTypeIPMI {
+	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+
+	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
 	}
 
-	if c.redfishClient == nil && server.ControlEndpoint.Type == types.BMCTypeRedfish {
+	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
 		return fmt.Errorf("Redfish client is nil")
 	}
 
-	endpoint := server.ControlEndpoint.Endpoint
-	username := server.ControlEndpoint.Username
-	password := server.ControlEndpoint.Password
+	endpoint := controlEndpoint.Endpoint
+	username := controlEndpoint.Username
+	password := controlEndpoint.Password
 
-	switch server.ControlEndpoint.Type {
+	switch controlEndpoint.Type {
 	case types.BMCTypeIPMI:
 		if err := c.ipmiClient.Reset(ctx, endpoint, username, password); err != nil {
 			return fmt.Errorf("IPMI Reset failed: %w", err)
@@ -225,7 +235,7 @@ func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
 		return nil
 
 	default:
-		return fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+		return fmt.Errorf("unsupported BMC type: %s", controlEndpoint.Type)
 	}
 }
 
@@ -235,15 +245,17 @@ func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gat
 		return nil, fmt.Errorf("server is nil")
 	}
 
-	if server.ControlEndpoint == nil {
+	if len(server.ControlEndpoints) == 0 {
 		return nil, fmt.Errorf("server has no control endpoint")
 	}
 
-	endpoint := server.ControlEndpoint.Endpoint
-	username := server.ControlEndpoint.Username
-	password := server.ControlEndpoint.Password
+	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
 
-	switch server.ControlEndpoint.Type {
+	endpoint := controlEndpoint.Endpoint
+	username := controlEndpoint.Username
+	password := controlEndpoint.Password
+
+	switch controlEndpoint.Type {
 	case types.BMCTypeIPMI:
 		if c.ipmiClient == nil {
 			return nil, fmt.Errorf("IPMI client is nil")
@@ -407,7 +419,7 @@ func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gat
 		}, nil
 
 	default:
-		return nil, fmt.Errorf("unsupported BMC type: %s", server.ControlEndpoint.Type)
+		return nil, fmt.Errorf("unsupported BMC type: %s", server.GetPrimaryControlEndpoint().Type)
 	}
 }
 

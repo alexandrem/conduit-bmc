@@ -36,7 +36,7 @@ func TestClient_GetPowerState_NoControlEndpoint(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: nil,
+		ControlEndpoints: nil,
 	}
 
 	ctx := context.Background()
@@ -55,12 +55,12 @@ func TestClient_GetPowerState_UnsupportedType(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: &discovery.BMCControlEndpoint{
+		ControlEndpoints: []*discovery.BMCControlEndpoint{{
 			Endpoint: "unknown://192.168.1.100",
 			Type:     "unknown",
 			Username: "admin",
 			Password: "password",
-		},
+		}},
 	}
 
 	ctx := context.Background()
@@ -80,7 +80,7 @@ func TestClient_PowerOn_NoControlEndpoint(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: nil,
+		ControlEndpoints: nil,
 	}
 
 	ctx := context.Background()
@@ -99,12 +99,12 @@ func TestClient_PowerOff_UnsupportedType(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: &discovery.BMCControlEndpoint{
+		ControlEndpoints: []*discovery.BMCControlEndpoint{{
 			Endpoint: "unknown://192.168.1.100",
 			Type:     "unsupported",
 			Username: "admin",
 			Password: "password",
-		},
+		}},
 	}
 
 	ctx := context.Background()
@@ -124,7 +124,7 @@ func TestClient_PowerCycle_NoControlEndpoint(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: nil,
+		ControlEndpoints: nil,
 	}
 
 	ctx := context.Background()
@@ -139,7 +139,7 @@ func TestClient_Reset_NoControlEndpoint(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: nil,
+		ControlEndpoints: nil,
 	}
 
 	ctx := context.Background()
@@ -154,7 +154,7 @@ func TestClient_AllOperations_NoControlEndpoint(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: nil,
+		ControlEndpoints: nil,
 	}
 
 	ctx := context.Background()
@@ -187,12 +187,12 @@ func TestClient_AllOperations_UnsupportedType(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: &discovery.BMCControlEndpoint{
+		ControlEndpoints: []*discovery.BMCControlEndpoint{{
 			Endpoint: "unknown://192.168.1.100",
 			Type:     "invalid_type",
 			Username: "admin",
 			Password: "password",
-		},
+		}},
 	}
 
 	ctx := context.Background()
@@ -230,12 +230,12 @@ func TestClient_IPMI_Routing(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: &discovery.BMCControlEndpoint{
+		ControlEndpoints: []*discovery.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
 			Type:     "ipmi",
 			Username: "admin",
 			Password: "password",
-		},
+		}},
 	}
 
 	ctx := context.Background()
@@ -259,12 +259,12 @@ func TestClient_Redfish_Routing(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoint: &discovery.BMCControlEndpoint{
+		ControlEndpoints: []*discovery.BMCControlEndpoint{{
 			Endpoint: "https://192.168.1.100",
 			Type:     "redfish",
 			Username: "admin",
 			Password: "password",
-		},
+		}},
 	}
 
 	ctx := context.Background()

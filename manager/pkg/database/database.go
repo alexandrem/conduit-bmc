@@ -228,17 +228,17 @@ func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 		}
 	}
 
-	// Deserialize control endpoint if present (prefer JSON over legacy fields)
+	// Deserialize control endpoints if present (prefer JSON over legacy fields)
 	if controlEndpointJSON.Valid && controlEndpointJSON.String != "" {
-		server.ControlEndpoint = &models.BMCControlEndpoint{}
-		if err := json.Unmarshal([]byte(controlEndpointJSON.String), server.ControlEndpoint); err != nil {
-			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal control endpoint")
-			server.ControlEndpoint = nil // Fall back to legacy parsing below
+		server.ControlEndpoints = []*models.BMCControlEndpoint{}
+		if err := json.Unmarshal([]byte(controlEndpointJSON.String), &server.ControlEndpoints); err != nil {
+			log.Warn().Err(err).Str("server_id", serverID).Msg("Failed to unmarshal control endpoints")
+			server.ControlEndpoints = nil // Fall back to legacy parsing below
 		}
 	}
 
 	// Convert legacy BMC fields to control endpoint (fallback if JSON not available)
-	if server.ControlEndpoint == nil && row.BMCEndpoint != "" {
+	if len(server.ControlEndpoints) == 0 && row.BMCEndpoint != "" {
 		bmcType := models.BMCTypeIPMI // Default
 		if row.BMCType == "redfish" {
 			bmcType = models.BMCTypeRedfish
@@ -250,13 +250,14 @@ func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 			capabilities = strings.Split(row.Capabilities, ",")
 		}
 
-		server.ControlEndpoint = &models.BMCControlEndpoint{
+		server.ControlEndpoints = []*models.BMCControlEndpoint{{
 			Endpoint:     row.BMCEndpoint,
 			Type:         bmcType,
 			Username:     row.Username,
 			Password:     "", // Password not stored per security requirement
 			Capabilities: capabilities,
-		}
+		}}
+		server.PrimaryProtocol = bmcType
 	}
 
 	// Deserialize metadata if present
@@ -374,28 +375,29 @@ func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 			}
 		}
 
-		// Deserialize control endpoint if present (prefer JSON over legacy fields)
+		// Deserialize control endpoints if present (prefer JSON over legacy fields)
 		if controlEndpointJSON.Valid && controlEndpointJSON.String != "" {
-			server.ControlEndpoint = &models.BMCControlEndpoint{}
-			if err := json.Unmarshal([]byte(controlEndpointJSON.String), server.ControlEndpoint); err != nil {
-				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal control endpoint")
-				server.ControlEndpoint = nil // Fall back to legacy parsing below
+			server.ControlEndpoints = []*models.BMCControlEndpoint{}
+			if err := json.Unmarshal([]byte(controlEndpointJSON.String), &server.ControlEndpoints); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal control endpoints")
+				server.ControlEndpoints = nil // Fall back to legacy parsing below
 			}
 		}
 
 		// Convert legacy BMC fields to control endpoint (fallback if JSON not available)
-		if server.ControlEndpoint == nil && row.BMCEndpoint != "" {
+		if len(server.ControlEndpoints) == 0 && row.BMCEndpoint != "" {
 			bmcType := models.BMCTypeIPMI // Default
 			if row.BMCType == "redfish" {
 				bmcType = models.BMCTypeRedfish
 			}
 
-			server.ControlEndpoint = &models.BMCControlEndpoint{
+			server.ControlEndpoints = []*models.BMCControlEndpoint{{
 				Endpoint: row.BMCEndpoint,
 				Type:     bmcType,
 				Username: "", // Will be filled by agent registration
 				Password: "", // Will be filled by agent registration
-			}
+			}}
+			server.PrimaryProtocol = bmcType
 		}
 
 		// Deserialize metadata if present
@@ -520,7 +522,7 @@ func (db *DB) CreateServerLocation(location *models.ServerLocation) error {
 
 	_, err := db.conn.Exec(
 		"INSERT OR REPLACE INTO server_locations (server_id, customer_id, datacenter_id, regional_gateway_id, bmc_type, features, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		location.ServerID, location.CustomerID, location.DatacenterID, location.RegionalGatewayID, location.BMCType, featuresStr, location.CreatedAt, location.UpdatedAt,
+		location.ServerID, location.CustomerID, location.DatacenterID, location.RegionalGatewayID, string(location.PrimaryProtocol), featuresStr, location.CreatedAt, location.UpdatedAt,
 	)
 	return err
 }
@@ -528,11 +530,14 @@ func (db *DB) CreateServerLocation(location *models.ServerLocation) error {
 func (db *DB) GetServerLocation(serverID string) (*models.ServerLocation, error) {
 	var location models.ServerLocation
 	var featuresStr string
+	var bmcType string
 
 	err := db.conn.QueryRow(
 		"SELECT server_id, customer_id, datacenter_id, regional_gateway_id, bmc_type, features, created_at, updated_at FROM server_locations WHERE server_id = ?",
 		serverID,
-	).Scan(&location.ServerID, &location.CustomerID, &location.DatacenterID, &location.RegionalGatewayID, &location.BMCType, &featuresStr, &location.CreatedAt, &location.UpdatedAt)
+	).Scan(&location.ServerID, &location.CustomerID, &location.DatacenterID, &location.RegionalGatewayID, &bmcType, &featuresStr, &location.CreatedAt, &location.UpdatedAt)
+
+	location.PrimaryProtocol = models.BMCType(bmcType)
 
 	if err != nil {
 		return nil, err
@@ -560,11 +565,14 @@ func (db *DB) ListAllServers() ([]models.ServerLocation, error) {
 	for rows.Next() {
 		var location models.ServerLocation
 		var featuresStr string
+		var bmcType string
 
-		err := rows.Scan(&location.ServerID, &location.CustomerID, &location.DatacenterID, &location.RegionalGatewayID, &location.BMCType, &featuresStr, &location.CreatedAt, &location.UpdatedAt)
+		err := rows.Scan(&location.ServerID, &location.CustomerID, &location.DatacenterID, &location.RegionalGatewayID, &bmcType, &featuresStr, &location.CreatedAt, &location.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
+
+		location.PrimaryProtocol = models.BMCType(bmcType)
 
 		// Parse features from string (simplified)
 		if featuresStr != "" {
@@ -610,7 +618,7 @@ func (db *DB) GetServerByIDAndCustomer(serverID, customerID string) (*models.Ser
 		Metadata:     make(map[string]string),
 	}
 
-	// Convert legacy BMC fields to control endpoint
+	// Convert legacy BMC fields to control endpoints
 	if row.BMCEndpoint != "" {
 		bmcType := models.BMCTypeIPMI // Default
 		if row.BMCType == "redfish" {
@@ -623,13 +631,14 @@ func (db *DB) GetServerByIDAndCustomer(serverID, customerID string) (*models.Ser
 			capabilities = strings.Split(row.Capabilities, ",")
 		}
 
-		server.ControlEndpoint = &models.BMCControlEndpoint{
+		server.ControlEndpoints = []*models.BMCControlEndpoint{{
 			Endpoint:     row.BMCEndpoint,
 			Type:         bmcType,
 			Username:     row.Username,
 			Password:     "", // Password not stored per security requirement
 			Capabilities: capabilities,
-		}
+		}}
+		server.PrimaryProtocol = bmcType
 	}
 
 	// Parse features if needed
@@ -676,19 +685,20 @@ func (db *DB) ListServersByCustomer(customerID string, pageSize int32, pageToken
 			Metadata:     make(map[string]string),
 		}
 
-		// Convert legacy BMC fields to control endpoint
+		// Convert legacy BMC fields to control endpoints
 		if row.BMCEndpoint != "" {
 			bmcType := models.BMCTypeIPMI // Default
 			if row.BMCType == "redfish" {
 				bmcType = models.BMCTypeRedfish
 			}
 
-			server.ControlEndpoint = &models.BMCControlEndpoint{
+			server.ControlEndpoints = []*models.BMCControlEndpoint{{
 				Endpoint: row.BMCEndpoint,
 				Type:     bmcType,
 				Username: "", // Will be filled by agent registration
 				Password: "", // Will be filled by agent registration
-			}
+			}}
+			server.PrimaryProtocol = bmcType
 		}
 
 		// Parse features if needed
@@ -722,18 +732,23 @@ func (db *DB) CreateServer(server *models.Server) error {
 	}
 
 	// Convert new Server structure to legacy format for database storage
-	bmcType := "ipmi" // Default
+	bmcType := string(server.PrimaryProtocol)
+	if bmcType == "" {
+		bmcType = "ipmi" // Default fallback
+	}
 	bmcEndpoint := ""
 	username := ""
 	capabilities := ""
 
-	if server.ControlEndpoint != nil {
-		bmcEndpoint = server.ControlEndpoint.Endpoint
-		bmcType = string(server.ControlEndpoint.Type)
-		username = server.ControlEndpoint.Username
+	if len(server.ControlEndpoints) > 0 {
+		bmcEndpoint = server.GetPrimaryControlEndpoint().Endpoint
+		if server.GetPrimaryControlEndpoint().Type != "" {
+			bmcType = string(server.GetPrimaryControlEndpoint().Type)
+		}
+		username = server.GetPrimaryControlEndpoint().Username
 
 		// Convert capabilities slice to string
-		for i, capability := range server.ControlEndpoint.Capabilities {
+		for i, capability := range server.GetPrimaryControlEndpoint().Capabilities {
 			if i > 0 {
 				capabilities += ","
 			}
@@ -742,7 +757,7 @@ func (db *DB) CreateServer(server *models.Server) error {
 	}
 
 	// Serialize endpoints and metadata to JSON
-	var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON []byte
+	var solEndpointJSON, vncEndpointJSON, controlEndpointsJSON, metadataJSON []byte
 	var err error
 
 	if server.SOLEndpoint != nil {
@@ -759,10 +774,10 @@ func (db *DB) CreateServer(server *models.Server) error {
 		}
 	}
 
-	if server.ControlEndpoint != nil {
-		controlEndpointJSON, err = json.Marshal(server.ControlEndpoint)
+	if len(server.ControlEndpoints) > 0 {
+		controlEndpointsJSON, err = json.Marshal(server.ControlEndpoints)
 		if err != nil {
-			return fmt.Errorf("failed to marshal control endpoint: %w", err)
+			return fmt.Errorf("failed to marshal control endpoints: %w", err)
 		}
 	}
 
@@ -800,7 +815,7 @@ func (db *DB) CreateServer(server *models.Server) error {
 			metadata = excluded.metadata,
 			discovery_metadata = excluded.discovery_metadata,
 			updated_at = excluded.updated_at
-	`, server.ID, server.CustomerID, server.DatacenterID, bmcType, bmcEndpoint, username, capabilities, featuresStr, server.Status, solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON, discoveryMetadataJSON, server.CreatedAt, server.UpdatedAt)
+	`, server.ID, server.CustomerID, server.DatacenterID, bmcType, bmcEndpoint, username, capabilities, featuresStr, server.Status, solEndpointJSON, vncEndpointJSON, controlEndpointsJSON, metadataJSON, discoveryMetadataJSON, server.CreatedAt, server.UpdatedAt)
 
 	return err
 }
@@ -927,19 +942,20 @@ func (db *DB) GetServersForCustomer(customerID string) ([]models.Server, error) 
 			Metadata:     make(map[string]string),
 		}
 
-		// Convert legacy BMC fields to control endpoint
+		// Convert legacy BMC fields to control endpoints
 		if row.BMCEndpoint != "" {
 			bmcType := models.BMCTypeIPMI // Default
 			if row.BMCType == "redfish" {
 				bmcType = models.BMCTypeRedfish
 			}
 
-			server.ControlEndpoint = &models.BMCControlEndpoint{
+			server.ControlEndpoints = []*models.BMCControlEndpoint{{
 				Endpoint: row.BMCEndpoint,
 				Type:     bmcType,
 				Username: "", // Will be filled by agent registration
 				Password: "", // Will be filled by agent registration
-			}
+			}}
+			server.PrimaryProtocol = bmcType
 		}
 
 		// Parse features if needed
@@ -1017,28 +1033,29 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 			}
 		}
 
-		// Deserialize control endpoint if present (prefer JSON over legacy fields)
+		// Deserialize control endpoints if present (prefer JSON over legacy fields)
 		if controlEndpointJSON.Valid && controlEndpointJSON.String != "" {
-			server.ControlEndpoint = &models.BMCControlEndpoint{}
-			if err := json.Unmarshal([]byte(controlEndpointJSON.String), server.ControlEndpoint); err != nil {
-				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal control endpoint")
-				server.ControlEndpoint = nil // Fall back to legacy parsing below
+			server.ControlEndpoints = []*models.BMCControlEndpoint{}
+			if err := json.Unmarshal([]byte(controlEndpointJSON.String), &server.ControlEndpoints); err != nil {
+				log.Warn().Err(err).Str("server_id", row.ID).Msg("Failed to unmarshal control endpoints")
+				server.ControlEndpoints = nil // Fall back to legacy parsing below
 			}
 		}
 
 		// Convert legacy BMC fields to control endpoint (fallback if JSON not available)
-		if server.ControlEndpoint == nil && row.BMCEndpoint != "" {
+		if len(server.ControlEndpoints) == 0 && row.BMCEndpoint != "" {
 			bmcType := models.BMCTypeIPMI // Default
 			if row.BMCType == "redfish" {
 				bmcType = models.BMCTypeRedfish
 			}
 
-			server.ControlEndpoint = &models.BMCControlEndpoint{
+			server.ControlEndpoints = []*models.BMCControlEndpoint{{
 				Endpoint: row.BMCEndpoint,
 				Type:     bmcType,
 				Username: "", // Will be filled by agent registration
 				Password: "", // Will be filled by agent registration
-			}
+			}}
+			server.PrimaryProtocol = bmcType
 		}
 
 		// Deserialize metadata if present

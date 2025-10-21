@@ -20,13 +20,36 @@ import (
 type Server struct {
 	ID                string                   `json:"id"`
 	CustomerID        string                   `json:"customer_id"`
-	ControlEndpoint   *BMCControlEndpoint      `json:"control_endpoint"`   // BMC control API
+	ControlEndpoints  []*BMCControlEndpoint    `json:"control_endpoints"`  // Multiple BMC control APIs (RFD 006)
+	PrimaryProtocol   types.BMCType            `json:"primary_protocol"`   // Preferred protocol for operations (RFD 006)
 	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint"`       // Serial-over-LAN (optional)
 	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint"`       // VNC/KVM access (optional)
 	Features          []string                 `json:"features"`           // High-level features
 	Status            string                   `json:"status"`             // "active", "inactive", etc.
 	Metadata          map[string]string        `json:"metadata"`           // Additional metadata
 	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata"` // Discovery metadata (RFD 017)
+}
+
+// GetPrimaryControlEndpoint returns the control endpoint matching PrimaryProtocol.
+// If PrimaryProtocol is set and found, returns that endpoint.
+// Otherwise, falls back to the first endpoint in the array.
+// Returns nil if no endpoints are available.
+func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+	if len(s.ControlEndpoints) == 0 {
+		return nil
+	}
+
+	// If PrimaryProtocol is set, try to find matching endpoint
+	if s.PrimaryProtocol != "" {
+		for _, endpoint := range s.ControlEndpoints {
+			if endpoint.Type == s.PrimaryProtocol {
+				return endpoint
+			}
+		}
+	}
+
+	// Fallback to first endpoint
+	return s.ControlEndpoints[0]
 }
 
 // BMCControlEndpoint represents BMC control API
@@ -129,14 +152,21 @@ func (s *Service) loadStaticServers() []*Server {
 			Metadata:   metadata,
 		}
 
-		// Convert control endpoint
-		if host.ControlEndpoint != nil {
-			server.ControlEndpoint = &BMCControlEndpoint{
-				Endpoint:     host.ControlEndpoint.Endpoint,
-				Type:         host.ControlEndpoint.InferType(), // Infer from endpoint if not specified
-				Username:     host.ControlEndpoint.Username,
-				Password:     host.ControlEndpoint.Password,
-				Capabilities: host.ControlEndpoint.Capabilities,
+		// Convert control endpoints
+		if len(host.ControlEndpoints) > 0 {
+			server.ControlEndpoints = make([]*BMCControlEndpoint, len(host.ControlEndpoints))
+			for i, endpoint := range host.ControlEndpoints {
+				server.ControlEndpoints[i] = &BMCControlEndpoint{
+					Endpoint:     endpoint.Endpoint,
+					Type:         endpoint.InferType(), // Infer from endpoint if not specified
+					Username:     endpoint.Username,
+					Password:     endpoint.Password,
+					Capabilities: endpoint.Capabilities,
+				}
+			}
+			// Set primary protocol to first endpoint's type
+			if len(server.ControlEndpoints) > 0 {
+				server.PrimaryProtocol = server.GetPrimaryControlEndpoint().Type
 			}
 		}
 
@@ -171,9 +201,10 @@ func (s *Service) loadStaticServers() []*Server {
 		}
 
 		// If Redfish, perform API discovery if enabled
-		if server.ControlEndpoint != nil && server.ControlEndpoint.Type == "redfish" {
-			endpoint := server.ControlEndpoint.Endpoint
-			info, err := s.redfishClient.DiscoverSerialConsole(context.Background(), endpoint, server.ControlEndpoint.Username, server.ControlEndpoint.Password)
+		// Check primary endpoint (first in list) for Redfish protocol
+		if len(server.ControlEndpoints) > 0 && server.GetPrimaryControlEndpoint().Type == "redfish" {
+			endpoint := server.GetPrimaryControlEndpoint().Endpoint
+			info, err := s.redfishClient.DiscoverSerialConsole(context.Background(), endpoint, server.GetPrimaryControlEndpoint().Username, server.GetPrimaryControlEndpoint().Password)
 			if err != nil {
 				log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to discover SerialConsole for static server")
 				server.Metadata["discovery_error"] = err.Error()
@@ -198,8 +229,8 @@ func (s *Service) loadStaticServers() []*Server {
 					server.SOLEndpoint = &SOLEndpoint{
 						Type:     "redfish_serial",
 						Endpoint: endpoint + info.SerialPath,
-						Username: server.ControlEndpoint.Username,
-						Password: server.ControlEndpoint.Password,
+						Username: server.GetPrimaryControlEndpoint().Username,
+						Password: server.GetPrimaryControlEndpoint().Password,
 					}
 					log.Info().Str("endpoint", endpoint).Str("vendor", string(info.Vendor)).Msg("Using Redfish serial console")
 				} else if info.FallbackToIPMI {
@@ -213,8 +244,8 @@ func (s *Service) loadStaticServers() []*Server {
 						server.SOLEndpoint = &SOLEndpoint{
 							Type:     "ipmi",
 							Endpoint: ipmiEndpoint,
-							Username: server.ControlEndpoint.Username,
-							Password: server.ControlEndpoint.Password,
+							Username: server.GetPrimaryControlEndpoint().Username,
+							Password: server.GetPrimaryControlEndpoint().Password,
 						}
 						server.Metadata["sol_fallback"] = "ipmi"
 						log.Info().
@@ -308,16 +339,16 @@ func (s *Service) filterDuplicates(staticServers, discoveredServers []*Server) [
 	// Create a map of static control endpoints for quick lookup
 	staticEndpoints := make(map[string]bool)
 	for _, server := range staticServers {
-		if server.ControlEndpoint != nil {
-			staticEndpoints[server.ControlEndpoint.Endpoint] = true
+		if len(server.ControlEndpoints) > 0 {
+			staticEndpoints[server.GetPrimaryControlEndpoint().Endpoint] = true
 		}
 	}
 
 	// Only include discovered servers that don't match static config
 	for _, server := range discoveredServers {
 		controlEndpoint := ""
-		if server.ControlEndpoint != nil {
-			controlEndpoint = server.ControlEndpoint.Endpoint
+		if len(server.ControlEndpoints) > 0 {
+			controlEndpoint = server.GetPrimaryControlEndpoint().Endpoint
 		}
 		if !staticEndpoints[controlEndpoint] {
 			filtered = append(filtered, server)
@@ -356,13 +387,16 @@ func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*Server, e
 			server := &Server{
 				ID:         fmt.Sprintf("server-%s", strings.ReplaceAll(ip.String(), ".", "-")),
 				CustomerID: "customer-1", // TODO: Determine customer ownership
-				ControlEndpoint: &BMCControlEndpoint{
-					Endpoint:     endpoint,
-					Type:         "ipmi",
-					Username:     "admin",    // Default credentials
-					Password:     "password", // Default credentials
-					Capabilities: types.CapabilitiesToStrings(types.IPMICapabilities()),
+				ControlEndpoints: []*BMCControlEndpoint{
+					{
+						Endpoint:     endpoint,
+						Type:         "ipmi",
+						Username:     "admin",    // Default credentials
+						Password:     "password", // Default credentials
+						Capabilities: types.CapabilitiesToStrings(types.IPMICapabilities()),
+					},
 				},
+				PrimaryProtocol: "ipmi",
 				Features: types.FeaturesToStrings([]types.Feature{
 					types.FeaturePower,
 					types.FeatureConsole,
@@ -409,13 +443,16 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 				server := &Server{
 					ID:         fmt.Sprintf("server-%s-%d", strings.ReplaceAll(ip.String(), ".", "-"), port),
 					CustomerID: "customer-1", // TODO: Determine customer ownership
-					ControlEndpoint: &BMCControlEndpoint{
-						Endpoint:     endpoint,
-						Type:         "redfish",
-						Username:     "admin",    // Default credentials
-						Password:     "password", // Default credentials
-						Capabilities: types.CapabilitiesToStrings(types.RedfishCapabilities()),
+					ControlEndpoints: []*BMCControlEndpoint{
+						{
+							Endpoint:     endpoint,
+							Type:         "redfish",
+							Username:     "admin",    // Default credentials
+							Password:     "password", // Default credentials
+							Capabilities: types.CapabilitiesToStrings(types.RedfishCapabilities()),
+						},
 					},
+					PrimaryProtocol: "redfish",
 					Features: types.FeaturesToStrings([]types.Feature{
 						types.FeaturePower,
 						types.FeatureConsole,
@@ -427,7 +464,7 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 				}
 
 				// Perform API discovery
-				info, err := s.redfishClient.DiscoverSerialConsole(ctx, endpoint, server.ControlEndpoint.Username, server.ControlEndpoint.Password)
+				info, err := s.redfishClient.DiscoverSerialConsole(ctx, endpoint, server.GetPrimaryControlEndpoint().Username, server.GetPrimaryControlEndpoint().Password)
 				if err != nil {
 					log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to discover SerialConsole")
 					server.Metadata["discovery_error"] = err.Error()
@@ -435,8 +472,8 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 					server.SOLEndpoint = &SOLEndpoint{
 						Type:     "redfish_serial",
 						Endpoint: endpoint + "/redfish/v1/Managers/1/SerialConsole", // Adjust based on actual path
-						Username: server.ControlEndpoint.Username,
-						Password: server.ControlEndpoint.Password,
+						Username: server.GetPrimaryControlEndpoint().Username,
+						Password: server.GetPrimaryControlEndpoint().Password,
 					}
 					// Ensure FeatureConsole is included
 					hasConsole := false
@@ -598,13 +635,13 @@ func (s *Service) buildDiscoveryMetadata(server *Server, discoveryMethod types.D
 	}
 
 	// Build protocol configuration
-	if server.ControlEndpoint != nil {
+	if len(server.ControlEndpoints) > 0 {
 		protocol := &types.ProtocolConfig{
-			PrimaryProtocol: string(server.ControlEndpoint.Type),
+			PrimaryProtocol: string(server.GetPrimaryControlEndpoint().Type),
 		}
 
 		// Add protocol version if known
-		if server.ControlEndpoint.Type == "ipmi" {
+		if server.GetPrimaryControlEndpoint().Type == "ipmi" {
 			protocol.PrimaryVersion = "2.0" // Assume IPMI 2.0
 		}
 
@@ -635,13 +672,13 @@ func (s *Service) buildDiscoveryMetadata(server *Server, discoveryMethod types.D
 	}
 
 	// Build endpoint details
-	if server.ControlEndpoint != nil {
+	if len(server.ControlEndpoints) > 0 {
 		endpoints := &types.EndpointDetails{
-			ControlEndpoint: server.ControlEndpoint.Endpoint,
+			ControlEndpoint: server.GetPrimaryControlEndpoint().Endpoint,
 		}
 
 		// Parse control endpoint URL to extract scheme and port
-		if u, err := url.Parse(server.ControlEndpoint.Endpoint); err == nil {
+		if u, err := url.Parse(server.GetPrimaryControlEndpoint().Endpoint); err == nil {
 			endpoints.ControlScheme = u.Scheme
 			if portStr := u.Port(); portStr != "" {
 				if port, err := fmt.Sscanf(portStr, "%d", &endpoints.ControlPort); err == nil && port == 1 {
@@ -666,9 +703,9 @@ func (s *Service) buildDiscoveryMetadata(server *Server, discoveryMethod types.D
 		AuthMethod: "basic", // Default to basic auth
 	}
 
-	if server.ControlEndpoint != nil && server.ControlEndpoint.TLS != nil {
-		security.TLSEnabled = server.ControlEndpoint.TLS.Enabled
-		security.TLSVerify = !server.ControlEndpoint.TLS.InsecureSkipVerify
+	if len(server.ControlEndpoints) > 0 && server.GetPrimaryControlEndpoint().TLS != nil {
+		security.TLSEnabled = server.GetPrimaryControlEndpoint().TLS.Enabled
+		security.TLSVerify = !server.GetPrimaryControlEndpoint().TLS.InsecureSkipVerify
 	}
 
 	if server.VNCEndpoint != nil && server.VNCEndpoint.Password != "" {
@@ -679,20 +716,20 @@ func (s *Service) buildDiscoveryMetadata(server *Server, discoveryMethod types.D
 	metadata.Security = security
 
 	// Build network information
-	if server.ControlEndpoint != nil {
+	if len(server.ControlEndpoints) > 0 {
 		network := &types.NetworkInfo{
 			Reachable: true, // If we got here, it's reachable
 		}
 
 		// Try to extract IP address from endpoint
-		if u, err := url.Parse(server.ControlEndpoint.Endpoint); err == nil {
+		if u, err := url.Parse(server.GetPrimaryControlEndpoint().Endpoint); err == nil {
 			host := u.Hostname()
 			if host != "" {
 				network.IPAddress = host
 			}
-		} else if strings.Contains(server.ControlEndpoint.Endpoint, ":") {
+		} else if strings.Contains(server.GetPrimaryControlEndpoint().Endpoint, ":") {
 			// Might be IP:port format
-			host, _, err := net.SplitHostPort(server.ControlEndpoint.Endpoint)
+			host, _, err := net.SplitHostPort(server.GetPrimaryControlEndpoint().Endpoint)
 			if err == nil {
 				network.IPAddress = host
 			}

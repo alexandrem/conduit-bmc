@@ -135,7 +135,7 @@ var showCmd = &cobra.Command{
 		fmt.Fprintf(w, "Features:\t%v\n", server.Features)
 
 		// Display BMC hardware information (merged with vendor)
-		if server.ControlEndpoint != nil {
+		if server.GetPrimaryControlEndpoint() != nil {
 			fmt.Fprintf(w, "\nBMC Hardware:\n")
 
 			// Show vendor info if available
@@ -148,18 +148,18 @@ var showCmd = &cobra.Command{
 			}
 
 			// Endpoint with protocol and auth method
-			endpointDisplay := server.ControlEndpoint.Endpoint
+			endpointDisplay := server.GetPrimaryControlEndpoint().Endpoint
 			authMethod := "Basic Auth"
 			if server.DiscoveryMetadata != nil && server.DiscoveryMetadata.Security != nil {
 				authMethod = server.DiscoveryMetadata.Security.AuthMethod
 			}
 			fmt.Fprintf(w, "  Endpoint:\t%s (%s, %s)\n",
 				endpointDisplay,
-				formatBMCType(server.ControlEndpoint.Type),
+				formatBMCType(server.GetPrimaryControlEndpoint().Type),
 				authMethod)
 
-			fmt.Fprintf(w, "  Credentials:\t%s (configured)\n", server.ControlEndpoint.Username)
-			fmt.Fprintf(w, "  Capabilities:\t%v\n", server.ControlEndpoint.Capabilities)
+			fmt.Fprintf(w, "  Credentials:\t%s (configured)\n", server.GetPrimaryControlEndpoint().Username)
+			fmt.Fprintf(w, "  Capabilities:\t%v\n", server.GetPrimaryControlEndpoint().Capabilities)
 		}
 
 		// Display operations available
@@ -173,8 +173,8 @@ var showCmd = &cobra.Command{
 				break
 			}
 		}
-		if hasPower && server.ControlEndpoint != nil {
-			fmt.Fprintf(w, "  Power:\t✓ via %s\n", formatBMCType(server.ControlEndpoint.Type))
+		if hasPower && server.GetPrimaryControlEndpoint() != nil {
+			fmt.Fprintf(w, "  Power:\t✓ via %s\n", formatBMCType(server.GetPrimaryControlEndpoint().Type))
 		}
 
 		// Console operations
@@ -216,8 +216,8 @@ var showCmd = &cobra.Command{
 				break
 			}
 		}
-		if hasSensors && server.ControlEndpoint != nil {
-			fmt.Fprintf(w, "  Sensors:\t✓ via %s\n", formatBMCType(server.ControlEndpoint.Type))
+		if hasSensors && server.GetPrimaryControlEndpoint() != nil {
+			fmt.Fprintf(w, "  Sensors:\t✓ via %s\n", formatBMCType(server.GetPrimaryControlEndpoint().Type))
 		}
 
 		// Security section with warnings
@@ -234,8 +234,8 @@ var showCmd = &cobra.Command{
 			} else {
 				fmt.Fprintf(w, "  TLS:\tDisabled (Warning: insecure connection)\n")
 			}
-		} else if server.ControlEndpoint != nil && server.ControlEndpoint.TLS != nil {
-			if server.ControlEndpoint.TLS.Enabled {
+		} else if server.GetPrimaryControlEndpoint() != nil && server.GetPrimaryControlEndpoint().TLS != nil {
+			if server.GetPrimaryControlEndpoint().TLS.Enabled {
 				fmt.Fprintf(w, "  TLS:\tEnabled\n")
 			} else {
 				fmt.Fprintf(w, "  TLS:\tDisabled (Warning: insecure connection)\n")
@@ -438,8 +438,8 @@ var listCmd = &cobra.Command{
 		for _, server := range servers {
 			// Determine BMC type from control endpoint
 			bmcType := "N/A"
-			if server.ControlEndpoint != nil {
-				bmcType = formatBMCType(server.ControlEndpoint.Type)
+			if server.GetPrimaryControlEndpoint() != nil {
+				bmcType = formatBMCType(server.GetPrimaryControlEndpoint().Type)
 			}
 
 			// Check console availability (SOL)

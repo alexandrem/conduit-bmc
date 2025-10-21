@@ -88,7 +88,8 @@ func (a *LocalAgent) validateDependencies() error {
 	// Also check static hosts
 	hasStaticIPMI := false
 	for _, host := range a.config.Static.Hosts {
-		if host.ControlEndpoint != nil && host.ControlEndpoint.InferType() == types.BMCTypeIPMI {
+		primaryEndpoint := host.GetPrimaryControlEndpoint()
+		if primaryEndpoint != nil && primaryEndpoint.InferType() == types.BMCTypeIPMI {
 			hasStaticIPMI = true
 			break
 		}
@@ -306,11 +307,11 @@ func (a *LocalAgent) discoverAndRegister(ctx context.Context) error {
 		a.discoveredServers[server.ID] = server
 
 		// Also index by BMC endpoint for manager-generated IDs
-		if server.ControlEndpoint != nil {
+		if server.GetPrimaryControlEndpoint() != nil {
 			// Use shared logic to generate manager-compatible server ID
 			managerID := identity.GenerateServerIDFromBMCEndpoint(
 				a.config.Agent.DatacenterID,
-				server.ControlEndpoint.Endpoint)
+				server.GetPrimaryControlEndpoint().Endpoint)
 			a.discoveredServers[managerID] = server
 			log.Debug().
 				Str("config_id", server.ID).
@@ -348,29 +349,44 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discove
 			Metadata: server.Metadata,
 		}
 
-		// Convert control endpoint
-		if server.ControlEndpoint != nil {
-			var bmcType gatewayv1.BMCType
-			switch server.ControlEndpoint.Type {
-			case "ipmi":
-				bmcType = gatewayv1.BMCType_BMC_IPMI
-			case "redfish":
-				bmcType = gatewayv1.BMCType_BMC_REDFISH
-			default:
-				bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
+		// Convert all control endpoints (RFD 006 multi-protocol support)
+		if len(server.ControlEndpoints) > 0 {
+			bmcEndpoint.ControlEndpoints = make([]*gatewayv1.BMCControlEndpoint, len(server.ControlEndpoints))
+			for i, endpoint := range server.ControlEndpoints {
+				var bmcType gatewayv1.BMCType
+				switch endpoint.Type {
+				case "ipmi":
+					bmcType = gatewayv1.BMCType_BMC_IPMI
+				case "redfish":
+					bmcType = gatewayv1.BMCType_BMC_REDFISH
+				default:
+					bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
+				}
+
+				bmcEndpoint.ControlEndpoints[i] = &gatewayv1.BMCControlEndpoint{
+					Endpoint:     endpoint.Endpoint,
+					Type:         bmcType,
+					Username:     endpoint.Username,
+					Password:     endpoint.Password,
+					Capabilities: endpoint.Capabilities,
+					Tls: &gatewayv1.TLSConfig{
+						Enabled:            true,
+						InsecureSkipVerify: true, // Default for dev
+					},
+				}
 			}
 
-			bmcEndpoint.ControlEndpoint = &gatewayv1.BMCControlEndpoint{
-				Endpoint:     server.ControlEndpoint.Endpoint,
-				Type:         bmcType,
-				Username:     server.ControlEndpoint.Username,
-				Password:     server.ControlEndpoint.Password,
-				Capabilities: server.ControlEndpoint.Capabilities,
-				Tls: &gatewayv1.TLSConfig{
-					Enabled:            true,
-					InsecureSkipVerify: true, // Default for dev
-				},
+			// Set primary protocol
+			var primaryProto gatewayv1.BMCType
+			switch server.PrimaryProtocol {
+			case "ipmi":
+				primaryProto = gatewayv1.BMCType_BMC_IPMI
+			case "redfish":
+				primaryProto = gatewayv1.BMCType_BMC_REDFISH
+			default:
+				primaryProto = gatewayv1.BMCType_BMC_UNSPECIFIED
 			}
+			bmcEndpoint.PrimaryProtocol = primaryProto
 		}
 
 		// Convert SOL endpoint
@@ -466,25 +482,40 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 			Metadata: server.Metadata,
 		}
 
-		// Convert control endpoint
-		if server.ControlEndpoint != nil {
-			var bmcType gatewayv1.BMCType
-			switch server.ControlEndpoint.Type {
-			case "ipmi":
-				bmcType = gatewayv1.BMCType_BMC_IPMI
-			case "redfish":
-				bmcType = gatewayv1.BMCType_BMC_REDFISH
-			default:
-				bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
+		// Convert all control endpoints (RFD 006 multi-protocol support)
+		if len(server.ControlEndpoints) > 0 {
+			bmcEndpoint.ControlEndpoints = make([]*gatewayv1.BMCControlEndpoint, len(server.ControlEndpoints))
+			for i, endpoint := range server.ControlEndpoints {
+				var bmcType gatewayv1.BMCType
+				switch endpoint.Type {
+				case "ipmi":
+					bmcType = gatewayv1.BMCType_BMC_IPMI
+				case "redfish":
+					bmcType = gatewayv1.BMCType_BMC_REDFISH
+				default:
+					bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
+				}
+
+				bmcEndpoint.ControlEndpoints[i] = &gatewayv1.BMCControlEndpoint{
+					Endpoint:     endpoint.Endpoint,
+					Type:         bmcType,
+					Username:     endpoint.Username,
+					Password:     endpoint.Password,
+					Capabilities: endpoint.Capabilities,
+				}
 			}
 
-			bmcEndpoint.ControlEndpoint = &gatewayv1.BMCControlEndpoint{
-				Endpoint:     server.ControlEndpoint.Endpoint,
-				Type:         bmcType,
-				Username:     server.ControlEndpoint.Username,
-				Password:     server.ControlEndpoint.Password,
-				Capabilities: server.ControlEndpoint.Capabilities,
+			// Set primary protocol
+			var primaryProto gatewayv1.BMCType
+			switch server.PrimaryProtocol {
+			case "ipmi":
+				primaryProto = gatewayv1.BMCType_BMC_IPMI
+			case "redfish":
+				primaryProto = gatewayv1.BMCType_BMC_REDFISH
+			default:
+				primaryProto = gatewayv1.BMCType_BMC_UNSPECIFIED
 			}
+			bmcEndpoint.PrimaryProtocol = primaryProto
 		}
 
 		// Convert SOL endpoint
@@ -647,12 +678,12 @@ func (a *LocalAgent) handleStatus(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Add control endpoint info
-		if server.ControlEndpoint != nil {
+		if server.GetPrimaryControlEndpoint() != nil {
 			serverInfo["control_endpoint"] = map[string]interface{}{
-				"endpoint":     server.ControlEndpoint.Endpoint,
-				"type":         server.ControlEndpoint.Type,
-				"username":     server.ControlEndpoint.Username,
-				"capabilities": server.ControlEndpoint.Capabilities,
+				"endpoint":     server.GetPrimaryControlEndpoint().Endpoint,
+				"type":         server.GetPrimaryControlEndpoint().Type,
+				"username":     server.GetPrimaryControlEndpoint().Username,
+				"capabilities": server.GetPrimaryControlEndpoint().Capabilities,
 			}
 		}
 

@@ -40,21 +40,21 @@ func TestService_LoadStaticServers(t *testing.T) {
 			Hosts: []config.BMCHost{
 				{
 					ID: "test-server-1",
-					ControlEndpoint: &config.BMCControlEndpoint{
+					ControlEndpoints: []*config.BMCControlEndpoint{{
 						Type:     "ipmi",
 						Endpoint: "192.168.1.100:623",
 						Username: "admin",
 						Password: "password",
-					},
+					}},
 				},
 				{
 					ID: "test-server-2",
-					ControlEndpoint: &config.BMCControlEndpoint{
+					ControlEndpoints: []*config.BMCControlEndpoint{{
 						Type:     "redfish",
 						Endpoint: "https://192.168.1.101",
 						Username: "root",
 						Password: "secret",
-					},
+					}},
 				},
 			},
 		},
@@ -72,16 +72,16 @@ func TestService_LoadStaticServers(t *testing.T) {
 		t.Errorf("Expected ID 'test-server-1', got '%s'", servers[0].ID)
 	}
 
-	if servers[0].ControlEndpoint == nil {
+	if servers[0].GetPrimaryControlEndpoint() == nil {
 		t.Fatal("Expected ControlEndpoint to be set")
 	}
 
-	if servers[0].ControlEndpoint.Type != types.BMCTypeIPMI {
-		t.Errorf("Expected type '%s', got '%s'", types.BMCTypeIPMI, servers[0].ControlEndpoint.Type)
+	if servers[0].GetPrimaryControlEndpoint().Type != types.BMCTypeIPMI {
+		t.Errorf("Expected type '%s', got '%s'", types.BMCTypeIPMI, servers[0].GetPrimaryControlEndpoint().Type)
 	}
 
-	if servers[0].ControlEndpoint.Endpoint != "192.168.1.100:623" {
-		t.Errorf("Expected endpoint '192.168.1.100:623', got '%s'", servers[0].ControlEndpoint.Endpoint)
+	if servers[0].GetPrimaryControlEndpoint().Endpoint != "192.168.1.100:623" {
+		t.Errorf("Expected endpoint '192.168.1.100:623', got '%s'", servers[0].GetPrimaryControlEndpoint().Endpoint)
 	}
 
 	// Check second server
@@ -89,8 +89,8 @@ func TestService_LoadStaticServers(t *testing.T) {
 		t.Errorf("Expected ID 'test-server-2', got '%s'", servers[1].ID)
 	}
 
-	if servers[1].ControlEndpoint.Type != types.BMCTypeRedfish {
-		t.Errorf("Expected type '%s', got '%s'", types.BMCTypeRedfish, servers[1].ControlEndpoint.Type)
+	if servers[1].GetPrimaryControlEndpoint().Type != types.BMCTypeRedfish {
+		t.Errorf("Expected type '%s', got '%s'", types.BMCTypeRedfish, servers[1].GetPrimaryControlEndpoint().Type)
 	}
 }
 
@@ -120,12 +120,12 @@ func TestService_DiscoverServers_StaticOnly(t *testing.T) {
 			Hosts: []config.BMCHost{
 				{
 					ID: "static-server-1",
-					ControlEndpoint: &config.BMCControlEndpoint{
+					ControlEndpoints: []*config.BMCControlEndpoint{{
 						Type:     "ipmi",
 						Endpoint: "192.168.1.100:623",
 						Username: "admin",
 						Password: "password",
-					},
+					}},
 				},
 			},
 		},
@@ -155,34 +155,34 @@ func TestService_FilterDuplicates(t *testing.T) {
 	existing := []*Server{
 		{
 			ID: "server-1",
-			ControlEndpoint: &BMCControlEndpoint{
+			ControlEndpoints: []*BMCControlEndpoint{{
 				Endpoint: "192.168.1.100:623",
 				Type:     "ipmi",
-			},
+			}},
 		},
 		{
 			ID: "server-2",
-			ControlEndpoint: &BMCControlEndpoint{
+			ControlEndpoints: []*BMCControlEndpoint{{
 				Endpoint: "192.168.1.101:623",
 				Type:     "ipmi",
-			},
+			}},
 		},
 	}
 
 	discovered := []*Server{
 		{
 			ID: "discovered-1",
-			ControlEndpoint: &BMCControlEndpoint{
+			ControlEndpoints: []*BMCControlEndpoint{{
 				Endpoint: "192.168.1.100:623", // Duplicate
 				Type:     "ipmi",
-			},
+			}},
 		},
 		{
 			ID: "discovered-2",
-			ControlEndpoint: &BMCControlEndpoint{
+			ControlEndpoints: []*BMCControlEndpoint{{
 				Endpoint: "192.168.1.102:623", // New
 				Type:     "ipmi",
-			},
+			}},
 		},
 	}
 
@@ -193,18 +193,18 @@ func TestService_FilterDuplicates(t *testing.T) {
 		t.Errorf("Expected 1 server after filtering, got %d", len(filtered))
 	}
 
-	if filtered[0].ControlEndpoint.Endpoint != "192.168.1.102:623" {
-		t.Errorf("Expected endpoint '192.168.1.102:623', got '%s'", filtered[0].ControlEndpoint.Endpoint)
+	if filtered[0].GetPrimaryControlEndpoint().Endpoint != "192.168.1.102:623" {
+		t.Errorf("Expected endpoint '192.168.1.102:623', got '%s'", filtered[0].GetPrimaryControlEndpoint().Endpoint)
 	}
 }
 
 func TestServer_Features(t *testing.T) {
 	server := &Server{
 		ID: "test-server",
-		ControlEndpoint: &BMCControlEndpoint{
+		ControlEndpoints: []*BMCControlEndpoint{{
 			Endpoint:     "192.168.1.100:623",
 			Type:         "ipmi",
-			Capabilities: []string{"power", "sensors"},
+			Capabilities: []string{"power", "sensors"}},
 		},
 		Features: []string{"power_management", "monitoring"},
 		Status:   "active",
@@ -218,8 +218,8 @@ func TestServer_Features(t *testing.T) {
 		t.Errorf("Expected status 'active', got '%s'", server.Status)
 	}
 
-	if len(server.ControlEndpoint.Capabilities) != 2 {
-		t.Errorf("Expected 2 capabilities, got %d", len(server.ControlEndpoint.Capabilities))
+	if len(server.GetPrimaryControlEndpoint().Capabilities) != 2 {
+		t.Errorf("Expected 2 capabilities, got %d", len(server.GetPrimaryControlEndpoint().Capabilities))
 	}
 }
 

@@ -169,13 +169,14 @@ message AgentHeartbeatResponse {
 // Agents register servers with distinct control, SOL, and VNC endpoints
 message BMCEndpointRegistration {
   string server_id = 1;                    // Logical server identifier
-  BMCControlEndpoint control_endpoint = 2;  // IPMI/Redfish management API
-  SOLEndpoint sol_endpoint = 3;            // Serial-over-LAN access (optional)
-  VNCEndpoint vnc_endpoint = 4;            // VNC/KVM access (optional)
-  repeated string features = 5;            // High-level features (power, sensors, etc.)
-  string status = 6;                       // Overall server status
-  map<string, string> metadata = 7;       // Additional server metadata
-  common.v1.DiscoveryMetadata discovery_metadata = 8; // Discovery metadata (RFD 017)
+  repeated BMCControlEndpoint control_endpoints = 2;  // Multiple protocol support (RFD 006)
+  BMCType primary_protocol = 3;            // Preferred protocol for operations
+  SOLEndpoint sol_endpoint = 4;            // Serial-over-LAN access (optional)
+  VNCEndpoint vnc_endpoint = 5;            // VNC/KVM access (optional)
+  repeated string features = 6;            // High-level features (power, sensors, etc.)
+  string status = 7;                       // Overall server status
+  map<string, string> metadata = 8;        // Additional server metadata
+  common.v1.DiscoveryMetadata discovery_metadata = 9; // Discovery metadata (RFD 017)
 }
 
 // BMC Control API endpoint (IPMI/Redfish)

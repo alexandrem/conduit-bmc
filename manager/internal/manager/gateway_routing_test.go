@@ -116,7 +116,7 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 	assert.Equal(t, gatewayUSEast.ID, locationResp.Msg.RegionalGatewayId)
 	assert.Equal(t, gatewayUSEast.Endpoint, locationResp.Msg.RegionalGatewayEndpoint)
 	assert.Equal(t, "dc-us-east-1a", locationResp.Msg.DatacenterId)
-	assert.Equal(t, managerv1.BMCType_BMC_IPMI, locationResp.Msg.BmcType)
+	assert.Equal(t, managerv1.BMCType_BMC_IPMI, locationResp.Msg.PrimaryProtocol)
 
 	// Get location for EU West server
 	euServerID := models.GenerateServerIDFromBMCEndpoint(euWestEndpoint.DatacenterId, euWestEndpoint.BmcEndpoint)
@@ -132,7 +132,7 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 	assert.Equal(t, gatewayEUWest.ID, locationResp.Msg.RegionalGatewayId)
 	assert.Equal(t, gatewayEUWest.Endpoint, locationResp.Msg.RegionalGatewayEndpoint)
 	assert.Equal(t, "dc-eu-west-1a", locationResp.Msg.DatacenterId)
-	assert.Equal(t, managerv1.BMCType_BMC_REDFISH, locationResp.Msg.BmcType)
+	assert.Equal(t, managerv1.BMCType_BMC_REDFISH, locationResp.Msg.PrimaryProtocol)
 }
 
 // TestGetServerLocation_MultipleDatacentersPerGateway tests that servers
@@ -380,7 +380,7 @@ func TestGetServerLocation_DifferentBMCTypes(t *testing.T) {
 			locationResp, err := handler.GetServerLocation(ctx, locationReq)
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedBMCType, locationResp.Msg.BmcType)
+			assert.Equal(t, tc.expectedBMCType, locationResp.Msg.PrimaryProtocol)
 		})
 	}
 }
@@ -528,7 +528,7 @@ func TestGetServerLocation_ConsistentResults(t *testing.T) {
 			"Gateway endpoint should be consistent")
 		assert.Equal(t, firstResp.DatacenterId, responses[i].Msg.DatacenterId,
 			"Datacenter ID should be consistent")
-		assert.Equal(t, firstResp.BmcType, responses[i].Msg.BmcType,
+		assert.Equal(t, firstResp.PrimaryProtocol, responses[i].Msg.PrimaryProtocol,
 			"BMC type should be consistent")
 		assert.Equal(t, firstResp.Features, responses[i].Msg.Features,
 			"Features should be consistent")

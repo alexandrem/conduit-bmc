@@ -26,10 +26,13 @@ func TestJWTManager_GenerateServerToken(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -113,10 +116,13 @@ func TestJWTManager_ValidateServerToken_WrongSigningKey(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeIPMI,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeIPMI,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeIPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -144,10 +150,13 @@ func TestJWTManager_ValidateServerToken_CustomerMismatch(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "different-customer", // Different customer ID
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeIPMI,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeIPMI,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeIPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -199,10 +208,13 @@ func TestJWTManager_EmptySecretKey(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeIPMI,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeIPMI,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeIPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -225,10 +237,13 @@ func TestJWTManager_ServerTokenExpirationMatches(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -259,10 +274,13 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 		{
 			ID:         "server-001",
 			CustomerID: "customer-123",
-			ControlEndpoint: &models.BMCControlEndpoint{
-				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeRedfish,
+			ControlEndpoints: []*models.BMCControlEndpoint{
+				{
+					Endpoint: "http://localhost:9001",
+					Type:     models.BMCTypeRedfish,
+				},
 			},
+			PrimaryProtocol: models.BMCTypeRedfish,
 			Features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 			}),
@@ -271,10 +289,13 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 		{
 			ID:         "server-002",
 			CustomerID: "customer-123",
-			ControlEndpoint: &models.BMCControlEndpoint{
-				Endpoint: "http://localhost:9002",
-				Type:     models.BMCTypeIPMI,
+			ControlEndpoints: []*models.BMCControlEndpoint{
+				{
+					Endpoint: "http://localhost:9002",
+					Type:     models.BMCTypeIPMI,
+				},
 			},
+			PrimaryProtocol: models.BMCTypeIPMI,
 			Features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -300,8 +321,8 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 
 		assert.Equal(t, customer.ID, authClaims.CustomerID)
 		assert.Equal(t, servers[i].ID, serverContext.ServerID)
-		assert.Equal(t, servers[i].ControlEndpoint.Endpoint, serverContext.BMCEndpoint)
-		assert.Equal(t, string(servers[i].ControlEndpoint.Type), serverContext.BMCType)
+		assert.Equal(t, servers[i].ControlEndpoints[0].Endpoint, serverContext.BMCEndpoint)
+		assert.Equal(t, string(servers[i].ControlEndpoints[0].Type), serverContext.BMCType)
 		assert.Equal(t, servers[i].DatacenterID, serverContext.DatacenterID)
 	}
 

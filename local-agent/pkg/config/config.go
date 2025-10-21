@@ -272,13 +272,13 @@ type StaticConfig struct {
 }
 
 type BMCHost struct {
-	ID              string              `yaml:"id"`
-	CustomerID      string              `yaml:"customer_id"`
-	ControlEndpoint *BMCControlEndpoint `yaml:"control_endpoint"`
-	SOLEndpoint     *SOLEndpoint        `yaml:"sol_endpoint"`
-	VNCEndpoint     *VNCEndpoint        `yaml:"vnc_endpoint"`
-	Features        []string            `yaml:"features"`
-	Metadata        map[string]string   `yaml:"metadata"`
+	ID               string                `yaml:"id"`
+	CustomerID       string                `yaml:"customer_id"`
+	ControlEndpoints []*BMCControlEndpoint `yaml:"control_endpoints"` // Multiple protocol support (required for RFD 006)
+	SOLEndpoint      *SOLEndpoint          `yaml:"sol_endpoint"`
+	VNCEndpoint      *VNCEndpoint          `yaml:"vnc_endpoint"`
+	Features         []string              `yaml:"features"`
+	Metadata         map[string]string     `yaml:"metadata"`
 }
 
 type BMCControlEndpoint struct {
@@ -363,12 +363,20 @@ type SOLConfig struct {
 	TimeoutSeconds int    `yaml:"timeout_seconds"`
 }
 
-// GetControlEndpoint returns the BMC control endpoint
+// GetControlEndpoint returns the primary BMC control endpoint (first in array)
 func (h *BMCHost) GetControlEndpoint() string {
-	if h.ControlEndpoint == nil {
+	if len(h.ControlEndpoints) == 0 {
 		return ""
 	}
-	return h.ControlEndpoint.Endpoint
+	return h.ControlEndpoints[0].Endpoint
+}
+
+// GetPrimaryControlEndpoint returns the primary BMC control endpoint (first in array)
+func (h *BMCHost) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+	if len(h.ControlEndpoints) == 0 {
+		return nil
+	}
+	return h.ControlEndpoints[0]
 }
 
 // GetSOLEndpoint returns the SOL endpoint if available

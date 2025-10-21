@@ -58,7 +58,7 @@ func (a *LocalAgent) PowerOn(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
-	bmcType := string(server.ControlEndpoint.Type)
+	bmcType := string(server.GetPrimaryControlEndpoint().Type)
 
 	// Execute power on operation
 	if err := a.bmcClient.PowerOn(ctx, server); err != nil {
@@ -90,7 +90,7 @@ func (a *LocalAgent) PowerOff(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
-	bmcType := string(server.ControlEndpoint.Type)
+	bmcType := string(server.GetPrimaryControlEndpoint().Type)
 
 	// Execute power off operation
 	if err := a.bmcClient.PowerOff(ctx, server); err != nil {
@@ -122,7 +122,7 @@ func (a *LocalAgent) PowerCycle(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
-	bmcType := string(server.ControlEndpoint.Type)
+	bmcType := string(server.GetPrimaryControlEndpoint().Type)
 
 	// Execute power cycle operation
 	if err := a.bmcClient.PowerCycle(ctx, server); err != nil {
@@ -154,7 +154,7 @@ func (a *LocalAgent) Reset(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
-	bmcType := string(server.ControlEndpoint.Type)
+	bmcType := string(server.GetPrimaryControlEndpoint().Type)
 
 	// Execute reset operation
 	if err := a.bmcClient.Reset(ctx, server); err != nil {
@@ -186,7 +186,7 @@ func (a *LocalAgent) GetPowerStatus(
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("server not found: %s", req.Msg.ServerId))
 	}
 
-	bmcType := string(server.ControlEndpoint.Type)
+	bmcType := string(server.GetPrimaryControlEndpoint().Type)
 
 	// Get power state
 	stateStr, err := a.bmcClient.GetPowerState(ctx, server)

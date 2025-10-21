@@ -33,23 +33,28 @@ func convertCustomerToManager(customer *domain.Customer) *managermodels.Customer
 
 // convertServerToManager converts common/domain.Server to manager/pkg/domain.Server
 func convertServerToManager(server *domain.Server) *managermodels.Server {
-	var controlEndpoint *managermodels.BMCControlEndpoint
+	var controlEndpoints []*managermodels.BMCControlEndpoint
+	var primaryProtocol managermodels.BMCType
 	if server.BMCEndpoint != "" {
-		controlEndpoint = &managermodels.BMCControlEndpoint{
-			Endpoint: server.BMCEndpoint,
-			Type:     managermodels.BMCType(server.BMCType),
+		controlEndpoints = []*managermodels.BMCControlEndpoint{
+			{
+				Endpoint: server.BMCEndpoint,
+				Type:     managermodels.BMCType(server.BMCType),
+			},
 		}
+		primaryProtocol = managermodels.BMCType(server.BMCType)
 	}
 
 	return &managermodels.Server{
-		ID:              server.ID,
-		CustomerID:      server.CustomerID,
-		DatacenterID:    server.DatacenterID,
-		ControlEndpoint: controlEndpoint,
-		Features:        server.Features,
-		Status:          server.Status,
-		CreatedAt:       server.CreatedAt,
-		UpdatedAt:       server.UpdatedAt,
+		ID:               server.ID,
+		CustomerID:       server.CustomerID,
+		DatacenterID:     server.DatacenterID,
+		ControlEndpoints: controlEndpoints,
+		PrimaryProtocol:  primaryProtocol,
+		Features:         server.Features,
+		Status:           server.Status,
+		CreatedAt:        server.CreatedAt,
+		UpdatedAt:        server.UpdatedAt,
 	}
 }
 
@@ -161,13 +166,16 @@ func TestRegisterAgent(t *testing.T) {
 	bmcEndpoints := []*gatewayv1.BMCEndpointRegistration{
 		{
 			ServerId: "test-server-1",
-			ControlEndpoint: &gatewayv1.BMCControlEndpoint{
-				Endpoint: "192.168.1.100:623",
-				Type:     gatewayv1.BMCType_BMC_IPMI,
+			ControlEndpoints: []*gatewayv1.BMCControlEndpoint{
+				{
+					Endpoint: "192.168.1.100:623",
+					Type:     gatewayv1.BMCType_BMC_IPMI,
+				},
 			},
-			Features: []string{"power", "console"},
-			Status:   "reachable",
-			Metadata: map[string]string{"rack": "R1U42"},
+			PrimaryProtocol: gatewayv1.BMCType_BMC_IPMI,
+			Features:        []string{"power", "console"},
+			Status:          "reachable",
+			Metadata:        map[string]string{"rack": "R1U42"},
 		},
 	}
 
@@ -247,13 +255,16 @@ func TestAgentHeartbeat(t *testing.T) {
 		BmcEndpoints: []*gatewayv1.BMCEndpointRegistration{
 			{
 				ServerId: "test-server-2",
-				ControlEndpoint: &gatewayv1.BMCControlEndpoint{
-					Endpoint: "192.168.1.100:623",
-					Type:     gatewayv1.BMCType_BMC_REDFISH,
+				ControlEndpoints: []*gatewayv1.BMCControlEndpoint{
+					{
+						Endpoint: "192.168.1.100:623",
+						Type:     gatewayv1.BMCType_BMC_REDFISH,
+					},
 				},
-				Features: []string{"power", "console"},
-				Status:   "reachable",
-				Metadata: map[string]string{"rack": "R1U42"},
+				PrimaryProtocol: gatewayv1.BMCType_BMC_REDFISH,
+				Features:        []string{"power", "console"},
+				Status:          "reachable",
+				Metadata:        map[string]string{"rack": "R1U42"},
 			},
 		},
 	})
@@ -894,5 +905,113 @@ func TestCreateVNCSession_WithAuthentication(t *testing.T) {
 
 	if resp.Msg.ExpiresAt == nil {
 		t.Error("Expires at should not be nil")
+	}
+}
+
+// TestRegisterAgentWithMultipleControlEndpoints tests RFD 006 multi-protocol support
+// This test ensures that when an agent registers a server with multiple control endpoints
+// (e.g., both IPMI and Redfish), ALL endpoints are properly registered in the gateway's
+// BMC endpoint mapping, not just the primary one.
+func TestRegisterAgentWithMultipleControlEndpoints(t *testing.T) {
+	handler := newGatewayHandler("gateway-1", "us-west-1")
+
+	// Register an agent with a server that has both IPMI and Redfish endpoints
+	bmcEndpoints := []*gatewayv1.BMCEndpointRegistration{
+		{
+			ServerId: "test-server-multi",
+			ControlEndpoints: []*gatewayv1.BMCControlEndpoint{
+				{
+					Endpoint:     "192.168.1.50:623",
+					Type:         gatewayv1.BMCType_BMC_IPMI,
+					Username:     "admin",
+					Password:     "ipmi_password",
+					Capabilities: []string{"power", "sensors", "sel"},
+				},
+				{
+					Endpoint:     "https://192.168.1.50:443",
+					Type:         gatewayv1.BMCType_BMC_REDFISH,
+					Username:     "admin",
+					Password:     "redfish_password",
+					Capabilities: []string{"power", "sensors", "info"},
+				},
+			},
+			PrimaryProtocol: gatewayv1.BMCType_BMC_IPMI,
+			Features:        []string{"power", "console", "sensors"},
+			Status:          "online",
+			Metadata:        map[string]string{"rack": "R2U10", "model": "Dell PowerEdge R750"},
+		},
+	}
+
+	req := connect.NewRequest(&gatewayv1.RegisterAgentRequest{
+		AgentId:      "agent-multi",
+		DatacenterId: "dc-prod",
+		Endpoint:     "http://agent-multi:8080",
+		BmcEndpoints: bmcEndpoints,
+	})
+
+	resp, err := handler.RegisterAgent(context.Background(), req)
+
+	if err != nil {
+		t.Fatalf("RegisterAgent failed: %v", err)
+	}
+
+	if !resp.Msg.Success {
+		t.Error("Registration should be successful")
+	}
+
+	// Verify agent was registered
+	agentInfo := handler.agentRegistry.Get("agent-multi")
+	if agentInfo == nil {
+		t.Fatal("Agent should be registered in registry")
+	}
+
+	// CRITICAL: Verify BOTH control endpoints were registered in the mapping
+	handler.mu.RLock()
+	ipmiMapping := handler.bmcEndpointMapping["192.168.1.50:623"]
+	redfishMapping := handler.bmcEndpointMapping["https://192.168.1.50:443"]
+	handler.mu.RUnlock()
+
+	if ipmiMapping == nil {
+		t.Error("IPMI endpoint mapping should be created")
+	} else {
+		if ipmiMapping.ServerID != "test-server-multi" {
+			t.Errorf("IPMI mapping: expected server ID 'test-server-multi', got '%s'", ipmiMapping.ServerID)
+		}
+		if ipmiMapping.BMCType != types.BMCTypeIPMI {
+			t.Errorf("IPMI mapping: expected type IPMI, got %s", ipmiMapping.BMCType)
+		}
+		if ipmiMapping.Username != "admin" {
+			t.Errorf("IPMI mapping: expected username 'admin', got '%s'", ipmiMapping.Username)
+		}
+		if len(ipmiMapping.Capabilities) != 3 {
+			t.Errorf("IPMI mapping: expected 3 capabilities, got %d", len(ipmiMapping.Capabilities))
+		}
+	}
+
+	if redfishMapping == nil {
+		t.Error("Redfish endpoint mapping should be created")
+	} else {
+		if redfishMapping.ServerID != "test-server-multi" {
+			t.Errorf("Redfish mapping: expected server ID 'test-server-multi', got '%s'", redfishMapping.ServerID)
+		}
+		if redfishMapping.BMCType != types.BMCTypeRedfish {
+			t.Errorf("Redfish mapping: expected type Redfish, got %s", redfishMapping.BMCType)
+		}
+		if redfishMapping.Username != "admin" {
+			t.Errorf("Redfish mapping: expected username 'admin', got '%s'", redfishMapping.Username)
+		}
+		if len(redfishMapping.Capabilities) != 3 {
+			t.Errorf("Redfish mapping: expected 3 capabilities, got %d", len(redfishMapping.Capabilities))
+		}
+	}
+
+	// Verify both mappings point to the same server and agent
+	if ipmiMapping != nil && redfishMapping != nil {
+		if ipmiMapping.ServerID != redfishMapping.ServerID {
+			t.Error("Both endpoints should map to the same server ID")
+		}
+		if ipmiMapping.AgentID != redfishMapping.AgentID {
+			t.Error("Both endpoints should map to the same agent ID")
+		}
 	}
 }

@@ -118,6 +118,7 @@ static:
   #
   # Example 1: Redfish-based server (Dell, HPE, Lenovo, Supermicro)
   # Types are auto-inferred from endpoint URLs - no explicit 'type' fields needed!
+  # Array order determines priority - first endpoint is primary
   # hosts:
   #   - id: redfish-server-001
   #     customer_id: customer-1
@@ -125,15 +126,16 @@ static:
   #     metadata:
   #       location: Rack 1, U10
   #       model: Dell PowerEdge R740
-  #     # Control Endpoint (type auto-inferred as 'redfish' from https://)
-  #     control_endpoint:
-  #       endpoint: https://192.168.1.100
-  #       username: admin
-  #       password: password
-  #       capabilities: [power, sensors, systems, chassis]
-  #       tls:
-  #         enabled: true
-  #         insecure_skip_verify: true
+  #     # Control Endpoints (type auto-inferred as 'redfish' from https://)
+  #     # First endpoint in array is the primary endpoint
+  #     control_endpoints:
+  #       - endpoint: https://192.168.1.100
+  #         username: admin
+  #         password: password
+  #         capabilities: [power, sensors, systems, chassis]
+  #         tls:
+  #           enabled: true
+  #           insecure_skip_verify: true
   #     # SOL Endpoint (type auto-inferred as 'redfish_serial' from https://)
   #     sol_endpoint:
   #       endpoint: https://192.168.1.100/redfish/v1/Systems/1/SerialInterfaces/1
@@ -157,12 +159,12 @@ static:
   #     metadata:
   #       location: Rack 2, U5
   #       model: Supermicro X10DRi
-  #     # Control Endpoint (type auto-inferred as 'ipmi' from host:port)
-  #     control_endpoint:
-  #       endpoint: 192.168.1.101:623
-  #       username: ADMIN
-  #       password: ADMIN
-  #       capabilities: [power, sensors]
+  #     # Control Endpoints (type auto-inferred as 'ipmi' from host:port)
+  #     control_endpoints:
+  #       - endpoint: 192.168.1.101:623
+  #         username: ADMIN
+  #         password: ADMIN
+  #         capabilities: [power, sensors]
   #     # SOL Endpoint (type auto-inferred as 'ipmi' from host:port)
   #     sol_endpoint:
   #       endpoint: 192.168.1.101:623

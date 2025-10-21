@@ -86,7 +86,7 @@ func TestServerRepository_CRUD(t *testing.T) {
 			types.FeatureConsole,
 			types.FeatureVNC,
 		}),
-		ControlEndpoint: &models.BMCControlEndpoint{
+		ControlEndpoints: []*models.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
 			Type:     models.BMCTypeIPMI,
 			Username: "admin",
@@ -94,10 +94,11 @@ func TestServerRepository_CRUD(t *testing.T) {
 				types.CapabilityIPMISEL,
 				types.CapabilityIPMISDR,
 			}),
-		},
-		Status:    "active",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		}},
+		PrimaryProtocol: models.BMCTypeIPMI,
+		Status:          "active",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	err = db.Servers.Create(ctx, server)
@@ -109,8 +110,8 @@ func TestServerRepository_CRUD(t *testing.T) {
 	assert.Equal(t, server.ID, retrieved.ID)
 	assert.Equal(t, server.CustomerID, retrieved.CustomerID)
 	assert.Equal(t, server.Features, retrieved.Features)
-	assert.NotNil(t, retrieved.ControlEndpoint)
-	assert.Equal(t, models.BMCTypeIPMI, retrieved.ControlEndpoint.Type)
+	assert.NotEmpty(t, retrieved.ControlEndpoints)
+	assert.Equal(t, models.BMCTypeIPMI, retrieved.ControlEndpoints[0].Type)
 
 	// Test List
 	servers, err := db.Servers.List(ctx, "customer-123")
@@ -169,13 +170,14 @@ func TestServer_JSONFields(t *testing.T) {
 			Username: "admin",
 			Password: "password",
 		},
-		ControlEndpoint: &models.BMCControlEndpoint{
+		ControlEndpoints: []*models.BMCControlEndpoint{{
 			Endpoint:     "http://192.168.1.100:8000",
 			Type:         models.BMCTypeRedfish,
 			Username:     "admin",
 			Password:     "password",
 			Capabilities: []string{"Systems", "Chassis"},
-		},
+		}},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Metadata: map[string]string{
 			"location": "rack-1",
 			"model":    "Dell R750",
@@ -200,10 +202,10 @@ func TestServer_JSONFields(t *testing.T) {
 	assert.Equal(t, "sensors", retrieved.Features[3])
 
 	// Verify capabilities from control endpoint
-	require.NotNil(t, retrieved.ControlEndpoint)
-	assert.IsType(t, []string{}, retrieved.ControlEndpoint.Capabilities)
-	assert.Len(t, retrieved.ControlEndpoint.Capabilities, 2)
-	assert.Contains(t, retrieved.ControlEndpoint.Capabilities, "Systems")
+	require.NotEmpty(t, retrieved.ControlEndpoints)
+	assert.IsType(t, []string{}, retrieved.ControlEndpoints[0].Capabilities)
+	assert.Len(t, retrieved.ControlEndpoints[0].Capabilities, 2)
+	assert.Contains(t, retrieved.ControlEndpoints[0].Capabilities, "Systems")
 
 	// Verify SOLEndpoint
 	require.NotNil(t, retrieved.SOLEndpoint)
@@ -215,8 +217,8 @@ func TestServer_JSONFields(t *testing.T) {
 	assert.Equal(t, models.VNCTypeNative, retrieved.VNCEndpoint.Type)
 	assert.Equal(t, "192.168.1.100:5901", retrieved.VNCEndpoint.Endpoint)
 
-	// Verify ControlEndpoint (already checked above, but double-check Type)
-	assert.Equal(t, models.BMCTypeRedfish, retrieved.ControlEndpoint.Type)
+	// Verify ControlEndpoints (already checked above, but double-check Type)
+	assert.Equal(t, models.BMCTypeRedfish, retrieved.ControlEndpoints[0].Type)
 
 	// Verify Metadata
 	assert.Len(t, retrieved.Metadata, 2)
@@ -266,10 +268,14 @@ func TestServerLocationRepository_Upsert(t *testing.T) {
 		CustomerID:        "customer-123",
 		DatacenterID:      "dc-us-east-1a",
 		RegionalGatewayID: "gateway-us-east-1",
-		BMCType:           models.BMCTypeIPMI,
-		Features:          []string{"power", "console"},
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
+		ControlEndpoints: []*models.BMCControlEndpoint{{
+			Endpoint: "192.168.1.100:623",
+			Type:     models.BMCTypeIPMI,
+		}},
+		PrimaryProtocol: models.BMCTypeIPMI,
+		Features:        []string{"power", "console"},
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	// First upsert (insert)
@@ -338,13 +344,14 @@ func TestProxySessionRepository_ListActive(t *testing.T) {
 		CustomerID:   "customer-123",
 		DatacenterID: "dc-01",
 		Features:     []string{"power"},
-		ControlEndpoint: &models.BMCControlEndpoint{
+		ControlEndpoints: []*models.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
 			Type:     models.BMCTypeIPMI,
-		},
-		Status:    "active",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		}},
+		PrimaryProtocol: models.BMCTypeIPMI,
+		Status:          "active",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 	db.Servers.Create(ctx, server)
 

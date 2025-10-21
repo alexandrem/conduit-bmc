@@ -65,12 +65,18 @@ func (s *ServerContextService) CreateServerContext(server *models.Server, permis
 	now := time.Now()
 
 	bmcEndpoint := ""
-	bmcType := "ipmi" // Default
+	bmcType := string(server.PrimaryProtocol)
+	if bmcType == "" {
+		bmcType = "ipmi" // Default fallback
+	}
 
-	// Extract BMC information from control endpoint
-	if server.ControlEndpoint != nil {
-		bmcEndpoint = server.ControlEndpoint.Endpoint
-		bmcType = string(server.ControlEndpoint.Type)
+	// Extract BMC information from primary control endpoint
+	primaryEndpoint := server.GetPrimaryControlEndpoint()
+	if primaryEndpoint != nil {
+		bmcEndpoint = primaryEndpoint.Endpoint
+		if primaryEndpoint.Type != "" {
+			bmcType = string(primaryEndpoint.Type)
+		}
 	}
 
 	return &ServerContext{

@@ -240,7 +240,7 @@ func TestGatewayRouting_ServerLocationResponse(t *testing.T) {
 				RegionalGatewayID:       "gateway-us-east-1",
 				RegionalGatewayEndpoint: "http://gateway-us-east-1:8081",
 				DatacenterID:            "dc-us-east-1a",
-				BMCType:                 "redfish",
+				PrimaryProtocol:         "BMC_REDFISH",
 				Features:                []string{"power", "console", "vnc"},
 			},
 		},
@@ -251,7 +251,7 @@ func TestGatewayRouting_ServerLocationResponse(t *testing.T) {
 				RegionalGatewayID:       "gateway-eu-west-1",
 				RegionalGatewayEndpoint: "http://gateway-eu-west-1:8081",
 				DatacenterID:            "dc-eu-west-1a",
-				BMCType:                 "ipmi",
+				PrimaryProtocol:         "BMC_IPMI",
 				Features:                []string{"power", "console"},
 			},
 		},
@@ -262,7 +262,7 @@ func TestGatewayRouting_ServerLocationResponse(t *testing.T) {
 				RegionalGatewayID:       "gateway-ap-south-1",
 				RegionalGatewayEndpoint: "http://gateway-ap-south-1:8081",
 				DatacenterID:            "dc-ap-south-1a",
-				BMCType:                 "redfish",
+				PrimaryProtocol:         "BMC_REDFISH",
 				Features:                []string{"power", "console", "vnc", "sensors"},
 			},
 		},
@@ -275,7 +275,7 @@ func TestGatewayRouting_ServerLocationResponse(t *testing.T) {
 			assert.NotEmpty(t, tc.location.RegionalGatewayID, "RegionalGatewayID should not be empty")
 			assert.NotEmpty(t, tc.location.RegionalGatewayEndpoint, "RegionalGatewayEndpoint should not be empty")
 			assert.NotEmpty(t, tc.location.DatacenterID, "DatacenterID should not be empty")
-			assert.NotEmpty(t, tc.location.BMCType, "BMCType should not be empty")
+			assert.NotEmpty(t, tc.location.PrimaryProtocol, "PrimaryProtocol should not be empty")
 			assert.NotEmpty(t, tc.location.Features, "Features should not be empty")
 
 			// Verify endpoint format

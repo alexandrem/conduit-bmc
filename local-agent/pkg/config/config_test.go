@@ -93,16 +93,16 @@ agent:
 tls:
   enabled: true
 
-# Legacy static hosts for backward compatibility
+# Static hosts configuration (RFD 006 multi-protocol format)
 static:
   hosts:
     - id: test-server-001
       customer_id: test-customer
-      control_endpoint:
-        endpoint: https://192.168.1.100
-        type: redfish
-        username: admin
-        password: password
+      control_endpoints:
+        - endpoint: https://192.168.1.100
+          type: redfish
+          username: admin
+          password: password
       features:
         - power
         - sensors
@@ -282,8 +282,10 @@ AGENT_ID=env-agent-001
 		t.Errorf("Expected static host ID 'test-server-001', got '%s'", cfg.Static.Hosts[0].ID)
 	}
 
-	if cfg.Static.Hosts[0].ControlEndpoint.Type != "redfish" {
-		t.Errorf("Expected static host type 'redfish', got '%s'", cfg.Static.Hosts[0].ControlEndpoint.Type)
+	if len(cfg.Static.Hosts[0].ControlEndpoints) == 0 {
+		t.Errorf("Expected static host to have at least one control endpoint, got 0")
+	} else if cfg.Static.Hosts[0].ControlEndpoints[0].Type != "redfish" {
+		t.Errorf("Expected static host type 'redfish', got '%s'", cfg.Static.Hosts[0].ControlEndpoints[0].Type)
 	}
 }
 
@@ -1050,9 +1052,9 @@ func TestAgentConfigLegacyMethods(t *testing.T) {
 static:
   hosts:
     - id: test-server
-      control_endpoint:
-        endpoint: https://192.168.1.100
-        type: redfish
+      control_endpoints:
+        - endpoint: https://192.168.1.100
+          type: redfish
       sol_endpoint:
         endpoint: https://192.168.1.100/sol
         type: redfish_serial

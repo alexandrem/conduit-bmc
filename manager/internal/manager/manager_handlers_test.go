@@ -512,9 +512,14 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 				CustomerId:        customer.ID,
 				DatacenterId:      "dc-test-01",
 				RegionalGatewayId: "gateway-1",
-				BmcType:           tc.bmcType,
-				Features:          tc.features,
-				BmcEndpoint:       bmcEndpoint,
+				BmcProtocols: []*managerv1.BMCControlEndpoint{
+					{
+						Endpoint: bmcEndpoint,
+						Type:     tc.bmcType,
+					},
+				},
+				PrimaryProtocol: tc.bmcType,
+				Features:        tc.features,
 			})
 
 			resp, err := handler.RegisterServer(ctx, req)
@@ -556,16 +561,19 @@ func TestDatabaseRoundTrip_PreservesSOLAndVNCEndpoints(t *testing.T) {
 		ID:           "test-server-roundtrip",
 		CustomerID:   "test-customer",
 		DatacenterID: "dc-test-01",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "192.168.1.100:623",
-			Type:     models.BMCTypeIPMI,
-			Username: "admin",
-			Password: "",
-			Capabilities: types.CapabilitiesToStrings([]types.Capability{
-				types.CapabilityIPMIChassis,
-				types.CapabilityIPMISDR,
-			}),
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "192.168.1.100:623",
+				Type:     models.BMCTypeIPMI,
+				Username: "admin",
+				Password: "",
+				Capabilities: types.CapabilitiesToStrings([]types.Capability{
+					types.CapabilityIPMIChassis,
+					types.CapabilityIPMISDR,
+				}),
+			},
 		},
+		PrimaryProtocol: models.BMCTypeIPMI,
 		SOLEndpoint: &models.SOLEndpoint{
 			Type:     models.SOLTypeIPMI,
 			Endpoint: "192.168.1.100:623",

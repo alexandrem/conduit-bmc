@@ -53,12 +53,13 @@ static:
         external_port: 6230
         server_container: "server-01"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "dev-virtualbmc-01:623"
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "dev-virtualbmc-01:623"
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -83,12 +84,13 @@ static:
         external_port: 6231
         server_container: "server-02"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "dev-virtualbmc-02:623"
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "dev-virtualbmc-02:623"
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -113,12 +115,13 @@ static:
         external_port: 6232
         server_container: "server-03"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "dev-virtualbmc-03:623"
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "dev-virtualbmc-03:623"
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # IPMI Serial-over-LAN
       sol_endpoint:
@@ -143,12 +146,13 @@ static:
         external_port: 6230
         server_container: "server-01"
 
-      # IPMI Control API
-      control_endpoint:
-        endpoint: "dev-virtualbmc-04:623" # this is fake
-        username: "ipmiusr"
-        password: "test"
-        capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
+      # IPMI Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "dev-virtualbmc-04:623" # this is fake
+          type: "ipmi"
+          username: "ipmiusr"
+          password: "test"
+          capabilities: ["sel", "sdr", "fru", "chassis", "lan"]
 
       # VNC via noVNC proxy
       vnc_endpoint:
@@ -169,15 +173,16 @@ static:
         server_container: "server-01"
         sushy_emulator: true
 
-      # Redfish Control API
-      control_endpoint:
-        endpoint: "http://dev-redfish-01:8000"
-        username: ""
-        password: ""
-        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
-        tls:
-          enabled: false
-          insecure_skip_verify: true
+      # Redfish Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "http://dev-redfish-01:8000"
+          type: "redfish"
+          username: ""
+          password: ""
+          capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
+          tls:
+            enabled: false
+            insecure_skip_verify: true
 
       # Redfish Serial Console
       sol_endpoint:
@@ -202,15 +207,16 @@ static:
         server_container: "server-02"
         sushy_emulator: true
 
-      # Redfish Control API
-      control_endpoint:
-        endpoint: "http://dev-redfish-02:8000"
-        username: ""
-        password: ""
-        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
-        tls:
-          enabled: false
-          insecure_skip_verify: true
+      # Redfish Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "http://dev-redfish-02:8000"
+          type: "redfish"
+          username: ""
+          password: ""
+          capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
+          tls:
+            enabled: false
+            insecure_skip_verify: true
 
       # Redfish Serial Console
       sol_endpoint:
@@ -235,15 +241,16 @@ static:
         server_container: "server-03"
         sushy_emulator: true
 
-      # Redfish Control API
-      control_endpoint:
-        endpoint: "http://dev-redfish-03:8000"
-        username: ""
-        password: ""
-        capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
-        tls:
-          enabled: false
-          insecure_skip_verify: true
+      # Redfish Control API (multiple protocols supported)
+      control_endpoints:
+        - endpoint: "http://dev-redfish-03:8000"
+          type: "redfish"
+          username: ""
+          password: ""
+          capabilities: ["Systems", "Chassis", "Managers", "SessionService", "EventService"]
+          tls:
+            enabled: false
+            insecure_skip_verify: true
 
       # Redfish Serial Console
       sol_endpoint:

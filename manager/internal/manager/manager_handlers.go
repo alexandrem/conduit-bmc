@@ -163,8 +163,8 @@ func (h *BMCManagerServiceHandler) GetServerToken(
 	}
 
 	bmcEndpoint := ""
-	if server.ControlEndpoint != nil {
-		bmcEndpoint = server.ControlEndpoint.Endpoint
+	if len(server.ControlEndpoints) > 0 {
+		bmcEndpoint = server.GetPrimaryControlEndpoint().Endpoint
 	}
 	log.Debug().
 		Str("customer_id", claims.CustomerID).
@@ -185,33 +185,50 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("customer not authenticated"))
 	}
 
-	// Convert BMC type from protobuf to models
-	var bmcType models.BMCType
-	switch req.Msg.BmcType {
+	// Convert BMC protocols from protobuf to models
+	controlEndpoints := make([]*models.BMCControlEndpoint, 0, len(req.Msg.BmcProtocols))
+	for _, protoEndpoint := range req.Msg.BmcProtocols {
+		var bmcType models.BMCType
+		switch protoEndpoint.Type {
+		case managerv1.BMCType_BMC_IPMI:
+			bmcType = models.BMCTypeIPMI
+		case managerv1.BMCType_BMC_REDFISH:
+			bmcType = models.BMCTypeRedfish
+		default:
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid BMC type"))
+		}
+
+		endpoint := &models.BMCControlEndpoint{
+			Endpoint:     protoEndpoint.Endpoint,
+			Type:         bmcType,
+			Username:     protoEndpoint.Username,
+			Password:     protoEndpoint.Password,
+			Capabilities: protoEndpoint.Capabilities,
+		}
+		controlEndpoints = append(controlEndpoints, endpoint)
+	}
+
+	// Determine primary protocol
+	var primaryProtocol models.BMCType = models.BMCTypeIPMI // Default
+	switch req.Msg.PrimaryProtocol {
 	case managerv1.BMCType_BMC_IPMI:
-		bmcType = models.BMCTypeIPMI
+		primaryProtocol = models.BMCTypeIPMI
 	case managerv1.BMCType_BMC_REDFISH:
-		bmcType = models.BMCTypeRedfish
-	default:
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid BMC type"))
+		primaryProtocol = models.BMCTypeRedfish
 	}
 
 	// Create server record with BMC endpoint information
 	server := &models.Server{
-		ID:           req.Msg.ServerId,
-		CustomerID:   customerID,
-		DatacenterID: req.Msg.DatacenterId,
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: req.Msg.BmcEndpoint,
-			Type:     bmcType,
-			Username: "", // Will be filled later
-			Password: "", // Will be filled later
-		},
-		Features:  req.Msg.Features,
-		Status:    "active",
-		Metadata:  make(map[string]string),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:               req.Msg.ServerId,
+		CustomerID:       customerID,
+		DatacenterID:     req.Msg.DatacenterId,
+		ControlEndpoints: controlEndpoints,
+		PrimaryProtocol:  primaryProtocol,
+		Features:         req.Msg.Features,
+		Status:           "active",
+		Metadata:         make(map[string]string),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
 	}
 
 	// Populate SOL/Console endpoint if feature is present
@@ -220,16 +237,22 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		Strs("features", req.Msg.Features).
 		Msg("Processing features for endpoint population")
 
+	// Use primary endpoint for SOL/VNC if not explicitly provided
+	primaryEndpoint := ""
+	if len(controlEndpoints) > 0 {
+		primaryEndpoint = controlEndpoints[0].Endpoint
+	}
+
 	for _, feature := range req.Msg.Features {
 		if feature == types.FeatureConsole.String() {
-			// Determine SOL type based on BMC type
+			// Determine SOL type based on primary protocol
 			solType := models.SOLTypeIPMI
-			if bmcType == models.BMCTypeRedfish {
+			if primaryProtocol == models.BMCTypeRedfish {
 				solType = models.SOLTypeRedfishSerial
 			}
 			server.SOLEndpoint = &models.SOLEndpoint{
 				Type:     solType,
-				Endpoint: req.Msg.BmcEndpoint,
+				Endpoint: primaryEndpoint,
 				Username: "", // Will be filled later
 				Password: "", // Will be filled later
 			}
@@ -246,7 +269,7 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		if feature == types.FeatureVNC.String() {
 			server.VNCEndpoint = &models.VNCEndpoint{
 				Type:     models.VNCTypeNative, // Default to native VNC
-				Endpoint: req.Msg.BmcEndpoint,
+				Endpoint: primaryEndpoint,
 				Username: "", // Will be filled later
 				Password: "", // Will be filled later
 			}
@@ -259,7 +282,8 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 
 	log.Info().
 		Str("server_id", server.ID).
-		Str("bmc_endpoint", server.ControlEndpoint.Endpoint).
+		Str("primary_endpoint", primaryEndpoint).
+		Int("protocol_count", len(controlEndpoints)).
 		Bool("has_sol", server.SOLEndpoint != nil).
 		Bool("has_vnc", server.VNCEndpoint != nil).
 		Msg("Creating server record")
@@ -275,7 +299,8 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 		CustomerID:        customerID,
 		DatacenterID:      req.Msg.DatacenterId,
 		RegionalGatewayID: req.Msg.RegionalGatewayId,
-		BMCType:           bmcType,
+		ControlEndpoints:  controlEndpoints,
+		PrimaryProtocol:   primaryProtocol,
 		Features:          req.Msg.Features,
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
@@ -319,22 +344,22 @@ func (h *BMCManagerServiceHandler) GetServerLocation(
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to get gateway info: %w", err))
 	}
 
-	// Convert BMC type to protobuf
-	var bmcType managerv1.BMCType
-	switch location.BMCType {
+	// Convert primary protocol to protobuf
+	var primaryProtocol managerv1.BMCType
+	switch location.PrimaryProtocol {
 	case models.BMCTypeIPMI:
-		bmcType = managerv1.BMCType_BMC_IPMI
+		primaryProtocol = managerv1.BMCType_BMC_IPMI
 	case models.BMCTypeRedfish:
-		bmcType = managerv1.BMCType_BMC_REDFISH
+		primaryProtocol = managerv1.BMCType_BMC_REDFISH
 	default:
-		bmcType = managerv1.BMCType_BMC_UNSPECIFIED
+		primaryProtocol = managerv1.BMCType_BMC_UNSPECIFIED
 	}
 
 	response := &managerv1.GetServerLocationResponse{
 		RegionalGatewayId:       gateway.ID,
 		RegionalGatewayEndpoint: gateway.Endpoint,
 		DatacenterId:            location.DatacenterID,
-		BmcType:                 bmcType,
+		PrimaryProtocol:         primaryProtocol,
 		Features:                location.Features,
 	}
 
@@ -478,11 +503,11 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 		server, exists := serverMap[loc.ServerID]
 
 		bmcEndpoint := ""
-		bmcType := loc.BMCType
+		bmcType := loc.PrimaryProtocol
 
-		if exists && server.ControlEndpoint != nil {
-			bmcEndpoint = server.ControlEndpoint.Endpoint
-			bmcType = server.ControlEndpoint.Type
+		if exists && len(server.ControlEndpoints) > 0 {
+			bmcEndpoint = server.GetPrimaryControlEndpoint().Endpoint
+			bmcType = server.GetPrimaryControlEndpoint().Type
 		}
 
 		allServers = append(allServers, serverWithBMC{
@@ -530,11 +555,11 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 					CustomerId:        server.CustomerID,
 					DatacenterId:      server.DatacenterID,
 					RegionalGatewayId: server.RegionalGatewayID,
-					BmcType:           convertBMCTypeToProto(server.BMCType),
+					PrimaryProtocol:   convertBMCTypeToProto(server.BMCType),
 					Features:          server.Features,
 					CreatedAt:         timestamppb.New(server.CreatedAt),
 					UpdatedAt:         timestamppb.New(server.UpdatedAt),
-					BmcEndpoint:       server.BMCEndpoint,
+					BmcProtocols:      []*managerv1.BMCControlEndpoint{{Endpoint: server.BMCEndpoint, Type: convertBMCTypeToProto(server.BMCType)}},
 				})
 			}
 		}
@@ -561,11 +586,11 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 			CustomerId:        server.CustomerID,
 			DatacenterId:      server.DatacenterID,
 			RegionalGatewayId: server.RegionalGatewayID,
-			BmcType:           convertBMCTypeToProto(server.BMCType),
+			PrimaryProtocol:   convertBMCTypeToProto(server.BMCType),
 			Features:          server.Features,
 			CreatedAt:         timestamppb.New(server.CreatedAt),
 			UpdatedAt:         timestamppb.New(server.UpdatedAt),
-			BmcEndpoint:       server.BMCEndpoint,
+			BmcProtocols:      []*managerv1.BMCControlEndpoint{{Endpoint: server.BMCEndpoint, Type: convertBMCTypeToProto(server.BMCType)}},
 		})
 	}
 
@@ -664,23 +689,26 @@ func (h *BMCManagerServiceHandler) GetServer(
 		DiscoveryMetadata: convertModelsToProtoDiscoveryMetadata(server.DiscoveryMetadata),
 	}
 
-	// Convert control endpoint
-	if server.ControlEndpoint != nil {
-		protoServer.ControlEndpoint = &managerv1.BMCControlEndpoint{
-			Endpoint:     server.ControlEndpoint.Endpoint,
-			Type:         convertBMCTypeToProto(server.ControlEndpoint.Type),
-			Username:     server.ControlEndpoint.Username,
-			Password:     server.ControlEndpoint.Password,
-			Capabilities: server.ControlEndpoint.Capabilities,
+	// Convert control endpoints (multi-protocol support)
+	protoServer.ControlEndpoints = make([]*managerv1.BMCControlEndpoint, 0, len(server.ControlEndpoints))
+	for _, endpoint := range server.ControlEndpoints {
+		protoEndpoint := &managerv1.BMCControlEndpoint{
+			Endpoint:     endpoint.Endpoint,
+			Type:         convertBMCTypeToProto(endpoint.Type),
+			Username:     endpoint.Username,
+			Password:     endpoint.Password,
+			Capabilities: endpoint.Capabilities,
 		}
-		if server.ControlEndpoint.TLS != nil {
-			protoServer.ControlEndpoint.Tls = &managerv1.TLSConfig{
-				Enabled:            server.ControlEndpoint.TLS.Enabled,
-				InsecureSkipVerify: server.ControlEndpoint.TLS.InsecureSkipVerify,
-				CaCert:             server.ControlEndpoint.TLS.CACert,
+		if endpoint.TLS != nil {
+			protoEndpoint.Tls = &managerv1.TLSConfig{
+				Enabled:            endpoint.TLS.Enabled,
+				InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
+				CaCert:             endpoint.TLS.CACert,
 			}
 		}
+		protoServer.ControlEndpoints = append(protoServer.ControlEndpoints, protoEndpoint)
 	}
+	protoServer.PrimaryProtocol = convertBMCTypeToProto(server.PrimaryProtocol)
 
 	// Convert SOL endpoint
 	if server.SOLEndpoint != nil {
@@ -765,23 +793,26 @@ func (h *BMCManagerServiceHandler) ListServers(
 			DiscoveryMetadata: convertModelsToProtoDiscoveryMetadata(server.DiscoveryMetadata),
 		}
 
-		// Convert control endpoint
-		if server.ControlEndpoint != nil {
-			protoServer.ControlEndpoint = &managerv1.BMCControlEndpoint{
-				Endpoint:     server.ControlEndpoint.Endpoint,
-				Type:         convertBMCTypeToProto(server.ControlEndpoint.Type),
-				Username:     server.ControlEndpoint.Username,
-				Password:     server.ControlEndpoint.Password,
-				Capabilities: server.ControlEndpoint.Capabilities,
+		// Convert control endpoints (multi-protocol support)
+		protoServer.ControlEndpoints = make([]*managerv1.BMCControlEndpoint, 0, len(server.ControlEndpoints))
+		for _, endpoint := range server.ControlEndpoints {
+			protoEndpoint := &managerv1.BMCControlEndpoint{
+				Endpoint:     endpoint.Endpoint,
+				Type:         convertBMCTypeToProto(endpoint.Type),
+				Username:     endpoint.Username,
+				Password:     endpoint.Password,
+				Capabilities: endpoint.Capabilities,
 			}
-			if server.ControlEndpoint.TLS != nil {
-				protoServer.ControlEndpoint.Tls = &managerv1.TLSConfig{
-					Enabled:            server.ControlEndpoint.TLS.Enabled,
-					InsecureSkipVerify: server.ControlEndpoint.TLS.InsecureSkipVerify,
-					CaCert:             server.ControlEndpoint.TLS.CACert,
+			if endpoint.TLS != nil {
+				protoEndpoint.Tls = &managerv1.TLSConfig{
+					Enabled:            endpoint.TLS.Enabled,
+					InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
+					CaCert:             endpoint.TLS.CACert,
 				}
 			}
+			protoServer.ControlEndpoints = append(protoServer.ControlEndpoints, protoEndpoint)
 		}
+		protoServer.PrimaryProtocol = convertBMCTypeToProto(server.PrimaryProtocol)
 
 		// Convert SOL endpoint
 		if server.SOLEndpoint != nil {
@@ -897,7 +928,8 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 		ID:                serverID,
 		CustomerID:        "system", // System-managed servers from gateway reports
 		DatacenterID:      endpoint.DatacenterId,
-		ControlEndpoint:   controlEndpoint,
+		ControlEndpoints:  []*models.BMCControlEndpoint{controlEndpoint},
+		PrimaryProtocol:   bmcType,
 		Features:          endpoint.Features,
 		Status:            endpoint.Status,
 		CreatedAt:         time.Now(),
@@ -972,7 +1004,8 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 		CustomerID:        "system", // System-managed servers from gateway reports
 		DatacenterID:      endpoint.DatacenterId,
 		RegionalGatewayID: gatewayID,
-		BMCType:           bmcType,
+		ControlEndpoints:  []*models.BMCControlEndpoint{controlEndpoint},
+		PrimaryProtocol:   bmcType,
 		Features:          endpoint.Features,
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),

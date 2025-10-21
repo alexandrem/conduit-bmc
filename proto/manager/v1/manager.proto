@@ -17,11 +17,11 @@ option go_package = "manager/gen/manager/v1;managerv1";
 // - Provides server location resolution for routing client requests
 service BMCManagerService {
   // Authentication and token management
-  
+
   // Authenticate verifies customer credentials and issues access tokens
   // Supports multiple authentication methods (password, OIDC, API keys)
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
-  
+
   // RefreshToken issues new access tokens using refresh tokens
   // Can optionally scope tokens to specific servers for enhanced security
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
@@ -29,23 +29,23 @@ service BMCManagerService {
   // GetServerToken generates a server-specific token with encrypted BMC context
   // Enables stateless gateway operations without server ID lookups
   rpc GetServerToken(GetServerTokenRequest) returns (GetServerTokenResponse);
-  
+
   // Server lifecycle and location management
-  
+
   // RegisterServer registers a server and maps it to a regional gateway
   // Called during server provisioning to establish BMC access routing
   rpc RegisterServer(RegisterServerRequest) returns (RegisterServerResponse);
-  
+
   // GetServerLocation resolves which gateway handles a specific server
   // Used by CLI and other clients to route server requests correctly
   rpc GetServerLocation(GetServerLocationRequest) returns (GetServerLocationResponse);
-  
+
   // Regional Gateway management
-  
+
   // RegisterGateway allows gateways to register and announce their capabilities
   // Establishes which datacenters each gateway can serve
   rpc RegisterGateway(RegisterGatewayRequest) returns (RegisterGatewayResponse);
-  
+
   // ListGateways returns available gateways, optionally filtered by region
   // Used for gateway discovery and load balancing
   rpc ListGateways(ListGatewaysRequest) returns (ListGatewaysResponse);
@@ -71,7 +71,129 @@ service BMCManagerService {
   rpc ReportAvailableEndpoints(ReportAvailableEndpointsRequest) returns (ReportAvailableEndpointsResponse);
 }
 
-// Authentication messages - handle customer login and token lifecycle
+// ============================================================================
+// Core Data Models
+// ============================================================================
+
+// BMCType specifies the type of BMC interface available on a server
+enum BMCType {
+  BMC_UNSPECIFIED = 0;  // Unknown or not specified BMC type
+  BMC_IPMI = 1;         // Traditional IPMI interface (typically port 623/UDP)
+  BMC_REDFISH = 2;      // Modern Redfish REST API interface (typically HTTPS/443)
+}
+
+enum SOLType {
+  SOL_UNSPECIFIED = 0;
+  SOL_IPMI = 1;            // IPMI Serial-over-LAN
+  SOL_REDFISH_SERIAL = 2;  // Redfish serial console
+}
+
+enum VNCType {
+  VNC_UNSPECIFIED = 0;
+  VNC_NATIVE = 1;     // Native VNC TCP (port 5900)
+  VNC_WEBSOCKET = 2;  // WebSocket-wrapped VNC/RFB
+}
+
+// Customer represents a customer/tenant in the system
+message Customer {
+  string id = 1;                               // Unique customer identifier
+  string email = 2;                            // Customer email address (login identifier)
+  google.protobuf.Timestamp created_at = 3;    // When the customer account was created
+}
+
+// Server represents a physical or virtual server with BMC access
+// This is the manager's view of servers, including customer ownership and BMC endpoints
+message Server {
+  string id = 1;                               // Unique server identifier (e.g., "srv-001", "rack1-server5")
+  string customer_id = 2;                      // Customer/tenant ID that owns this server
+  string datacenter_id = 3;                   // Datacenter where the server is physically located
+  repeated BMCControlEndpoint control_endpoints = 4; // Multiple protocol support (required for RFD 006)
+  BMCType primary_protocol = 5;               // Preferred protocol for operations
+  SOLEndpoint sol_endpoint = 6;               // Serial-over-LAN endpoint (optional)
+  VNCEndpoint vnc_endpoint = 7;               // VNC/KVM endpoint (optional)
+  repeated string features = 8;               // Supported high-level features (e.g., "power", "console", "vnc")
+  string status = 9;                          // Current server status (e.g., "online", "offline", "maintenance")
+  google.protobuf.Timestamp created_at = 10;  // When the server was first registered
+  google.protobuf.Timestamp updated_at = 11; // Last time server information was updated
+  map<string, string> metadata = 12;         // Additional server metadata
+  common.v1.DiscoveryMetadata discovery_metadata = 13;  // Discovery metadata (RFD 017)
+}
+
+// BMC Control API endpoint (IPMI/Redfish)
+message BMCControlEndpoint {
+  string endpoint = 1;                     // BMC API endpoint (e.g., "192.168.1.100:623", "https://192.168.1.100")
+  BMCType type = 2;                        // IPMI or Redfish
+  string username = 3;                     // BMC credentials
+  string password = 4;                     // BMC credentials
+  TLSConfig tls = 5;                       // TLS configuration for Redfish
+  repeated string capabilities = 6;        // Control capabilities (power, sensors, sel, etc.)
+}
+
+// Serial-over-LAN console endpoint
+message SOLEndpoint {
+  SOLType type = 1;                        // IPMI SOL or Redfish serial console
+  string endpoint = 2;                     // SOL-specific endpoint (may differ from control)
+  string username = 3;                     // SOL credentials (may differ from BMC)
+  string password = 4;                     // SOL credentials
+  SOLConfig config = 5;                    // SOL-specific configuration
+}
+
+// VNC/KVM graphical console endpoint
+message VNCEndpoint {
+  VNCType type = 1;                        // BMC native VNC, noVNC proxy, or external KVM
+  string endpoint = 2;                     // VNC endpoint (websocket, TCP, or HTTP)
+  string username = 3;                     // VNC credentials
+  string password = 4;                     // VNC credentials
+  VNCConfig config = 5;                    // VNC-specific configuration
+}
+
+message TLSConfig {
+  bool enabled = 1;
+  bool insecure_skip_verify = 2;
+  string ca_cert = 3;                      // Optional CA certificate
+}
+
+message SOLConfig {
+  int32 baud_rate = 1;                     // Serial baud rate (default: 115200)
+  string flow_control = 2;                 // Flow control settings
+  int32 timeout_seconds = 3;               // SOL session timeout
+}
+
+message VNCConfig {
+  string protocol = 1;                     // "websocket", "tcp", "http"
+  string path = 2;                         // URL path for HTTP/WebSocket
+  int32 display = 3;                       // VNC display number
+  bool read_only = 4;                      // Read-only access
+}
+
+// RegionalGateway represents a gateway instance serving one or more datacenters
+message RegionalGateway {
+  string id = 1;                               // Unique gateway identifier
+  string region = 2;                           // Geographic region (e.g., "us-east-1", "eu-west-1")
+  string endpoint = 3;                         // Public endpoint URL for client connections
+  repeated string datacenter_ids = 4;          // List of datacenters this gateway serves
+  string status = 5;                           // Gateway status (e.g., "healthy", "degraded", "offline")
+  google.protobuf.Timestamp last_seen = 6;     // Last heartbeat or health check timestamp
+  google.protobuf.Timestamp created_at = 7;    // When the gateway was first registered
+  string delegated_token = 8;                  // JWT token delegated for client access to this gateway
+}
+
+// ServerLocation contains the routing and metadata information for a server
+message ServerLocation {
+  string server_id = 1;                        // Unique server identifier
+  string customer_id = 2;                      // Customer that owns this server
+  string datacenter_id = 3;                   // Physical location of the server
+  string regional_gateway_id = 4;             // Gateway responsible for routing to this server
+  repeated string features = 5;               // BMC capabilities (e.g., "power", "sol", "kvm", "sensors")
+  google.protobuf.Timestamp created_at = 6;  // When the server was first registered
+  google.protobuf.Timestamp updated_at = 7;  // Last time server information was modified
+  repeated BMCControlEndpoint bmc_protocols = 8; // Multiple protocol support (required for RFD 006)
+  BMCType primary_protocol = 9;               // Preferred protocol for operations
+}
+
+// ============================================================================
+// Authentication Messages
+// ============================================================================
 
 // AuthenticateRequest contains customer credentials for initial authentication
 message AuthenticateRequest {
@@ -110,7 +232,9 @@ message GetServerTokenResponse {
   google.protobuf.Timestamp expires_at = 2;     // When the server token expires
 }
 
-// Server location and routing management - establishes server-to-gateway mappings
+// ============================================================================
+// Server Management Messages
+// ============================================================================
 
 // RegisterServerRequest registers a server with the BMC Manager during provisioning
 message RegisterServerRequest {
@@ -118,15 +242,38 @@ message RegisterServerRequest {
   string customer_id = 2;         // Customer/tenant ID that owns this server
   string datacenter_id = 3;       // Physical datacenter where the server is located
   string regional_gateway_id = 4; // Gateway responsible for this server (must serve the datacenter)
-  BMCType bmc_type = 5;           // Type of BMC interface available (IPMI or Redfish)
-  repeated string features = 6;   // BMC capabilities (e.g., "power", "sol", "kvm", "sensors", "media")
-  string bmc_endpoint = 7;        // BMC network endpoint (IP:port or hostname:port)
+  repeated string features = 5;   // BMC capabilities (e.g., "power", "sol", "kvm", "sensors", "media")
+  repeated BMCControlEndpoint bmc_protocols = 6; // Multiple protocol support (required for RFD 006)
+  BMCType primary_protocol = 7;   // Preferred protocol for operations
 }
 
 // RegisterServerResponse confirms server registration
 message RegisterServerResponse {
   bool success = 1;   // Whether registration was successful
   string message = 2; // Success confirmation or detailed error message
+}
+
+// GetServerRequest retrieves information about a specific server
+message GetServerRequest {
+  string server_id = 1;  // The unique identifier of the server to retrieve
+}
+
+// GetServerResponse contains the requested server information
+message GetServerResponse {
+  Server server = 1;  // The server information, or error if not found/accessible
+}
+
+// ListServersRequest retrieves a list of servers accessible to the authenticated customer
+message ListServersRequest {
+  // Optional pagination controls
+  int32 page_size = 1;    // Maximum number of servers to return (default: 50, max: 1000)
+  string page_token = 2;  // Token from previous response to continue pagination
+}
+
+// ListServersResponse contains a list of servers and pagination information
+message ListServersResponse {
+  repeated Server servers = 1;      // List of servers accessible to the customer
+  string next_page_token = 2;       // Token for retrieving the next page (empty if last page)
 }
 
 // GetServerLocationRequest queries routing information for a server
@@ -139,11 +286,14 @@ message GetServerLocationResponse {
   string regional_gateway_id = 1;       // Gateway that handles requests for this server
   string regional_gateway_endpoint = 2; // Full URL/endpoint of the responsible gateway
   string datacenter_id = 3;             // Datacenter where the server is physically located
-  BMCType bmc_type = 4;                 // Type of BMC interface available
-  repeated string features = 5;         // BMC capabilities supported by this server
+  repeated string features = 4;         // BMC capabilities supported by this server
+  repeated BMCControlEndpoint bmc_protocols = 5; // Multiple protocol support (required for RFD 006)
+  BMCType primary_protocol = 6;         // Preferred protocol for operations
 }
 
-// Regional Gateway registration and discovery
+// ============================================================================
+// Gateway Management Messages
+// ============================================================================
 
 // RegisterGatewayRequest allows gateways to register with the BMC Manager
 message RegisterGatewayRequest {
@@ -169,47 +319,36 @@ message ListGatewaysResponse {
   repeated RegionalGateway gateways = 1;  // List of gateways matching the request criteria
 }
 
-// Data models and shared types
-
-// BMCType specifies the type of BMC interface available on a server
-enum BMCType {
-  BMC_UNSPECIFIED = 0;  // Unknown or not specified BMC type
-  BMC_IPMI = 1;         // Traditional IPMI interface (typically port 623/UDP)
-  BMC_REDFISH = 2;      // Modern Redfish REST API interface (typically HTTPS/443)
+// ReportAvailableEndpointsRequest reports BMC endpoints that a gateway can proxy
+message ReportAvailableEndpointsRequest {
+  string gateway_id = 1;                             // Gateway identifier
+  string region = 2;                                 // Gateway region
+  repeated BMCEndpointAvailability bmc_endpoints = 3; // BMC endpoints available through this gateway
 }
 
-// Customer represents a customer/tenant in the system
-message Customer {
-  string id = 1;                               // Unique customer identifier
-  string email = 2;                            // Customer email address (login identifier)
-  google.protobuf.Timestamp created_at = 3;    // When the customer account was created
+// BMCEndpointAvailability describes a BMC endpoint available through a gateway
+message BMCEndpointAvailability {
+  string bmc_endpoint = 1;        // BMC endpoint (e.g., "192.168.1.100:623")
+  string agent_id = 2;            // Agent that provides access to this endpoint
+  string datacenter_id = 3;       // Datacenter containing this BMC
+  BMCType bmc_type = 4;           // Type of BMC interface
+  repeated string features = 5;   // Available features
+  string status = 6;              // Endpoint status
+  google.protobuf.Timestamp last_seen = 7; // When this endpoint was last verified
+  string username = 8;            // BMC username
+  repeated string capabilities = 9; // BMC capabilities
+  common.v1.DiscoveryMetadata discovery_metadata = 10; // Discovery metadata (RFD 017)
 }
 
-// RegionalGateway represents a gateway instance serving one or more datacenters
-message RegionalGateway {
-  string id = 1;                               // Unique gateway identifier
-  string region = 2;                           // Geographic region (e.g., "us-east-1", "eu-west-1")
-  string endpoint = 3;                         // Public endpoint URL for client connections
-  repeated string datacenter_ids = 4;          // List of datacenters this gateway serves
-  string status = 5;                           // Gateway status (e.g., "healthy", "degraded", "offline")
-  google.protobuf.Timestamp last_seen = 6;     // Last heartbeat or health check timestamp
-  google.protobuf.Timestamp created_at = 7;    // When the gateway was first registered
-  string delegated_token = 8;                  // JWT token delegated for client access to this gateway
+// ReportAvailableEndpointsResponse confirms endpoint registration
+message ReportAvailableEndpointsResponse {
+  bool success = 1;
+  string message = 2;
 }
 
-// ServerLocation contains the routing and metadata information for a server
-message ServerLocation {
-  string server_id = 1;                        // Unique server identifier
-  string customer_id = 2;                      // Customer that owns this server
-  string datacenter_id = 3;                   // Physical location of the server
-  string regional_gateway_id = 4;             // Gateway responsible for routing to this server
-  BMCType bmc_type = 5;                       // Type of BMC interface available
-  repeated string features = 6;               // BMC capabilities (e.g., "power", "sol", "kvm", "sensors")
-  google.protobuf.Timestamp created_at = 7;  // When the server was first registered
-  google.protobuf.Timestamp updated_at = 8;  // Last time server information was modified
-}
-
-// System status messages - for admin monitoring and debugging
+// ============================================================================
+// System Status Messages
+// ============================================================================
 
 // GetSystemStatusRequest queries the overall system status
 message GetSystemStatusRequest {
@@ -252,141 +391,11 @@ message SystemStatusServerEntry {
   string customer_id = 2;                                      // Customer that owns this server
   string datacenter_id = 3;                                   // Physical datacenter location
   string regional_gateway_id = 4;                             // Gateway managing this server
-  BMCType bmc_type = 5;                                       // BMC interface type
-  repeated string features = 6;                               // BMC capabilities
-  google.protobuf.Timestamp created_at = 7;                  // When server was registered
-  google.protobuf.Timestamp updated_at = 8;                  // Last update time
-  string bmc_endpoint = 9;                                    // BMC network endpoint (IP:port or hostname:port)
-}
-
-// Server information messages - moved from gateway in BMC-centric architecture
-
-// GetServerRequest retrieves information about a specific server
-message GetServerRequest {
-  string server_id = 1;  // The unique identifier of the server to retrieve
-}
-
-// GetServerResponse contains the requested server information
-message GetServerResponse {
-  Server server = 1;  // The server information, or error if not found/accessible
-}
-
-// ListServersRequest retrieves a list of servers accessible to the authenticated customer
-message ListServersRequest {
-  // Optional pagination controls
-  int32 page_size = 1;    // Maximum number of servers to return (default: 50, max: 1000)
-  string page_token = 2;  // Token from previous response to continue pagination
-}
-
-// ListServersResponse contains a list of servers and pagination information
-message ListServersResponse {
-  repeated Server servers = 1;      // List of servers accessible to the customer
-  string next_page_token = 2;       // Token for retrieving the next page (empty if last page)
-}
-
-// Server represents a physical or virtual server with BMC access
-// This is the manager's view of servers, including customer ownership and BMC endpoints
-message Server {
-  string id = 1;                               // Unique server identifier (e.g., "srv-001", "rack1-server5")
-  string customer_id = 2;                      // Customer/tenant ID that owns this server
-  string datacenter_id = 3;                   // Datacenter where the server is physically located
-  BMCControlEndpoint control_endpoint = 4;     // BMC control API endpoint
-  SOLEndpoint sol_endpoint = 5;               // Serial-over-LAN endpoint (optional)
-  VNCEndpoint vnc_endpoint = 6;               // VNC/KVM endpoint (optional)
-  repeated string features = 7;               // Supported high-level features (e.g., "power", "console", "vnc")
-  string status = 8;                          // Current server status (e.g., "online", "offline", "maintenance")
-  google.protobuf.Timestamp created_at = 9;  // When the server was first registered
-  google.protobuf.Timestamp updated_at = 10; // Last time server information was updated
-  map<string, string> metadata = 11;         // Additional server metadata
-  common.v1.DiscoveryMetadata discovery_metadata = 12;  // Discovery metadata (RFD 017)
-}
-
-// BMC Control API endpoint (IPMI/Redfish)
-message BMCControlEndpoint {
-  string endpoint = 1;                     // BMC API endpoint (e.g., "192.168.1.100:623", "https://192.168.1.100")
-  BMCType type = 2;                        // IPMI or Redfish
-  string username = 3;                     // BMC credentials
-  string password = 4;                     // BMC credentials
-  TLSConfig tls = 5;                       // TLS configuration for Redfish
-  repeated string capabilities = 6;        // Control capabilities (power, sensors, sel, etc.)
-}
-
-// Serial-over-LAN console endpoint
-message SOLEndpoint {
-  SOLType type = 1;                        // IPMI SOL or Redfish serial console
-  string endpoint = 2;                     // SOL-specific endpoint (may differ from control)
-  string username = 3;                     // SOL credentials (may differ from BMC)
-  string password = 4;                     // SOL credentials
-  SOLConfig config = 5;                    // SOL-specific configuration
-}
-
-// VNC/KVM graphical console endpoint
-message VNCEndpoint {
-  VNCType type = 1;                        // BMC native VNC, noVNC proxy, or external KVM
-  string endpoint = 2;                     // VNC endpoint (websocket, TCP, or HTTP)
-  string username = 3;                     // VNC credentials
-  string password = 4;                     // VNC credentials
-  VNCConfig config = 5;                    // VNC-specific configuration
-}
-
-enum SOLType {
-  SOL_UNSPECIFIED = 0;
-  SOL_IPMI = 1;            // IPMI Serial-over-LAN
-  SOL_REDFISH_SERIAL = 2;  // Redfish serial console
-}
-
-enum VNCType {
-  VNC_UNSPECIFIED = 0;
-  VNC_NATIVE = 1;     // Native VNC TCP (port 5900)
-  VNC_WEBSOCKET = 2;  // WebSocket-wrapped VNC/RFB
-}
-
-message TLSConfig {
-  bool enabled = 1;
-  bool insecure_skip_verify = 2;
-  string ca_cert = 3;                      // Optional CA certificate
-}
-
-message SOLConfig {
-  int32 baud_rate = 1;                     // Serial baud rate (default: 115200)
-  string flow_control = 2;                 // Flow control settings
-  int32 timeout_seconds = 3;               // SOL session timeout
-}
-
-message VNCConfig {
-  string protocol = 1;                     // "websocket", "tcp", "http"
-  string path = 2;                         // URL path for HTTP/WebSocket
-  int32 display = 3;                       // VNC display number
-  bool read_only = 4;                      // Read-only access
-}
-
-// BMC endpoint availability reporting messages
-
-// ReportAvailableEndpointsRequest reports BMC endpoints that a gateway can proxy
-message ReportAvailableEndpointsRequest {
-  string gateway_id = 1;                             // Gateway identifier
-  string region = 2;                                 // Gateway region
-  repeated BMCEndpointAvailability bmc_endpoints = 3; // BMC endpoints available through this gateway
-}
-
-// BMCEndpointAvailability describes a BMC endpoint available through a gateway
-message BMCEndpointAvailability {
-  string bmc_endpoint = 1;        // BMC endpoint (e.g., "192.168.1.100:623")
-  string agent_id = 2;            // Agent that provides access to this endpoint
-  string datacenter_id = 3;       // Datacenter containing this BMC
-  BMCType bmc_type = 4;           // Type of BMC interface
-  repeated string features = 5;   // Available features
-  string status = 6;              // Endpoint status
-  google.protobuf.Timestamp last_seen = 7; // When this endpoint was last verified
-  string username = 8;            // BMC username
-  repeated string capabilities = 9; // BMC capabilities
-  common.v1.DiscoveryMetadata discovery_metadata = 10; // Discovery metadata (RFD 017)
-}
-
-// ReportAvailableEndpointsResponse confirms endpoint registration
-message ReportAvailableEndpointsResponse {
-  bool success = 1;
-  string message = 2;
+  repeated string features = 5;                               // BMC capabilities
+  google.protobuf.Timestamp created_at = 6;                  // When server was registered
+  google.protobuf.Timestamp updated_at = 7;                  // Last update time
+  repeated BMCControlEndpoint bmc_protocols = 8;             // Multiple protocol support (required for RFD 006)
+  BMCType primary_protocol = 9;                              // Preferred protocol for operations
 }
 
 // Discovery metadata is now defined in common/v1/discovery.proto (RFD 017)

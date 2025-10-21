@@ -18,10 +18,13 @@ func TestServerContextService_CreateServerContext(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoint: &models.BMCControlEndpoint{
-			Endpoint: "http://localhost:9001",
-			Type:     models.BMCTypeRedfish,
+		ControlEndpoints: []*models.BMCControlEndpoint{
+			{
+				Endpoint: "http://localhost:9001",
+				Type:     models.BMCTypeRedfish,
+			},
 		},
+		PrimaryProtocol: models.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,

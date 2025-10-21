@@ -46,18 +46,19 @@ func CustomerFromModel(m *models.Customer) *Customer {
 type Server struct {
 	bun.BaseModel `bun:"table:servers"`
 
-	ID                string                     `bun:"id,pk"`
-	CustomerID        string                     `bun:"customer_id,notnull"`
-	DatacenterID      string                     `bun:"datacenter_id,notnull"`
-	Features          []string                   `bun:"features,type:json,notnull"`
-	Status            string                     `bun:"status,notnull,default:'active'"`
-	SOLEndpoint       *models.SOLEndpoint        `bun:"sol_endpoint,type:json"`
-	VNCEndpoint       *models.VNCEndpoint        `bun:"vnc_endpoint,type:json"`
-	ControlEndpoint   *models.BMCControlEndpoint `bun:"control_endpoint,type:json"`
-	Metadata          map[string]string          `bun:"metadata,type:json"`
-	DiscoveryMetadata *types.DiscoveryMetadata   `bun:"discovery_metadata,type:json"`
-	CreatedAt         time.Time                  `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt         time.Time                  `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+	ID                string                       `bun:"id,pk"`
+	CustomerID        string                       `bun:"customer_id,notnull"`
+	DatacenterID      string                       `bun:"datacenter_id,notnull"`
+	ControlEndpoints  []*models.BMCControlEndpoint `bun:"control_endpoints,type:json,notnull"`
+	PrimaryProtocol   string                       `bun:"primary_protocol,notnull"`
+	Features          []string                     `bun:"features,type:json,notnull"`
+	Status            string                       `bun:"status,notnull,default:'active'"`
+	SOLEndpoint       *models.SOLEndpoint          `bun:"sol_endpoint,type:json"`
+	VNCEndpoint       *models.VNCEndpoint          `bun:"vnc_endpoint,type:json"`
+	Metadata          map[string]string            `bun:"metadata,type:json"`
+	DiscoveryMetadata *types.DiscoveryMetadata     `bun:"discovery_metadata,type:json"`
+	CreatedAt         time.Time                    `bun:"created_at,nullzero,notnull,default:current_timestamp"`
+	UpdatedAt         time.Time                    `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 
 	// Relations
 	Customer *Customer `bun:"rel:belongs-to,join:customer_id=id"`
@@ -69,11 +70,12 @@ func (s *Server) ToModel() *models.Server {
 		ID:                s.ID,
 		CustomerID:        s.CustomerID,
 		DatacenterID:      s.DatacenterID,
+		ControlEndpoints:  s.ControlEndpoints,
+		PrimaryProtocol:   models.BMCType(s.PrimaryProtocol),
 		Features:          s.Features,
 		Status:            s.Status,
 		SOLEndpoint:       s.SOLEndpoint,
 		VNCEndpoint:       s.VNCEndpoint,
-		ControlEndpoint:   s.ControlEndpoint,
 		Metadata:          s.Metadata,
 		DiscoveryMetadata: s.DiscoveryMetadata,
 		CreatedAt:         s.CreatedAt,
@@ -87,11 +89,12 @@ func ServerFromModel(m *models.Server) *Server {
 		ID:                m.ID,
 		CustomerID:        m.CustomerID,
 		DatacenterID:      m.DatacenterID,
+		ControlEndpoints:  m.ControlEndpoints,
+		PrimaryProtocol:   string(m.PrimaryProtocol),
 		Features:          m.Features,
 		Status:            m.Status,
 		SOLEndpoint:       m.SOLEndpoint,
 		VNCEndpoint:       m.VNCEndpoint,
-		ControlEndpoint:   m.ControlEndpoint,
 		Metadata:          m.Metadata,
 		DiscoveryMetadata: m.DiscoveryMetadata,
 		CreatedAt:         m.CreatedAt,
@@ -178,14 +181,15 @@ func RegionalGatewayFromModel(m *models.RegionalGateway) *RegionalGateway {
 type ServerLocation struct {
 	bun.BaseModel `bun:"table:server_locations"`
 
-	ServerID          string    `bun:"server_id,pk"`
-	CustomerID        string    `bun:"customer_id,notnull"`
-	DatacenterID      string    `bun:"datacenter_id,notnull"`
-	RegionalGatewayID string    `bun:"regional_gateway_id,notnull"`
-	BMCType           string    `bun:"bmc_type,notnull"`
-	Features          []string  `bun:"features,type:json,notnull"`
-	CreatedAt         time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
-	UpdatedAt         time.Time `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+	ServerID          string                       `bun:"server_id,pk"`
+	CustomerID        string                       `bun:"customer_id,notnull"`
+	DatacenterID      string                       `bun:"datacenter_id,notnull"`
+	RegionalGatewayID string                       `bun:"regional_gateway_id,notnull"`
+	ControlEndpoints  []*models.BMCControlEndpoint `bun:"control_endpoints,type:json,notnull"`
+	PrimaryProtocol   string                       `bun:"primary_protocol,notnull"`
+	Features          []string                     `bun:"features,type:json,notnull"`
+	CreatedAt         time.Time                    `bun:"created_at,nullzero,notnull,default:current_timestamp"`
+	UpdatedAt         time.Time                    `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
 }
 
 // ToModel converts database ServerLocation to domain model
@@ -195,7 +199,8 @@ func (sl *ServerLocation) ToModel() *models.ServerLocation {
 		CustomerID:        sl.CustomerID,
 		DatacenterID:      sl.DatacenterID,
 		RegionalGatewayID: sl.RegionalGatewayID,
-		BMCType:           models.BMCType(sl.BMCType),
+		ControlEndpoints:  sl.ControlEndpoints,
+		PrimaryProtocol:   models.BMCType(sl.PrimaryProtocol),
 		Features:          sl.Features,
 		CreatedAt:         sl.CreatedAt,
 		UpdatedAt:         sl.UpdatedAt,
@@ -209,7 +214,8 @@ func ServerLocationFromModel(m *models.ServerLocation) *ServerLocation {
 		CustomerID:        m.CustomerID,
 		DatacenterID:      m.DatacenterID,
 		RegionalGatewayID: m.RegionalGatewayID,
-		BMCType:           string(m.BMCType),
+		ControlEndpoints:  m.ControlEndpoints,
+		PrimaryProtocol:   string(m.PrimaryProtocol),
 		Features:          m.Features,
 		CreatedAt:         m.CreatedAt,
 		UpdatedAt:         m.UpdatedAt,

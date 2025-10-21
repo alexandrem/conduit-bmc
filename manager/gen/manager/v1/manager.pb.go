@@ -170,854 +170,6 @@ func (VNCType) EnumDescriptor() ([]byte, []int) {
 	return file_manager_v1_manager_proto_rawDescGZIP(), []int{2}
 }
 
-// AuthenticateRequest contains customer credentials for initial authentication
-type AuthenticateRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Email    string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`       // Customer email address (primary identifier)
-	Password string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"` // Customer password (or OIDC/OAuth token in production environments)
-}
-
-func (x *AuthenticateRequest) Reset() {
-	*x = AuthenticateRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AuthenticateRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AuthenticateRequest) ProtoMessage() {}
-
-func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AuthenticateRequest.ProtoReflect.Descriptor instead.
-func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *AuthenticateRequest) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
-func (x *AuthenticateRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-// AuthenticateResponse provides authentication tokens and customer information
-type AuthenticateResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	AccessToken  string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`    // Short-lived JWT token for API access (e.g., 1 hour)
-	RefreshToken string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"` // Long-lived token for obtaining new access tokens (e.g., 30 days)
-	ExpiresAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`          // When the access token expires
-	Customer     *Customer              `protobuf:"bytes,4,opt,name=customer,proto3" json:"customer,omitempty"`                             // Customer profile information
-}
-
-func (x *AuthenticateResponse) Reset() {
-	*x = AuthenticateResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AuthenticateResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AuthenticateResponse) ProtoMessage() {}
-
-func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AuthenticateResponse.ProtoReflect.Descriptor instead.
-func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *AuthenticateResponse) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *AuthenticateResponse) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-func (x *AuthenticateResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-func (x *AuthenticateResponse) GetCustomer() *Customer {
-	if x != nil {
-		return x.Customer
-	}
-	return nil
-}
-
-// RefreshTokenRequest uses a refresh token to obtain new access tokens
-type RefreshTokenRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	RefreshToken string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"` // The refresh token from initial authentication
-	ServerId     string `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`             // Optional: scope the new token to a specific server for enhanced security
-}
-
-func (x *RefreshTokenRequest) Reset() {
-	*x = RefreshTokenRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RefreshTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RefreshTokenRequest) ProtoMessage() {}
-
-func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RefreshTokenRequest.ProtoReflect.Descriptor instead.
-func (*RefreshTokenRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *RefreshTokenRequest) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-func (x *RefreshTokenRequest) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-// RefreshTokenResponse provides a new access token
-type RefreshTokenResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	AccessToken string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"` // New short-lived JWT token for API access
-	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`       // When the new access token expires
-}
-
-func (x *RefreshTokenResponse) Reset() {
-	*x = RefreshTokenResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RefreshTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RefreshTokenResponse) ProtoMessage() {}
-
-func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RefreshTokenResponse.ProtoReflect.Descriptor instead.
-func (*RefreshTokenResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *RefreshTokenResponse) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *RefreshTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-// GetServerTokenRequest requests a server-specific token with encrypted BMC context
-type GetServerTokenRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ServerId string `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The server ID to create a token for
-}
-
-func (x *GetServerTokenRequest) Reset() {
-	*x = GetServerTokenRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetServerTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetServerTokenRequest) ProtoMessage() {}
-
-func (x *GetServerTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetServerTokenRequest.ProtoReflect.Descriptor instead.
-func (*GetServerTokenRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetServerTokenRequest) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-// GetServerTokenResponse provides a server-specific token with encrypted BMC context
-type GetServerTokenResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Token     string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`                          // Server-specific JWT token with encrypted BMC context
-	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"` // When the server token expires
-}
-
-func (x *GetServerTokenResponse) Reset() {
-	*x = GetServerTokenResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetServerTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetServerTokenResponse) ProtoMessage() {}
-
-func (x *GetServerTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetServerTokenResponse.ProtoReflect.Descriptor instead.
-func (*GetServerTokenResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *GetServerTokenResponse) GetToken() string {
-	if x != nil {
-		return x.Token
-	}
-	return ""
-}
-
-func (x *GetServerTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-// RegisterServerRequest registers a server with the BMC Manager during provisioning
-type RegisterServerRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ServerId          string   `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                              // Unique server identifier (must be unique within customer namespace)
-	CustomerId        string   `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                        // Customer/tenant ID that owns this server
-	DatacenterId      string   `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                  // Physical datacenter where the server is located
-	RegionalGatewayId string   `protobuf:"bytes,4,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"` // Gateway responsible for this server (must serve the datacenter)
-	BmcType           BMCType  `protobuf:"varint,5,opt,name=bmc_type,json=bmcType,proto3,enum=manager.v1.BMCType" json:"bmc_type,omitempty"`        // Type of BMC interface available (IPMI or Redfish)
-	Features          []string `protobuf:"bytes,6,rep,name=features,proto3" json:"features,omitempty"`                                              // BMC capabilities (e.g., "power", "sol", "kvm", "sensors", "media")
-	BmcEndpoint       string   `protobuf:"bytes,7,opt,name=bmc_endpoint,json=bmcEndpoint,proto3" json:"bmc_endpoint,omitempty"`                     // BMC network endpoint (IP:port or hostname:port)
-}
-
-func (x *RegisterServerRequest) Reset() {
-	*x = RegisterServerRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RegisterServerRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterServerRequest) ProtoMessage() {}
-
-func (x *RegisterServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterServerRequest.ProtoReflect.Descriptor instead.
-func (*RegisterServerRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *RegisterServerRequest) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-func (x *RegisterServerRequest) GetCustomerId() string {
-	if x != nil {
-		return x.CustomerId
-	}
-	return ""
-}
-
-func (x *RegisterServerRequest) GetDatacenterId() string {
-	if x != nil {
-		return x.DatacenterId
-	}
-	return ""
-}
-
-func (x *RegisterServerRequest) GetRegionalGatewayId() string {
-	if x != nil {
-		return x.RegionalGatewayId
-	}
-	return ""
-}
-
-func (x *RegisterServerRequest) GetBmcType() BMCType {
-	if x != nil {
-		return x.BmcType
-	}
-	return BMCType_BMC_UNSPECIFIED
-}
-
-func (x *RegisterServerRequest) GetFeatures() []string {
-	if x != nil {
-		return x.Features
-	}
-	return nil
-}
-
-func (x *RegisterServerRequest) GetBmcEndpoint() string {
-	if x != nil {
-		return x.BmcEndpoint
-	}
-	return ""
-}
-
-// RegisterServerResponse confirms server registration
-type RegisterServerResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // Whether registration was successful
-	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`  // Success confirmation or detailed error message
-}
-
-func (x *RegisterServerResponse) Reset() {
-	*x = RegisterServerResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RegisterServerResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterServerResponse) ProtoMessage() {}
-
-func (x *RegisterServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterServerResponse.ProtoReflect.Descriptor instead.
-func (*RegisterServerResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *RegisterServerResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *RegisterServerResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-// GetServerLocationRequest queries routing information for a server
-type GetServerLocationRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ServerId string `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The server ID to resolve location for
-}
-
-func (x *GetServerLocationRequest) Reset() {
-	*x = GetServerLocationRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetServerLocationRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetServerLocationRequest) ProtoMessage() {}
-
-func (x *GetServerLocationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetServerLocationRequest.ProtoReflect.Descriptor instead.
-func (*GetServerLocationRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *GetServerLocationRequest) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-// GetServerLocationResponse provides server routing and capability information
-type GetServerLocationResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	RegionalGatewayId       string   `protobuf:"bytes,1,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"`                   // Gateway that handles requests for this server
-	RegionalGatewayEndpoint string   `protobuf:"bytes,2,opt,name=regional_gateway_endpoint,json=regionalGatewayEndpoint,proto3" json:"regional_gateway_endpoint,omitempty"` // Full URL/endpoint of the responsible gateway
-	DatacenterId            string   `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                    // Datacenter where the server is physically located
-	BmcType                 BMCType  `protobuf:"varint,4,opt,name=bmc_type,json=bmcType,proto3,enum=manager.v1.BMCType" json:"bmc_type,omitempty"`                          // Type of BMC interface available
-	Features                []string `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                                                // BMC capabilities supported by this server
-}
-
-func (x *GetServerLocationResponse) Reset() {
-	*x = GetServerLocationResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetServerLocationResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetServerLocationResponse) ProtoMessage() {}
-
-func (x *GetServerLocationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetServerLocationResponse.ProtoReflect.Descriptor instead.
-func (*GetServerLocationResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *GetServerLocationResponse) GetRegionalGatewayId() string {
-	if x != nil {
-		return x.RegionalGatewayId
-	}
-	return ""
-}
-
-func (x *GetServerLocationResponse) GetRegionalGatewayEndpoint() string {
-	if x != nil {
-		return x.RegionalGatewayEndpoint
-	}
-	return ""
-}
-
-func (x *GetServerLocationResponse) GetDatacenterId() string {
-	if x != nil {
-		return x.DatacenterId
-	}
-	return ""
-}
-
-func (x *GetServerLocationResponse) GetBmcType() BMCType {
-	if x != nil {
-		return x.BmcType
-	}
-	return BMCType_BMC_UNSPECIFIED
-}
-
-func (x *GetServerLocationResponse) GetFeatures() []string {
-	if x != nil {
-		return x.Features
-	}
-	return nil
-}
-
-// RegisterGatewayRequest allows gateways to register with the BMC Manager
-type RegisterGatewayRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	GatewayId     string   `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`             // Unique identifier for this gateway instance
-	Region        string   `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`                                    // Geographic region (e.g., "us-east-1", "eu-west-1")
-	Endpoint      string   `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`                                // Public endpoint URL where the gateway can be reached
-	DatacenterIds []string `protobuf:"bytes,4,rep,name=datacenter_ids,json=datacenterIds,proto3" json:"datacenter_ids,omitempty"` // List of datacenters this gateway can serve
-}
-
-func (x *RegisterGatewayRequest) Reset() {
-	*x = RegisterGatewayRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RegisterGatewayRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterGatewayRequest) ProtoMessage() {}
-
-func (x *RegisterGatewayRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterGatewayRequest.ProtoReflect.Descriptor instead.
-func (*RegisterGatewayRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *RegisterGatewayRequest) GetGatewayId() string {
-	if x != nil {
-		return x.GatewayId
-	}
-	return ""
-}
-
-func (x *RegisterGatewayRequest) GetRegion() string {
-	if x != nil {
-		return x.Region
-	}
-	return ""
-}
-
-func (x *RegisterGatewayRequest) GetEndpoint() string {
-	if x != nil {
-		return x.Endpoint
-	}
-	return ""
-}
-
-func (x *RegisterGatewayRequest) GetDatacenterIds() []string {
-	if x != nil {
-		return x.DatacenterIds
-	}
-	return nil
-}
-
-// RegisterGatewayResponse confirms gateway registration
-type RegisterGatewayResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // Whether registration was successful
-	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`  // Success confirmation or error details
-}
-
-func (x *RegisterGatewayResponse) Reset() {
-	*x = RegisterGatewayResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RegisterGatewayResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterGatewayResponse) ProtoMessage() {}
-
-func (x *RegisterGatewayResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterGatewayResponse.ProtoReflect.Descriptor instead.
-func (*RegisterGatewayResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *RegisterGatewayResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *RegisterGatewayResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-// ListGatewaysRequest queries available gateways
-type ListGatewaysRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Region string `protobuf:"bytes,1,opt,name=region,proto3" json:"region,omitempty"` // Optional filter to return only gateways in a specific region
-}
-
-func (x *ListGatewaysRequest) Reset() {
-	*x = ListGatewaysRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListGatewaysRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListGatewaysRequest) ProtoMessage() {}
-
-func (x *ListGatewaysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListGatewaysRequest.ProtoReflect.Descriptor instead.
-func (*ListGatewaysRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *ListGatewaysRequest) GetRegion() string {
-	if x != nil {
-		return x.Region
-	}
-	return ""
-}
-
-// ListGatewaysResponse provides a list of registered gateways
-type ListGatewaysResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Gateways []*RegionalGateway `protobuf:"bytes,1,rep,name=gateways,proto3" json:"gateways,omitempty"` // List of gateways matching the request criteria
-}
-
-func (x *ListGatewaysResponse) Reset() {
-	*x = ListGatewaysResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListGatewaysResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListGatewaysResponse) ProtoMessage() {}
-
-func (x *ListGatewaysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListGatewaysResponse.ProtoReflect.Descriptor instead.
-func (*ListGatewaysResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *ListGatewaysResponse) GetGateways() []*RegionalGateway {
-	if x != nil {
-		return x.Gateways
-	}
-	return nil
-}
-
 // Customer represents a customer/tenant in the system
 type Customer struct {
 	state         protoimpl.MessageState
@@ -1032,7 +184,7 @@ type Customer struct {
 func (x *Customer) Reset() {
 	*x = Customer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[14]
+		mi := &file_manager_v1_manager_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1045,7 +197,7 @@ func (x *Customer) String() string {
 func (*Customer) ProtoMessage() {}
 
 func (x *Customer) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[14]
+	mi := &file_manager_v1_manager_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1058,7 +210,7 @@ func (x *Customer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Customer.ProtoReflect.Descriptor instead.
 func (*Customer) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{14}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Customer) GetId() string {
@@ -1082,838 +234,6 @@ func (x *Customer) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// RegionalGateway represents a gateway instance serving one or more datacenters
-type RegionalGateway struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                               // Unique gateway identifier
-	Region         string                 `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`                                       // Geographic region (e.g., "us-east-1", "eu-west-1")
-	Endpoint       string                 `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`                                   // Public endpoint URL for client connections
-	DatacenterIds  []string               `protobuf:"bytes,4,rep,name=datacenter_ids,json=datacenterIds,proto3" json:"datacenter_ids,omitempty"`    // List of datacenters this gateway serves
-	Status         string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`                                       // Gateway status (e.g., "healthy", "degraded", "offline")
-	LastSeen       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`                   // Last heartbeat or health check timestamp
-	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                // When the gateway was first registered
-	DelegatedToken string                 `protobuf:"bytes,8,opt,name=delegated_token,json=delegatedToken,proto3" json:"delegated_token,omitempty"` // JWT token delegated for client access to this gateway
-}
-
-func (x *RegionalGateway) Reset() {
-	*x = RegionalGateway{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *RegionalGateway) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegionalGateway) ProtoMessage() {}
-
-func (x *RegionalGateway) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegionalGateway.ProtoReflect.Descriptor instead.
-func (*RegionalGateway) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *RegionalGateway) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *RegionalGateway) GetRegion() string {
-	if x != nil {
-		return x.Region
-	}
-	return ""
-}
-
-func (x *RegionalGateway) GetEndpoint() string {
-	if x != nil {
-		return x.Endpoint
-	}
-	return ""
-}
-
-func (x *RegionalGateway) GetDatacenterIds() []string {
-	if x != nil {
-		return x.DatacenterIds
-	}
-	return nil
-}
-
-func (x *RegionalGateway) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *RegionalGateway) GetLastSeen() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastSeen
-	}
-	return nil
-}
-
-func (x *RegionalGateway) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *RegionalGateway) GetDelegatedToken() string {
-	if x != nil {
-		return x.DelegatedToken
-	}
-	return ""
-}
-
-// ServerLocation contains the routing and metadata information for a server
-type ServerLocation struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                              // Unique server identifier
-	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                        // Customer that owns this server
-	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                  // Physical location of the server
-	RegionalGatewayId string                 `protobuf:"bytes,4,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"` // Gateway responsible for routing to this server
-	BmcType           BMCType                `protobuf:"varint,5,opt,name=bmc_type,json=bmcType,proto3,enum=manager.v1.BMCType" json:"bmc_type,omitempty"`        // Type of BMC interface available
-	Features          []string               `protobuf:"bytes,6,rep,name=features,proto3" json:"features,omitempty"`                                              // BMC capabilities (e.g., "power", "sol", "kvm", "sensors")
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                           // When the server was first registered
-	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                           // Last time server information was modified
-}
-
-func (x *ServerLocation) Reset() {
-	*x = ServerLocation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[16]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ServerLocation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ServerLocation) ProtoMessage() {}
-
-func (x *ServerLocation) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[16]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ServerLocation.ProtoReflect.Descriptor instead.
-func (*ServerLocation) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *ServerLocation) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-func (x *ServerLocation) GetCustomerId() string {
-	if x != nil {
-		return x.CustomerId
-	}
-	return ""
-}
-
-func (x *ServerLocation) GetDatacenterId() string {
-	if x != nil {
-		return x.DatacenterId
-	}
-	return ""
-}
-
-func (x *ServerLocation) GetRegionalGatewayId() string {
-	if x != nil {
-		return x.RegionalGatewayId
-	}
-	return ""
-}
-
-func (x *ServerLocation) GetBmcType() BMCType {
-	if x != nil {
-		return x.BmcType
-	}
-	return BMCType_BMC_UNSPECIFIED
-}
-
-func (x *ServerLocation) GetFeatures() []string {
-	if x != nil {
-		return x.Features
-	}
-	return nil
-}
-
-func (x *ServerLocation) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *ServerLocation) GetUpdatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.UpdatedAt
-	}
-	return nil
-}
-
-// GetSystemStatusRequest queries the overall system status
-type GetSystemStatusRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *GetSystemStatusRequest) Reset() {
-	*x = GetSystemStatusRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetSystemStatusRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSystemStatusRequest) ProtoMessage() {}
-
-func (x *GetSystemStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSystemStatusRequest.ProtoReflect.Descriptor instead.
-func (*GetSystemStatusRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{17}
-}
-
-// GetSystemStatusResponse provides comprehensive system status
-type GetSystemStatusResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Status *SystemStatus `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"` // Overall system status information
-}
-
-func (x *GetSystemStatusResponse) Reset() {
-	*x = GetSystemStatusResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[18]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetSystemStatusResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSystemStatusResponse) ProtoMessage() {}
-
-func (x *GetSystemStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[18]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSystemStatusResponse.ProtoReflect.Descriptor instead.
-func (*GetSystemStatusResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *GetSystemStatusResponse) GetStatus() *SystemStatus {
-	if x != nil {
-		return x.Status
-	}
-	return nil
-}
-
-// SystemStatus contains comprehensive system state information
-type SystemStatus struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Version        string                     `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`                                      // Manager service version
-	StartedAt      *timestamppb.Timestamp     `protobuf:"bytes,2,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`                 // When the manager service started
-	StatusTime     *timestamppb.Timestamp     `protobuf:"bytes,3,opt,name=status_time,json=statusTime,proto3" json:"status_time,omitempty"`              // When this status was generated
-	TotalGateways  int32                      `protobuf:"varint,4,opt,name=total_gateways,json=totalGateways,proto3" json:"total_gateways,omitempty"`    // Total number of registered gateways
-	ActiveGateways int32                      `protobuf:"varint,5,opt,name=active_gateways,json=activeGateways,proto3" json:"active_gateways,omitempty"` // Number of gateways that have reported recently
-	TotalServers   int32                      `protobuf:"varint,6,opt,name=total_servers,json=totalServers,proto3" json:"total_servers,omitempty"`       // Total number of registered servers
-	Gateways       []*GatewayStatus           `protobuf:"bytes,7,rep,name=gateways,proto3" json:"gateways,omitempty"`                                    // Detailed status of each gateway
-	Servers        []*SystemStatusServerEntry `protobuf:"bytes,8,rep,name=servers,proto3" json:"servers,omitempty"`                                      // Summary of all servers across gateways
-}
-
-func (x *SystemStatus) Reset() {
-	*x = SystemStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[19]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *SystemStatus) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SystemStatus) ProtoMessage() {}
-
-func (x *SystemStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[19]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SystemStatus.ProtoReflect.Descriptor instead.
-func (*SystemStatus) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *SystemStatus) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
-}
-
-func (x *SystemStatus) GetStartedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StartedAt
-	}
-	return nil
-}
-
-func (x *SystemStatus) GetStatusTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.StatusTime
-	}
-	return nil
-}
-
-func (x *SystemStatus) GetTotalGateways() int32 {
-	if x != nil {
-		return x.TotalGateways
-	}
-	return 0
-}
-
-func (x *SystemStatus) GetActiveGateways() int32 {
-	if x != nil {
-		return x.ActiveGateways
-	}
-	return 0
-}
-
-func (x *SystemStatus) GetTotalServers() int32 {
-	if x != nil {
-		return x.TotalServers
-	}
-	return 0
-}
-
-func (x *SystemStatus) GetGateways() []*GatewayStatus {
-	if x != nil {
-		return x.Gateways
-	}
-	return nil
-}
-
-func (x *SystemStatus) GetServers() []*SystemStatusServerEntry {
-	if x != nil {
-		return x.Servers
-	}
-	return nil
-}
-
-// GatewayStatus provides detailed information about a specific gateway
-type GatewayStatus struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id            string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                            // Gateway identifier
-	Region        string                     `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`                                    // Geographic region
-	Endpoint      string                     `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`                                // Gateway endpoint URL
-	DatacenterIds []string                   `protobuf:"bytes,4,rep,name=datacenter_ids,json=datacenterIds,proto3" json:"datacenter_ids,omitempty"` // Datacenters served by this gateway
-	Status        string                     `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`                                    // Gateway status (e.g., "healthy", "degraded")
-	LastSeen      *timestamppb.Timestamp     `protobuf:"bytes,6,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`                // Last time gateway registered/updated
-	CreatedAt     *timestamppb.Timestamp     `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`             // When gateway was first registered
-	ServerCount   int32                      `protobuf:"varint,8,opt,name=server_count,json=serverCount,proto3" json:"server_count,omitempty"`      // Number of servers registered through this gateway
-	Servers       []*SystemStatusServerEntry `protobuf:"bytes,9,rep,name=servers,proto3" json:"servers,omitempty"`                                  // List of servers managed by this gateway
-}
-
-func (x *GatewayStatus) Reset() {
-	*x = GatewayStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[20]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GatewayStatus) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GatewayStatus) ProtoMessage() {}
-
-func (x *GatewayStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[20]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GatewayStatus.ProtoReflect.Descriptor instead.
-func (*GatewayStatus) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *GatewayStatus) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *GatewayStatus) GetRegion() string {
-	if x != nil {
-		return x.Region
-	}
-	return ""
-}
-
-func (x *GatewayStatus) GetEndpoint() string {
-	if x != nil {
-		return x.Endpoint
-	}
-	return ""
-}
-
-func (x *GatewayStatus) GetDatacenterIds() []string {
-	if x != nil {
-		return x.DatacenterIds
-	}
-	return nil
-}
-
-func (x *GatewayStatus) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *GatewayStatus) GetLastSeen() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastSeen
-	}
-	return nil
-}
-
-func (x *GatewayStatus) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *GatewayStatus) GetServerCount() int32 {
-	if x != nil {
-		return x.ServerCount
-	}
-	return 0
-}
-
-func (x *GatewayStatus) GetServers() []*SystemStatusServerEntry {
-	if x != nil {
-		return x.Servers
-	}
-	return nil
-}
-
-// SystemStatusServerEntry provides server information for status display
-type SystemStatusServerEntry struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                              // Server identifier
-	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                        // Customer that owns this server
-	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                  // Physical datacenter location
-	RegionalGatewayId string                 `protobuf:"bytes,4,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"` // Gateway managing this server
-	BmcType           BMCType                `protobuf:"varint,5,opt,name=bmc_type,json=bmcType,proto3,enum=manager.v1.BMCType" json:"bmc_type,omitempty"`        // BMC interface type
-	Features          []string               `protobuf:"bytes,6,rep,name=features,proto3" json:"features,omitempty"`                                              // BMC capabilities
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                           // When server was registered
-	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                           // Last update time
-	BmcEndpoint       string                 `protobuf:"bytes,9,opt,name=bmc_endpoint,json=bmcEndpoint,proto3" json:"bmc_endpoint,omitempty"`                     // BMC network endpoint (IP:port or hostname:port)
-}
-
-func (x *SystemStatusServerEntry) Reset() {
-	*x = SystemStatusServerEntry{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *SystemStatusServerEntry) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SystemStatusServerEntry) ProtoMessage() {}
-
-func (x *SystemStatusServerEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SystemStatusServerEntry.ProtoReflect.Descriptor instead.
-func (*SystemStatusServerEntry) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *SystemStatusServerEntry) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-func (x *SystemStatusServerEntry) GetCustomerId() string {
-	if x != nil {
-		return x.CustomerId
-	}
-	return ""
-}
-
-func (x *SystemStatusServerEntry) GetDatacenterId() string {
-	if x != nil {
-		return x.DatacenterId
-	}
-	return ""
-}
-
-func (x *SystemStatusServerEntry) GetRegionalGatewayId() string {
-	if x != nil {
-		return x.RegionalGatewayId
-	}
-	return ""
-}
-
-func (x *SystemStatusServerEntry) GetBmcType() BMCType {
-	if x != nil {
-		return x.BmcType
-	}
-	return BMCType_BMC_UNSPECIFIED
-}
-
-func (x *SystemStatusServerEntry) GetFeatures() []string {
-	if x != nil {
-		return x.Features
-	}
-	return nil
-}
-
-func (x *SystemStatusServerEntry) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
-}
-
-func (x *SystemStatusServerEntry) GetUpdatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.UpdatedAt
-	}
-	return nil
-}
-
-func (x *SystemStatusServerEntry) GetBmcEndpoint() string {
-	if x != nil {
-		return x.BmcEndpoint
-	}
-	return ""
-}
-
-// GetServerRequest retrieves information about a specific server
-type GetServerRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	ServerId string `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The unique identifier of the server to retrieve
-}
-
-func (x *GetServerRequest) Reset() {
-	*x = GetServerRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetServerRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetServerRequest) ProtoMessage() {}
-
-func (x *GetServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetServerRequest.ProtoReflect.Descriptor instead.
-func (*GetServerRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *GetServerRequest) GetServerId() string {
-	if x != nil {
-		return x.ServerId
-	}
-	return ""
-}
-
-// GetServerResponse contains the requested server information
-type GetServerResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Server *Server `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"` // The server information, or error if not found/accessible
-}
-
-func (x *GetServerResponse) Reset() {
-	*x = GetServerResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[23]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetServerResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetServerResponse) ProtoMessage() {}
-
-func (x *GetServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[23]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetServerResponse.ProtoReflect.Descriptor instead.
-func (*GetServerResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *GetServerResponse) GetServer() *Server {
-	if x != nil {
-		return x.Server
-	}
-	return nil
-}
-
-// ListServersRequest retrieves a list of servers accessible to the authenticated customer
-type ListServersRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Optional pagination controls
-	PageSize  int32  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`   // Maximum number of servers to return (default: 50, max: 1000)
-	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // Token from previous response to continue pagination
-}
-
-func (x *ListServersRequest) Reset() {
-	*x = ListServersRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[24]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListServersRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListServersRequest) ProtoMessage() {}
-
-func (x *ListServersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[24]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListServersRequest.ProtoReflect.Descriptor instead.
-func (*ListServersRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *ListServersRequest) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-func (x *ListServersRequest) GetPageToken() string {
-	if x != nil {
-		return x.PageToken
-	}
-	return ""
-}
-
-// ListServersResponse contains a list of servers and pagination information
-type ListServersResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Servers       []*Server `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`                                    // List of servers accessible to the customer
-	NextPageToken string    `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"` // Token for retrieving the next page (empty if last page)
-}
-
-func (x *ListServersResponse) Reset() {
-	*x = ListServersResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[25]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListServersResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListServersResponse) ProtoMessage() {}
-
-func (x *ListServersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[25]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListServersResponse.ProtoReflect.Descriptor instead.
-func (*ListServersResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *ListServersResponse) GetServers() []*Server {
-	if x != nil {
-		return x.Servers
-	}
-	return nil
-}
-
-func (x *ListServersResponse) GetNextPageToken() string {
-	if x != nil {
-		return x.NextPageToken
-	}
-	return ""
-}
-
 // Server represents a physical or virtual server with BMC access
 // This is the manager's view of servers, including customer ownership and BMC endpoints
 type Server struct {
@@ -1924,21 +244,22 @@ type Server struct {
 	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                                      // Unique server identifier (e.g., "srv-001", "rack1-server5")
 	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                                                                    // Customer/tenant ID that owns this server
 	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                                              // Datacenter where the server is physically located
-	ControlEndpoint   *BMCControlEndpoint    `protobuf:"bytes,4,opt,name=control_endpoint,json=controlEndpoint,proto3" json:"control_endpoint,omitempty"`                                                     // BMC control API endpoint
-	SolEndpoint       *SOLEndpoint           `protobuf:"bytes,5,opt,name=sol_endpoint,json=solEndpoint,proto3" json:"sol_endpoint,omitempty"`                                                                 // Serial-over-LAN endpoint (optional)
-	VncEndpoint       *VNCEndpoint           `protobuf:"bytes,6,opt,name=vnc_endpoint,json=vncEndpoint,proto3" json:"vnc_endpoint,omitempty"`                                                                 // VNC/KVM endpoint (optional)
-	Features          []string               `protobuf:"bytes,7,rep,name=features,proto3" json:"features,omitempty"`                                                                                          // Supported high-level features (e.g., "power", "console", "vnc")
-	Status            string                 `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`                                                                                              // Current server status (e.g., "online", "offline", "maintenance")
-	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                                                                       // When the server was first registered
-	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                                                                      // Last time server information was updated
-	Metadata          map[string]string      `protobuf:"bytes,11,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Additional server metadata
-	DiscoveryMetadata *v1.DiscoveryMetadata  `protobuf:"bytes,12,opt,name=discovery_metadata,json=discoveryMetadata,proto3" json:"discovery_metadata,omitempty"`                                              // Discovery metadata (RFD 017)
+	ControlEndpoints  []*BMCControlEndpoint  `protobuf:"bytes,4,rep,name=control_endpoints,json=controlEndpoints,proto3" json:"control_endpoints,omitempty"`                                                  // Multiple protocol support (required for RFD 006)
+	PrimaryProtocol   BMCType                `protobuf:"varint,5,opt,name=primary_protocol,json=primaryProtocol,proto3,enum=manager.v1.BMCType" json:"primary_protocol,omitempty"`                            // Preferred protocol for operations
+	SolEndpoint       *SOLEndpoint           `protobuf:"bytes,6,opt,name=sol_endpoint,json=solEndpoint,proto3" json:"sol_endpoint,omitempty"`                                                                 // Serial-over-LAN endpoint (optional)
+	VncEndpoint       *VNCEndpoint           `protobuf:"bytes,7,opt,name=vnc_endpoint,json=vncEndpoint,proto3" json:"vnc_endpoint,omitempty"`                                                                 // VNC/KVM endpoint (optional)
+	Features          []string               `protobuf:"bytes,8,rep,name=features,proto3" json:"features,omitempty"`                                                                                          // Supported high-level features (e.g., "power", "console", "vnc")
+	Status            string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`                                                                                              // Current server status (e.g., "online", "offline", "maintenance")
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                                                                      // When the server was first registered
+	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                                                                      // Last time server information was updated
+	Metadata          map[string]string      `protobuf:"bytes,12,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"` // Additional server metadata
+	DiscoveryMetadata *v1.DiscoveryMetadata  `protobuf:"bytes,13,opt,name=discovery_metadata,json=discoveryMetadata,proto3" json:"discovery_metadata,omitempty"`                                              // Discovery metadata (RFD 017)
 }
 
 func (x *Server) Reset() {
 	*x = Server{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[26]
+		mi := &file_manager_v1_manager_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1951,7 +272,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[26]
+	mi := &file_manager_v1_manager_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1964,7 +285,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{26}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Server) GetId() string {
@@ -1988,11 +309,18 @@ func (x *Server) GetDatacenterId() string {
 	return ""
 }
 
-func (x *Server) GetControlEndpoint() *BMCControlEndpoint {
+func (x *Server) GetControlEndpoints() []*BMCControlEndpoint {
 	if x != nil {
-		return x.ControlEndpoint
+		return x.ControlEndpoints
 	}
 	return nil
+}
+
+func (x *Server) GetPrimaryProtocol() BMCType {
+	if x != nil {
+		return x.PrimaryProtocol
+	}
+	return BMCType_BMC_UNSPECIFIED
 }
 
 func (x *Server) GetSolEndpoint() *SOLEndpoint {
@@ -2068,7 +396,7 @@ type BMCControlEndpoint struct {
 func (x *BMCControlEndpoint) Reset() {
 	*x = BMCControlEndpoint{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[27]
+		mi := &file_manager_v1_manager_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2081,7 +409,7 @@ func (x *BMCControlEndpoint) String() string {
 func (*BMCControlEndpoint) ProtoMessage() {}
 
 func (x *BMCControlEndpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[27]
+	mi := &file_manager_v1_manager_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2094,7 +422,7 @@ func (x *BMCControlEndpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BMCControlEndpoint.ProtoReflect.Descriptor instead.
 func (*BMCControlEndpoint) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{27}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BMCControlEndpoint) GetEndpoint() string {
@@ -2155,7 +483,7 @@ type SOLEndpoint struct {
 func (x *SOLEndpoint) Reset() {
 	*x = SOLEndpoint{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[28]
+		mi := &file_manager_v1_manager_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2168,7 +496,7 @@ func (x *SOLEndpoint) String() string {
 func (*SOLEndpoint) ProtoMessage() {}
 
 func (x *SOLEndpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[28]
+	mi := &file_manager_v1_manager_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2181,7 +509,7 @@ func (x *SOLEndpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SOLEndpoint.ProtoReflect.Descriptor instead.
 func (*SOLEndpoint) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{28}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SOLEndpoint) GetType() SOLType {
@@ -2235,7 +563,7 @@ type VNCEndpoint struct {
 func (x *VNCEndpoint) Reset() {
 	*x = VNCEndpoint{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[29]
+		mi := &file_manager_v1_manager_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2248,7 +576,7 @@ func (x *VNCEndpoint) String() string {
 func (*VNCEndpoint) ProtoMessage() {}
 
 func (x *VNCEndpoint) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[29]
+	mi := &file_manager_v1_manager_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2261,7 +589,7 @@ func (x *VNCEndpoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VNCEndpoint.ProtoReflect.Descriptor instead.
 func (*VNCEndpoint) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{29}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *VNCEndpoint) GetType() VNCType {
@@ -2312,7 +640,7 @@ type TLSConfig struct {
 func (x *TLSConfig) Reset() {
 	*x = TLSConfig{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[30]
+		mi := &file_manager_v1_manager_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2325,7 +653,7 @@ func (x *TLSConfig) String() string {
 func (*TLSConfig) ProtoMessage() {}
 
 func (x *TLSConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[30]
+	mi := &file_manager_v1_manager_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2338,7 +666,7 @@ func (x *TLSConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TLSConfig.ProtoReflect.Descriptor instead.
 func (*TLSConfig) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{30}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *TLSConfig) GetEnabled() bool {
@@ -2375,7 +703,7 @@ type SOLConfig struct {
 func (x *SOLConfig) Reset() {
 	*x = SOLConfig{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[31]
+		mi := &file_manager_v1_manager_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2388,7 +716,7 @@ func (x *SOLConfig) String() string {
 func (*SOLConfig) ProtoMessage() {}
 
 func (x *SOLConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[31]
+	mi := &file_manager_v1_manager_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2401,7 +729,7 @@ func (x *SOLConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SOLConfig.ProtoReflect.Descriptor instead.
 func (*SOLConfig) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{31}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SOLConfig) GetBaudRate() int32 {
@@ -2439,7 +767,7 @@ type VNCConfig struct {
 func (x *VNCConfig) Reset() {
 	*x = VNCConfig{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[32]
+		mi := &file_manager_v1_manager_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2452,7 +780,7 @@ func (x *VNCConfig) String() string {
 func (*VNCConfig) ProtoMessage() {}
 
 func (x *VNCConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[32]
+	mi := &file_manager_v1_manager_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2465,7 +793,7 @@ func (x *VNCConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VNCConfig.ProtoReflect.Descriptor instead.
 func (*VNCConfig) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{32}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *VNCConfig) GetProtocol() string {
@@ -2496,6 +824,1287 @@ func (x *VNCConfig) GetReadOnly() bool {
 	return false
 }
 
+// RegionalGateway represents a gateway instance serving one or more datacenters
+type RegionalGateway struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                               // Unique gateway identifier
+	Region         string                 `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`                                       // Geographic region (e.g., "us-east-1", "eu-west-1")
+	Endpoint       string                 `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`                                   // Public endpoint URL for client connections
+	DatacenterIds  []string               `protobuf:"bytes,4,rep,name=datacenter_ids,json=datacenterIds,proto3" json:"datacenter_ids,omitempty"`    // List of datacenters this gateway serves
+	Status         string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`                                       // Gateway status (e.g., "healthy", "degraded", "offline")
+	LastSeen       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`                   // Last heartbeat or health check timestamp
+	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                // When the gateway was first registered
+	DelegatedToken string                 `protobuf:"bytes,8,opt,name=delegated_token,json=delegatedToken,proto3" json:"delegated_token,omitempty"` // JWT token delegated for client access to this gateway
+}
+
+func (x *RegionalGateway) Reset() {
+	*x = RegionalGateway{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegionalGateway) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegionalGateway) ProtoMessage() {}
+
+func (x *RegionalGateway) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegionalGateway.ProtoReflect.Descriptor instead.
+func (*RegionalGateway) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RegionalGateway) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *RegionalGateway) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *RegionalGateway) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *RegionalGateway) GetDatacenterIds() []string {
+	if x != nil {
+		return x.DatacenterIds
+	}
+	return nil
+}
+
+func (x *RegionalGateway) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *RegionalGateway) GetLastSeen() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSeen
+	}
+	return nil
+}
+
+func (x *RegionalGateway) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *RegionalGateway) GetDelegatedToken() string {
+	if x != nil {
+		return x.DelegatedToken
+	}
+	return ""
+}
+
+// ServerLocation contains the routing and metadata information for a server
+type ServerLocation struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                                               // Unique server identifier
+	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                                         // Customer that owns this server
+	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                   // Physical location of the server
+	RegionalGatewayId string                 `protobuf:"bytes,4,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"`                  // Gateway responsible for routing to this server
+	Features          []string               `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                                               // BMC capabilities (e.g., "power", "sol", "kvm", "sensors")
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                                            // When the server was first registered
+	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                                            // Last time server information was modified
+	BmcProtocols      []*BMCControlEndpoint  `protobuf:"bytes,8,rep,name=bmc_protocols,json=bmcProtocols,proto3" json:"bmc_protocols,omitempty"`                                   // Multiple protocol support (required for RFD 006)
+	PrimaryProtocol   BMCType                `protobuf:"varint,9,opt,name=primary_protocol,json=primaryProtocol,proto3,enum=manager.v1.BMCType" json:"primary_protocol,omitempty"` // Preferred protocol for operations
+}
+
+func (x *ServerLocation) Reset() {
+	*x = ServerLocation{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerLocation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerLocation) ProtoMessage() {}
+
+func (x *ServerLocation) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerLocation.ProtoReflect.Descriptor instead.
+func (*ServerLocation) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ServerLocation) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *ServerLocation) GetCustomerId() string {
+	if x != nil {
+		return x.CustomerId
+	}
+	return ""
+}
+
+func (x *ServerLocation) GetDatacenterId() string {
+	if x != nil {
+		return x.DatacenterId
+	}
+	return ""
+}
+
+func (x *ServerLocation) GetRegionalGatewayId() string {
+	if x != nil {
+		return x.RegionalGatewayId
+	}
+	return ""
+}
+
+func (x *ServerLocation) GetFeatures() []string {
+	if x != nil {
+		return x.Features
+	}
+	return nil
+}
+
+func (x *ServerLocation) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *ServerLocation) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *ServerLocation) GetBmcProtocols() []*BMCControlEndpoint {
+	if x != nil {
+		return x.BmcProtocols
+	}
+	return nil
+}
+
+func (x *ServerLocation) GetPrimaryProtocol() BMCType {
+	if x != nil {
+		return x.PrimaryProtocol
+	}
+	return BMCType_BMC_UNSPECIFIED
+}
+
+// AuthenticateRequest contains customer credentials for initial authentication
+type AuthenticateRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Email    string `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`       // Customer email address (primary identifier)
+	Password string `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"` // Customer password (or OIDC/OAuth token in production environments)
+}
+
+func (x *AuthenticateRequest) Reset() {
+	*x = AuthenticateRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AuthenticateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticateRequest) ProtoMessage() {}
+
+func (x *AuthenticateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticateRequest.ProtoReflect.Descriptor instead.
+func (*AuthenticateRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AuthenticateRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *AuthenticateRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+// AuthenticateResponse provides authentication tokens and customer information
+type AuthenticateResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AccessToken  string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`    // Short-lived JWT token for API access (e.g., 1 hour)
+	RefreshToken string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"` // Long-lived token for obtaining new access tokens (e.g., 30 days)
+	ExpiresAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`          // When the access token expires
+	Customer     *Customer              `protobuf:"bytes,4,opt,name=customer,proto3" json:"customer,omitempty"`                             // Customer profile information
+}
+
+func (x *AuthenticateResponse) Reset() {
+	*x = AuthenticateResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AuthenticateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AuthenticateResponse) ProtoMessage() {}
+
+func (x *AuthenticateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AuthenticateResponse.ProtoReflect.Descriptor instead.
+func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AuthenticateResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *AuthenticateResponse) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+func (x *AuthenticateResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *AuthenticateResponse) GetCustomer() *Customer {
+	if x != nil {
+		return x.Customer
+	}
+	return nil
+}
+
+// RefreshTokenRequest uses a refresh token to obtain new access tokens
+type RefreshTokenRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RefreshToken string `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"` // The refresh token from initial authentication
+	ServerId     string `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`             // Optional: scope the new token to a specific server for enhanced security
+}
+
+func (x *RefreshTokenRequest) Reset() {
+	*x = RefreshTokenRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshTokenRequest) ProtoMessage() {}
+
+func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshTokenRequest.ProtoReflect.Descriptor instead.
+func (*RefreshTokenRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *RefreshTokenRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+func (x *RefreshTokenRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+// RefreshTokenResponse provides a new access token
+type RefreshTokenResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	AccessToken string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"` // New short-lived JWT token for API access
+	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`       // When the new access token expires
+}
+
+func (x *RefreshTokenResponse) Reset() {
+	*x = RefreshTokenResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[13]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshTokenResponse) ProtoMessage() {}
+
+func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[13]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshTokenResponse.ProtoReflect.Descriptor instead.
+func (*RefreshTokenResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *RefreshTokenResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *RefreshTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+// GetServerTokenRequest requests a server-specific token with encrypted BMC context
+type GetServerTokenRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ServerId string `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The server ID to create a token for
+}
+
+func (x *GetServerTokenRequest) Reset() {
+	*x = GetServerTokenRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[14]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetServerTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerTokenRequest) ProtoMessage() {}
+
+func (x *GetServerTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[14]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerTokenRequest.ProtoReflect.Descriptor instead.
+func (*GetServerTokenRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetServerTokenRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+// GetServerTokenResponse provides a server-specific token with encrypted BMC context
+type GetServerTokenResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Token     string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`                          // Server-specific JWT token with encrypted BMC context
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"` // When the server token expires
+}
+
+func (x *GetServerTokenResponse) Reset() {
+	*x = GetServerTokenResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetServerTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerTokenResponse) ProtoMessage() {}
+
+func (x *GetServerTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerTokenResponse.ProtoReflect.Descriptor instead.
+func (*GetServerTokenResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetServerTokenResponse) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *GetServerTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+// RegisterServerRequest registers a server with the BMC Manager during provisioning
+type RegisterServerRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ServerId          string                `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                                               // Unique server identifier (must be unique within customer namespace)
+	CustomerId        string                `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                                         // Customer/tenant ID that owns this server
+	DatacenterId      string                `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                   // Physical datacenter where the server is located
+	RegionalGatewayId string                `protobuf:"bytes,4,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"`                  // Gateway responsible for this server (must serve the datacenter)
+	Features          []string              `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                                               // BMC capabilities (e.g., "power", "sol", "kvm", "sensors", "media")
+	BmcProtocols      []*BMCControlEndpoint `protobuf:"bytes,6,rep,name=bmc_protocols,json=bmcProtocols,proto3" json:"bmc_protocols,omitempty"`                                   // Multiple protocol support (required for RFD 006)
+	PrimaryProtocol   BMCType               `protobuf:"varint,7,opt,name=primary_protocol,json=primaryProtocol,proto3,enum=manager.v1.BMCType" json:"primary_protocol,omitempty"` // Preferred protocol for operations
+}
+
+func (x *RegisterServerRequest) Reset() {
+	*x = RegisterServerRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegisterServerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterServerRequest) ProtoMessage() {}
+
+func (x *RegisterServerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterServerRequest.ProtoReflect.Descriptor instead.
+func (*RegisterServerRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RegisterServerRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *RegisterServerRequest) GetCustomerId() string {
+	if x != nil {
+		return x.CustomerId
+	}
+	return ""
+}
+
+func (x *RegisterServerRequest) GetDatacenterId() string {
+	if x != nil {
+		return x.DatacenterId
+	}
+	return ""
+}
+
+func (x *RegisterServerRequest) GetRegionalGatewayId() string {
+	if x != nil {
+		return x.RegionalGatewayId
+	}
+	return ""
+}
+
+func (x *RegisterServerRequest) GetFeatures() []string {
+	if x != nil {
+		return x.Features
+	}
+	return nil
+}
+
+func (x *RegisterServerRequest) GetBmcProtocols() []*BMCControlEndpoint {
+	if x != nil {
+		return x.BmcProtocols
+	}
+	return nil
+}
+
+func (x *RegisterServerRequest) GetPrimaryProtocol() BMCType {
+	if x != nil {
+		return x.PrimaryProtocol
+	}
+	return BMCType_BMC_UNSPECIFIED
+}
+
+// RegisterServerResponse confirms server registration
+type RegisterServerResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // Whether registration was successful
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`  // Success confirmation or detailed error message
+}
+
+func (x *RegisterServerResponse) Reset() {
+	*x = RegisterServerResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegisterServerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterServerResponse) ProtoMessage() {}
+
+func (x *RegisterServerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterServerResponse.ProtoReflect.Descriptor instead.
+func (*RegisterServerResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *RegisterServerResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RegisterServerResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// GetServerRequest retrieves information about a specific server
+type GetServerRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ServerId string `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The unique identifier of the server to retrieve
+}
+
+func (x *GetServerRequest) Reset() {
+	*x = GetServerRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetServerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerRequest) ProtoMessage() {}
+
+func (x *GetServerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerRequest.ProtoReflect.Descriptor instead.
+func (*GetServerRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetServerRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+// GetServerResponse contains the requested server information
+type GetServerResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Server *Server `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"` // The server information, or error if not found/accessible
+}
+
+func (x *GetServerResponse) Reset() {
+	*x = GetServerResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetServerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerResponse) ProtoMessage() {}
+
+func (x *GetServerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerResponse.ProtoReflect.Descriptor instead.
+func (*GetServerResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GetServerResponse) GetServer() *Server {
+	if x != nil {
+		return x.Server
+	}
+	return nil
+}
+
+// ListServersRequest retrieves a list of servers accessible to the authenticated customer
+type ListServersRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Optional pagination controls
+	PageSize  int32  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`   // Maximum number of servers to return (default: 50, max: 1000)
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // Token from previous response to continue pagination
+}
+
+func (x *ListServersRequest) Reset() {
+	*x = ListServersRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListServersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListServersRequest) ProtoMessage() {}
+
+func (x *ListServersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListServersRequest.ProtoReflect.Descriptor instead.
+func (*ListServersRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListServersRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListServersRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+// ListServersResponse contains a list of servers and pagination information
+type ListServersResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Servers       []*Server `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`                                    // List of servers accessible to the customer
+	NextPageToken string    `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"` // Token for retrieving the next page (empty if last page)
+}
+
+func (x *ListServersResponse) Reset() {
+	*x = ListServersResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListServersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListServersResponse) ProtoMessage() {}
+
+func (x *ListServersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListServersResponse.ProtoReflect.Descriptor instead.
+func (*ListServersResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ListServersResponse) GetServers() []*Server {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
+func (x *ListServersResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+// GetServerLocationRequest queries routing information for a server
+type GetServerLocationRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ServerId string `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"` // The server ID to resolve location for
+}
+
+func (x *GetServerLocationRequest) Reset() {
+	*x = GetServerLocationRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetServerLocationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerLocationRequest) ProtoMessage() {}
+
+func (x *GetServerLocationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerLocationRequest.ProtoReflect.Descriptor instead.
+func (*GetServerLocationRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *GetServerLocationRequest) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+// GetServerLocationResponse provides server routing and capability information
+type GetServerLocationResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RegionalGatewayId       string                `protobuf:"bytes,1,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"`                   // Gateway that handles requests for this server
+	RegionalGatewayEndpoint string                `protobuf:"bytes,2,opt,name=regional_gateway_endpoint,json=regionalGatewayEndpoint,proto3" json:"regional_gateway_endpoint,omitempty"` // Full URL/endpoint of the responsible gateway
+	DatacenterId            string                `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                    // Datacenter where the server is physically located
+	Features                []string              `protobuf:"bytes,4,rep,name=features,proto3" json:"features,omitempty"`                                                                // BMC capabilities supported by this server
+	BmcProtocols            []*BMCControlEndpoint `protobuf:"bytes,5,rep,name=bmc_protocols,json=bmcProtocols,proto3" json:"bmc_protocols,omitempty"`                                    // Multiple protocol support (required for RFD 006)
+	PrimaryProtocol         BMCType               `protobuf:"varint,6,opt,name=primary_protocol,json=primaryProtocol,proto3,enum=manager.v1.BMCType" json:"primary_protocol,omitempty"`  // Preferred protocol for operations
+}
+
+func (x *GetServerLocationResponse) Reset() {
+	*x = GetServerLocationResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetServerLocationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetServerLocationResponse) ProtoMessage() {}
+
+func (x *GetServerLocationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetServerLocationResponse.ProtoReflect.Descriptor instead.
+func (*GetServerLocationResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetServerLocationResponse) GetRegionalGatewayId() string {
+	if x != nil {
+		return x.RegionalGatewayId
+	}
+	return ""
+}
+
+func (x *GetServerLocationResponse) GetRegionalGatewayEndpoint() string {
+	if x != nil {
+		return x.RegionalGatewayEndpoint
+	}
+	return ""
+}
+
+func (x *GetServerLocationResponse) GetDatacenterId() string {
+	if x != nil {
+		return x.DatacenterId
+	}
+	return ""
+}
+
+func (x *GetServerLocationResponse) GetFeatures() []string {
+	if x != nil {
+		return x.Features
+	}
+	return nil
+}
+
+func (x *GetServerLocationResponse) GetBmcProtocols() []*BMCControlEndpoint {
+	if x != nil {
+		return x.BmcProtocols
+	}
+	return nil
+}
+
+func (x *GetServerLocationResponse) GetPrimaryProtocol() BMCType {
+	if x != nil {
+		return x.PrimaryProtocol
+	}
+	return BMCType_BMC_UNSPECIFIED
+}
+
+// RegisterGatewayRequest allows gateways to register with the BMC Manager
+type RegisterGatewayRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	GatewayId     string   `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`             // Unique identifier for this gateway instance
+	Region        string   `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`                                    // Geographic region (e.g., "us-east-1", "eu-west-1")
+	Endpoint      string   `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`                                // Public endpoint URL where the gateway can be reached
+	DatacenterIds []string `protobuf:"bytes,4,rep,name=datacenter_ids,json=datacenterIds,proto3" json:"datacenter_ids,omitempty"` // List of datacenters this gateway can serve
+}
+
+func (x *RegisterGatewayRequest) Reset() {
+	*x = RegisterGatewayRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegisterGatewayRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterGatewayRequest) ProtoMessage() {}
+
+func (x *RegisterGatewayRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterGatewayRequest.ProtoReflect.Descriptor instead.
+func (*RegisterGatewayRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RegisterGatewayRequest) GetGatewayId() string {
+	if x != nil {
+		return x.GatewayId
+	}
+	return ""
+}
+
+func (x *RegisterGatewayRequest) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *RegisterGatewayRequest) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *RegisterGatewayRequest) GetDatacenterIds() []string {
+	if x != nil {
+		return x.DatacenterIds
+	}
+	return nil
+}
+
+// RegisterGatewayResponse confirms gateway registration
+type RegisterGatewayResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // Whether registration was successful
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`  // Success confirmation or error details
+}
+
+func (x *RegisterGatewayResponse) Reset() {
+	*x = RegisterGatewayResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RegisterGatewayResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterGatewayResponse) ProtoMessage() {}
+
+func (x *RegisterGatewayResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterGatewayResponse.ProtoReflect.Descriptor instead.
+func (*RegisterGatewayResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *RegisterGatewayResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RegisterGatewayResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// ListGatewaysRequest queries available gateways
+type ListGatewaysRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Region string `protobuf:"bytes,1,opt,name=region,proto3" json:"region,omitempty"` // Optional filter to return only gateways in a specific region
+}
+
+func (x *ListGatewaysRequest) Reset() {
+	*x = ListGatewaysRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListGatewaysRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGatewaysRequest) ProtoMessage() {}
+
+func (x *ListGatewaysRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGatewaysRequest.ProtoReflect.Descriptor instead.
+func (*ListGatewaysRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ListGatewaysRequest) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+// ListGatewaysResponse provides a list of registered gateways
+type ListGatewaysResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Gateways []*RegionalGateway `protobuf:"bytes,1,rep,name=gateways,proto3" json:"gateways,omitempty"` // List of gateways matching the request criteria
+}
+
+func (x *ListGatewaysResponse) Reset() {
+	*x = ListGatewaysResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[27]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListGatewaysResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGatewaysResponse) ProtoMessage() {}
+
+func (x *ListGatewaysResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[27]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGatewaysResponse.ProtoReflect.Descriptor instead.
+func (*ListGatewaysResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ListGatewaysResponse) GetGateways() []*RegionalGateway {
+	if x != nil {
+		return x.Gateways
+	}
+	return nil
+}
+
 // ReportAvailableEndpointsRequest reports BMC endpoints that a gateway can proxy
 type ReportAvailableEndpointsRequest struct {
 	state         protoimpl.MessageState
@@ -2510,7 +2119,7 @@ type ReportAvailableEndpointsRequest struct {
 func (x *ReportAvailableEndpointsRequest) Reset() {
 	*x = ReportAvailableEndpointsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[33]
+		mi := &file_manager_v1_manager_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2523,7 +2132,7 @@ func (x *ReportAvailableEndpointsRequest) String() string {
 func (*ReportAvailableEndpointsRequest) ProtoMessage() {}
 
 func (x *ReportAvailableEndpointsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[33]
+	mi := &file_manager_v1_manager_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2536,7 +2145,7 @@ func (x *ReportAvailableEndpointsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportAvailableEndpointsRequest.ProtoReflect.Descriptor instead.
 func (*ReportAvailableEndpointsRequest) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{33}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ReportAvailableEndpointsRequest) GetGatewayId() string {
@@ -2581,7 +2190,7 @@ type BMCEndpointAvailability struct {
 func (x *BMCEndpointAvailability) Reset() {
 	*x = BMCEndpointAvailability{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[34]
+		mi := &file_manager_v1_manager_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2594,7 +2203,7 @@ func (x *BMCEndpointAvailability) String() string {
 func (*BMCEndpointAvailability) ProtoMessage() {}
 
 func (x *BMCEndpointAvailability) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[34]
+	mi := &file_manager_v1_manager_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2607,7 +2216,7 @@ func (x *BMCEndpointAvailability) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BMCEndpointAvailability.ProtoReflect.Descriptor instead.
 func (*BMCEndpointAvailability) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{34}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *BMCEndpointAvailability) GetBmcEndpoint() string {
@@ -2693,7 +2302,7 @@ type ReportAvailableEndpointsResponse struct {
 func (x *ReportAvailableEndpointsResponse) Reset() {
 	*x = ReportAvailableEndpointsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_manager_v1_manager_proto_msgTypes[35]
+		mi := &file_manager_v1_manager_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2706,7 +2315,7 @@ func (x *ReportAvailableEndpointsResponse) String() string {
 func (*ReportAvailableEndpointsResponse) ProtoMessage() {}
 
 func (x *ReportAvailableEndpointsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_manager_v1_manager_proto_msgTypes[35]
+	mi := &file_manager_v1_manager_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2719,7 +2328,7 @@ func (x *ReportAvailableEndpointsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportAvailableEndpointsResponse.ProtoReflect.Descriptor instead.
 func (*ReportAvailableEndpointsResponse) Descriptor() ([]byte, []int) {
-	return file_manager_v1_manager_proto_rawDescGZIP(), []int{35}
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ReportAvailableEndpointsResponse) GetSuccess() bool {
@@ -2736,6 +2345,421 @@ func (x *ReportAvailableEndpointsResponse) GetMessage() string {
 	return ""
 }
 
+// GetSystemStatusRequest queries the overall system status
+type GetSystemStatusRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *GetSystemStatusRequest) Reset() {
+	*x = GetSystemStatusRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[31]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSystemStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSystemStatusRequest) ProtoMessage() {}
+
+func (x *GetSystemStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[31]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSystemStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetSystemStatusRequest) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{31}
+}
+
+// GetSystemStatusResponse provides comprehensive system status
+type GetSystemStatusResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Status *SystemStatus `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"` // Overall system status information
+}
+
+func (x *GetSystemStatusResponse) Reset() {
+	*x = GetSystemStatusResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[32]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSystemStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSystemStatusResponse) ProtoMessage() {}
+
+func (x *GetSystemStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[32]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSystemStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetSystemStatusResponse) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *GetSystemStatusResponse) GetStatus() *SystemStatus {
+	if x != nil {
+		return x.Status
+	}
+	return nil
+}
+
+// SystemStatus contains comprehensive system state information
+type SystemStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Version        string                     `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`                                      // Manager service version
+	StartedAt      *timestamppb.Timestamp     `protobuf:"bytes,2,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`                 // When the manager service started
+	StatusTime     *timestamppb.Timestamp     `protobuf:"bytes,3,opt,name=status_time,json=statusTime,proto3" json:"status_time,omitempty"`              // When this status was generated
+	TotalGateways  int32                      `protobuf:"varint,4,opt,name=total_gateways,json=totalGateways,proto3" json:"total_gateways,omitempty"`    // Total number of registered gateways
+	ActiveGateways int32                      `protobuf:"varint,5,opt,name=active_gateways,json=activeGateways,proto3" json:"active_gateways,omitempty"` // Number of gateways that have reported recently
+	TotalServers   int32                      `protobuf:"varint,6,opt,name=total_servers,json=totalServers,proto3" json:"total_servers,omitempty"`       // Total number of registered servers
+	Gateways       []*GatewayStatus           `protobuf:"bytes,7,rep,name=gateways,proto3" json:"gateways,omitempty"`                                    // Detailed status of each gateway
+	Servers        []*SystemStatusServerEntry `protobuf:"bytes,8,rep,name=servers,proto3" json:"servers,omitempty"`                                      // Summary of all servers across gateways
+}
+
+func (x *SystemStatus) Reset() {
+	*x = SystemStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[33]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SystemStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemStatus) ProtoMessage() {}
+
+func (x *SystemStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[33]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemStatus.ProtoReflect.Descriptor instead.
+func (*SystemStatus) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *SystemStatus) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *SystemStatus) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *SystemStatus) GetStatusTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StatusTime
+	}
+	return nil
+}
+
+func (x *SystemStatus) GetTotalGateways() int32 {
+	if x != nil {
+		return x.TotalGateways
+	}
+	return 0
+}
+
+func (x *SystemStatus) GetActiveGateways() int32 {
+	if x != nil {
+		return x.ActiveGateways
+	}
+	return 0
+}
+
+func (x *SystemStatus) GetTotalServers() int32 {
+	if x != nil {
+		return x.TotalServers
+	}
+	return 0
+}
+
+func (x *SystemStatus) GetGateways() []*GatewayStatus {
+	if x != nil {
+		return x.Gateways
+	}
+	return nil
+}
+
+func (x *SystemStatus) GetServers() []*SystemStatusServerEntry {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
+// GatewayStatus provides detailed information about a specific gateway
+type GatewayStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id            string                     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                            // Gateway identifier
+	Region        string                     `protobuf:"bytes,2,opt,name=region,proto3" json:"region,omitempty"`                                    // Geographic region
+	Endpoint      string                     `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`                                // Gateway endpoint URL
+	DatacenterIds []string                   `protobuf:"bytes,4,rep,name=datacenter_ids,json=datacenterIds,proto3" json:"datacenter_ids,omitempty"` // Datacenters served by this gateway
+	Status        string                     `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`                                    // Gateway status (e.g., "healthy", "degraded")
+	LastSeen      *timestamppb.Timestamp     `protobuf:"bytes,6,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`                // Last time gateway registered/updated
+	CreatedAt     *timestamppb.Timestamp     `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`             // When gateway was first registered
+	ServerCount   int32                      `protobuf:"varint,8,opt,name=server_count,json=serverCount,proto3" json:"server_count,omitempty"`      // Number of servers registered through this gateway
+	Servers       []*SystemStatusServerEntry `protobuf:"bytes,9,rep,name=servers,proto3" json:"servers,omitempty"`                                  // List of servers managed by this gateway
+}
+
+func (x *GatewayStatus) Reset() {
+	*x = GatewayStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[34]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GatewayStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GatewayStatus) ProtoMessage() {}
+
+func (x *GatewayStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[34]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GatewayStatus.ProtoReflect.Descriptor instead.
+func (*GatewayStatus) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *GatewayStatus) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GatewayStatus) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *GatewayStatus) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *GatewayStatus) GetDatacenterIds() []string {
+	if x != nil {
+		return x.DatacenterIds
+	}
+	return nil
+}
+
+func (x *GatewayStatus) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *GatewayStatus) GetLastSeen() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSeen
+	}
+	return nil
+}
+
+func (x *GatewayStatus) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *GatewayStatus) GetServerCount() int32 {
+	if x != nil {
+		return x.ServerCount
+	}
+	return 0
+}
+
+func (x *GatewayStatus) GetServers() []*SystemStatusServerEntry {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
+// SystemStatusServerEntry provides server information for status display
+type SystemStatusServerEntry struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`                                               // Server identifier
+	CustomerId        string                 `protobuf:"bytes,2,opt,name=customer_id,json=customerId,proto3" json:"customer_id,omitempty"`                                         // Customer that owns this server
+	DatacenterId      string                 `protobuf:"bytes,3,opt,name=datacenter_id,json=datacenterId,proto3" json:"datacenter_id,omitempty"`                                   // Physical datacenter location
+	RegionalGatewayId string                 `protobuf:"bytes,4,opt,name=regional_gateway_id,json=regionalGatewayId,proto3" json:"regional_gateway_id,omitempty"`                  // Gateway managing this server
+	Features          []string               `protobuf:"bytes,5,rep,name=features,proto3" json:"features,omitempty"`                                                               // BMC capabilities
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`                                            // When server was registered
+	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`                                            // Last update time
+	BmcProtocols      []*BMCControlEndpoint  `protobuf:"bytes,8,rep,name=bmc_protocols,json=bmcProtocols,proto3" json:"bmc_protocols,omitempty"`                                   // Multiple protocol support (required for RFD 006)
+	PrimaryProtocol   BMCType                `protobuf:"varint,9,opt,name=primary_protocol,json=primaryProtocol,proto3,enum=manager.v1.BMCType" json:"primary_protocol,omitempty"` // Preferred protocol for operations
+}
+
+func (x *SystemStatusServerEntry) Reset() {
+	*x = SystemStatusServerEntry{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_manager_v1_manager_proto_msgTypes[35]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SystemStatusServerEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemStatusServerEntry) ProtoMessage() {}
+
+func (x *SystemStatusServerEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_manager_v1_manager_proto_msgTypes[35]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemStatusServerEntry.ProtoReflect.Descriptor instead.
+func (*SystemStatusServerEntry) Descriptor() ([]byte, []int) {
+	return file_manager_v1_manager_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *SystemStatusServerEntry) GetServerId() string {
+	if x != nil {
+		return x.ServerId
+	}
+	return ""
+}
+
+func (x *SystemStatusServerEntry) GetCustomerId() string {
+	if x != nil {
+		return x.CustomerId
+	}
+	return ""
+}
+
+func (x *SystemStatusServerEntry) GetDatacenterId() string {
+	if x != nil {
+		return x.DatacenterId
+	}
+	return ""
+}
+
+func (x *SystemStatusServerEntry) GetRegionalGatewayId() string {
+	if x != nil {
+		return x.RegionalGatewayId
+	}
+	return ""
+}
+
+func (x *SystemStatusServerEntry) GetFeatures() []string {
+	if x != nil {
+		return x.Features
+	}
+	return nil
+}
+
+func (x *SystemStatusServerEntry) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *SystemStatusServerEntry) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *SystemStatusServerEntry) GetBmcProtocols() []*BMCControlEndpoint {
+	if x != nil {
+		return x.BmcProtocols
+	}
+	return nil
+}
+
+func (x *SystemStatusServerEntry) GetPrimaryProtocol() BMCType {
+	if x != nil {
+		return x.PrimaryProtocol
+	}
+	return BMCType_BMC_UNSPECIFIED
+}
+
 var File_manager_v1_manager_proto protoreflect.FileDescriptor
 
 var file_manager_v1_manager_proto_rawDesc = []byte{
@@ -2745,49 +2769,139 @@ var file_manager_v1_manager_proto_rawDesc = []byte{
 	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
 	0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x19, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2f,
 	0x76, 0x31, 0x2f, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0x47, 0x0a, 0x13, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61,
-	0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61,
-	0x69, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12,
-	0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x22, 0xcb, 0x01, 0x0a, 0x14,
-	0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x5f, 0x74,
-	0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x61, 0x63, 0x63, 0x65,
-	0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x66, 0x72, 0x65,
-	0x73, 0x68, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c,
-	0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x39, 0x0a, 0x0a,
-	0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x5f, 0x61, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
+	0x74, 0x6f, 0x22, 0x6b, 0x0a, 0x08, 0x43, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x12, 0x0e,
+	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14,
+	0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65,
+	0x6d, 0x61, 0x69, 0x6c, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f,
+	0x61, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22,
+	0xd5, 0x05, 0x0a, 0x06, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x63, 0x75,
+	0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0a, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x49, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x64,
+	0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0c, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64,
+	0x12, 0x4b, 0x0a, 0x11, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x5f, 0x65, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x6d, 0x61,
+	0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x43, 0x6f, 0x6e, 0x74,
+	0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x10, 0x63, 0x6f, 0x6e,
+	0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x12, 0x3e, 0x0a,
+	0x10, 0x70, 0x72, 0x69, 0x6d, 0x61, 0x72, 0x79, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f,
+	0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0f, 0x70, 0x72,
+	0x69, 0x6d, 0x61, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x12, 0x3a, 0x0a,
+	0x0c, 0x73, 0x6f, 0x6c, 0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x06, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31,
+	0x2e, 0x53, 0x4f, 0x4c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0b, 0x73, 0x6f,
+	0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x3a, 0x0a, 0x0c, 0x76, 0x6e, 0x63,
+	0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x17, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x4e, 0x43,
+	0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0b, 0x76, 0x6e, 0x63, 0x45, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65,
+	0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65,
+	0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x09, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65,
+	0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
+	0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x64, 0x41, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x5f,
+	0x61, 0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
+	0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12,
+	0x3c, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0c, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x20, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x4b, 0x0a,
+	0x12, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x6f, 0x6d, 0x6d,
+	0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x4d,
+	0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x11, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65,
+	0x72, 0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x1a, 0x3b, 0x0a, 0x0d, 0x4d, 0x65,
+	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b,
+	0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0xde, 0x01, 0x0a, 0x12, 0x42, 0x4d, 0x43, 0x43,
+	0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a,
+	0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x79,
+	0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74,
+	0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x27, 0x0a, 0x03, 0x74,
+	0x6c, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x4c, 0x53, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52,
+	0x03, 0x74, 0x6c, 0x73, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69,
+	0x74, 0x69, 0x65, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x61, 0x70, 0x61,
+	0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73, 0x22, 0xb9, 0x01, 0x0a, 0x0b, 0x53, 0x4f, 0x4c,
+	0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x53, 0x4f, 0x4c, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70,
+	0x65, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x0a,
+	0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73,
+	0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73,
+	0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x2d, 0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e,
+	0x76, 0x31, 0x2e, 0x53, 0x4f, 0x4c, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x06, 0x63, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x22, 0xb9, 0x01, 0x0a, 0x0b, 0x56, 0x4e, 0x43, 0x45, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e,
+	0x56, 0x4e, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a,
+	0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65,
+	0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65,
+	0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72,
+	0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72,
+	0x64, 0x12, 0x2d, 0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x15, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x56,
+	0x4e, 0x43, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x22, 0x70, 0x0a, 0x09, 0x54, 0x4c, 0x53, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x18, 0x0a,
+	0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07,
+	0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12, 0x30, 0x0a, 0x14, 0x69, 0x6e, 0x73, 0x65, 0x63,
+	0x75, 0x72, 0x65, 0x5f, 0x73, 0x6b, 0x69, 0x70, 0x5f, 0x76, 0x65, 0x72, 0x69, 0x66, 0x79, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x12, 0x69, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x53,
+	0x6b, 0x69, 0x70, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x12, 0x17, 0x0a, 0x07, 0x63, 0x61, 0x5f,
+	0x63, 0x65, 0x72, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x63, 0x61, 0x43, 0x65,
+	0x72, 0x74, 0x22, 0x74, 0x0a, 0x09, 0x53, 0x4f, 0x4c, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12,
+	0x1b, 0x0a, 0x09, 0x62, 0x61, 0x75, 0x64, 0x5f, 0x72, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x08, 0x62, 0x61, 0x75, 0x64, 0x52, 0x61, 0x74, 0x65, 0x12, 0x21, 0x0a, 0x0c,
+	0x66, 0x6c, 0x6f, 0x77, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0b, 0x66, 0x6c, 0x6f, 0x77, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x12,
+	0x27, 0x0a, 0x0f, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e,
+	0x64, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0e, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75,
+	0x74, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x22, 0x72, 0x0a, 0x09, 0x56, 0x4e, 0x43, 0x43,
+	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f,
+	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f,
+	0x6c, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x70, 0x61, 0x74, 0x68, 0x12, 0x18, 0x0a, 0x07, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x12,
+	0x1b, 0x0a, 0x09, 0x72, 0x65, 0x61, 0x64, 0x5f, 0x6f, 0x6e, 0x6c, 0x79, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x08, 0x72, 0x65, 0x61, 0x64, 0x4f, 0x6e, 0x6c, 0x79, 0x22, 0xb1, 0x02, 0x0a,
+	0x0f, 0x52, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
+	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64,
+	0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74,
+	0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x64, 0x61,
+	0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73,
+	0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61,
+	0x74, 0x75, 0x73, 0x12, 0x37, 0x0a, 0x09, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x73, 0x65, 0x65, 0x6e,
+	0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61,
+	0x6d, 0x70, 0x52, 0x08, 0x6c, 0x61, 0x73, 0x74, 0x53, 0x65, 0x65, 0x6e, 0x12, 0x39, 0x0a, 0x0a,
+	0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
-	0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x65, 0x78,
-	0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x12, 0x30, 0x0a, 0x08, 0x63, 0x75, 0x73, 0x74, 0x6f,
-	0x6d, 0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x6d, 0x61, 0x6e, 0x61,
-	0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x52,
-	0x08, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x22, 0x57, 0x0a, 0x13, 0x52, 0x65, 0x66,
-	0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x5f, 0x74, 0x6f, 0x6b, 0x65,
-	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68,
-	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f,
-	0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x49, 0x64, 0x22, 0x74, 0x0a, 0x14, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b,
-	0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x61, 0x63,
-	0x63, 0x65, 0x73, 0x73, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x0b, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x39, 0x0a,
-	0x0a, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x65,
-	0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x22, 0x34, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x53,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x22, 0x69,
-	0x0a, 0x16, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65,
-	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x39,
-	0x0a, 0x0a, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09,
-	0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x41, 0x74, 0x22, 0x99, 0x02, 0x0a, 0x15, 0x52, 0x65,
-	0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64,
+	0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x64, 0x65, 0x6c, 0x65, 0x67,
+	0x61, 0x74, 0x65, 0x64, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0e, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x22, 0xba, 0x03, 0x0a, 0x0e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x6f, 0x63, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64,
 	0x12, 0x1f, 0x0a, 0x0b, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x49,
@@ -2796,109 +2910,199 @@ var file_manager_v1_manager_proto_rawDesc = []byte{
 	0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e,
 	0x61, 0x6c, 0x5f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x11, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74,
-	0x65, 0x77, 0x61, 0x79, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x62, 0x6d, 0x63, 0x5f, 0x74, 0x79,
-	0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67,
-	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x62,
-	0x6d, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72,
-	0x65, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72,
-	0x65, 0x73, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x6d, 0x63, 0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x62, 0x6d, 0x63, 0x45, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x22, 0x4c, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
-	0x72, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
-	0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73,
-	0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73,
-	0x61, 0x67, 0x65, 0x22, 0x37, 0x0a, 0x18, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
-	0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x22, 0xf8, 0x01, 0x0a,
-	0x19, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65,
-	0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x11, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61,
-	0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x49, 0x64, 0x12, 0x3a, 0x0a, 0x19, 0x72, 0x65,
-	0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x65,
-	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x17, 0x72,
-	0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x45, 0x6e,
-	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65,
-	0x6e, 0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64,
-	0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x62,
-	0x6d, 0x63, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e,
-	0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79,
-	0x70, 0x65, 0x52, 0x07, 0x62, 0x6d, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66,
-	0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66,
-	0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x22, 0x92, 0x01, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69,
-	0x73, 0x74, 0x65, 0x72, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x65, 0x77, 0x61, 0x79, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72,
+	0x65, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72,
+	0x65, 0x73, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74,
+	0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61,
+	0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x39, 0x0a,
+	0x0a, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x75,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x43, 0x0a, 0x0d, 0x62, 0x6d, 0x63, 0x5f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x1e, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43,
+	0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52,
+	0x0c, 0x62, 0x6d, 0x63, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x12, 0x3e, 0x0a,
+	0x10, 0x70, 0x72, 0x69, 0x6d, 0x61, 0x72, 0x79, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f,
+	0x6c, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0f, 0x70, 0x72,
+	0x69, 0x6d, 0x61, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x22, 0x47, 0x0a,
+	0x13, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61,
+	0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61,
+	0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x22, 0xcb, 0x01, 0x0a, 0x14, 0x41, 0x75, 0x74, 0x68, 0x65,
+	0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x21, 0x0a, 0x0c, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b,
+	0x65, 0x6e, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x5f, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x66, 0x72, 0x65,
+	0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x39, 0x0a, 0x0a, 0x65, 0x78, 0x70, 0x69, 0x72,
+	0x65, 0x73, 0x5f, 0x61, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f,
+	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69,
+	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73,
+	0x41, 0x74, 0x12, 0x30, 0x0a, 0x08, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
+	0x31, 0x2e, 0x43, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x52, 0x08, 0x63, 0x75, 0x73, 0x74,
+	0x6f, 0x6d, 0x65, 0x72, 0x22, 0x57, 0x0a, 0x13, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x72,
+	0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0c, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x22, 0x74, 0x0a,
+	0x14, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x5f,
+	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x61, 0x63, 0x63,
+	0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x39, 0x0a, 0x0a, 0x65, 0x78, 0x70, 0x69,
+	0x72, 0x65, 0x73, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67,
+	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54,
+	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65,
+	0x73, 0x41, 0x74, 0x22, 0x34, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09,
+	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x22, 0x69, 0x0a, 0x16, 0x47, 0x65, 0x74,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x39, 0x0a, 0x0a, 0x65, 0x78, 0x70,
+	0x69, 0x72, 0x65, 0x73, 0x5f, 0x61, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
+	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
+	0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x65, 0x78, 0x70, 0x69, 0x72,
+	0x65, 0x73, 0x41, 0x74, 0x22, 0xcb, 0x02, 0x0a, 0x15, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
+	0x72, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b,
+	0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x63,
+	0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0a, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x49, 0x64, 0x12, 0x23, 0x0a, 0x0d,
+	0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49,
+	0x64, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x67, 0x61,
+	0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x11,
+	0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x49,
+	0x64, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x05, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x43, 0x0a,
+	0x0d, 0x62, 0x6d, 0x63, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x18, 0x06,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
+	0x31, 0x2e, 0x42, 0x4d, 0x43, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0c, 0x62, 0x6d, 0x63, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f,
+	0x6c, 0x73, 0x12, 0x3e, 0x0a, 0x10, 0x70, 0x72, 0x69, 0x6d, 0x61, 0x72, 0x79, 0x5f, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d,
+	0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70,
+	0x65, 0x52, 0x0f, 0x70, 0x72, 0x69, 0x6d, 0x61, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63,
+	0x6f, 0x6c, 0x22, 0x4c, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x53, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73,
+	0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x22, 0x2f, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49,
+	0x64, 0x22, 0x3f, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x22, 0x50, 0x0a, 0x12, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x61, 0x67, 0x65,
+	0x5f, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x70, 0x61, 0x67,
+	0x65, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x6b, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x53, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x07, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d,
+	0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x52, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x12, 0x26, 0x0a, 0x0f, 0x6e, 0x65, 0x78,
+	0x74, 0x5f, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x0d, 0x6e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x22, 0x37, 0x0a, 0x18, 0x47, 0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x6f,
+	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a,
+	0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x22, 0xcd, 0x02, 0x0a, 0x19, 0x47,
+	0x65, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65, 0x67, 0x69,
+	0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x11, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47,
+	0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x49, 0x64, 0x12, 0x3a, 0x0a, 0x19, 0x72, 0x65, 0x67, 0x69,
+	0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x65, 0x6e, 0x64,
+	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x17, 0x72, 0x65, 0x67,
+	0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x45, 0x6e, 0x64, 0x70,
+	0x6f, 0x69, 0x6e, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74,
+	0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x61, 0x74,
+	0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x43, 0x0a, 0x0d, 0x62, 0x6d, 0x63, 0x5f, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x6d,
+	0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x43, 0x6f, 0x6e,
+	0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0c, 0x62, 0x6d,
+	0x63, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x12, 0x3e, 0x0a, 0x10, 0x70, 0x72,
+	0x69, 0x6d, 0x61, 0x72, 0x79, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x18, 0x06,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
+	0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0f, 0x70, 0x72, 0x69, 0x6d, 0x61,
+	0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x22, 0x92, 0x01, 0x0a, 0x16, 0x52,
+	0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x67, 0x61, 0x74, 0x65, 0x77,
+	0x61, 0x79, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08,
+	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x64, 0x61, 0x74, 0x61,
+	0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09,
+	0x52, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x73, 0x22,
+	0x4d, 0x0a, 0x17, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x47, 0x61, 0x74, 0x65, 0x77,
+	0x61, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75,
+	0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x2d,
+	0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x22, 0x4f, 0x0a,
+	0x14, 0x4c, 0x69, 0x73, 0x74, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x37, 0x0a, 0x08, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74,
+	0x65, 0x77, 0x61, 0x79, 0x52, 0x08, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x22, 0xa2,
+	0x01, 0x0a, 0x1f, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62,
+	0x6c, 0x65, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69, 0x64,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x49,
 	0x64, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e,
-	0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x64,
-	0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x73, 0x22, 0x4d, 0x0a, 0x17,
-	0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65,
-	0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73,
-	0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x2d, 0x0a, 0x13, 0x4c,
-	0x69, 0x73, 0x74, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x22, 0x4f, 0x0a, 0x14, 0x4c, 0x69,
-	0x73, 0x74, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x37, 0x0a, 0x08, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
-	0x31, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61,
-	0x79, 0x52, 0x08, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x73, 0x22, 0x6b, 0x0a, 0x08, 0x43,
-	0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x39, 0x0a,
-	0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x22, 0xb1, 0x02, 0x0a, 0x0f, 0x52, 0x65, 0x67,
-	0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x12, 0x0e, 0x0a, 0x02,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x16, 0x0a, 0x06,
-	0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65,
-	0x67, 0x69, 0x6f, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x12, 0x25, 0x0a, 0x0e, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x5f, 0x69,
-	0x64, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65,
-	0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
-	0x37, 0x0a, 0x09, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x73, 0x65, 0x65, 0x6e, 0x18, 0x06, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x08,
-	0x6c, 0x61, 0x73, 0x74, 0x53, 0x65, 0x65, 0x6e, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61,
-	0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67,
-	0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54,
-	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65,
-	0x64, 0x41, 0x74, 0x12, 0x27, 0x0a, 0x0f, 0x64, 0x65, 0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x64,
-	0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x64, 0x65,
-	0x6c, 0x65, 0x67, 0x61, 0x74, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0xe5, 0x02, 0x0a,
-	0x0e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x4c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12,
-	0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b,
-	0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0a, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72, 0x49, 0x64, 0x12, 0x23, 0x0a,
+	0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x12, 0x48, 0x0a, 0x0d, 0x62, 0x6d, 0x63,
+	0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x23, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d,
+	0x43, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62,
+	0x69, 0x6c, 0x69, 0x74, 0x79, 0x52, 0x0c, 0x62, 0x6d, 0x63, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x73, 0x22, 0xa6, 0x03, 0x0a, 0x17, 0x42, 0x4d, 0x43, 0x45, 0x6e, 0x64, 0x70, 0x6f,
+	0x69, 0x6e, 0x74, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79, 0x12,
+	0x21, 0x0a, 0x0c, 0x62, 0x6d, 0x63, 0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x62, 0x6d, 0x63, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69,
+	0x6e, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x23, 0x0a,
 	0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72,
-	0x49, 0x64, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f, 0x67,
-	0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x11, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
-	0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x62, 0x6d, 0x63, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x05,
+	0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x62, 0x6d, 0x63, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x04,
 	0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
 	0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x62, 0x6d, 0x63, 0x54, 0x79,
-	0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x06,
-	0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x39,
-	0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09,
-	0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x75, 0x70, 0x64,
-	0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
-	0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x75, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x64, 0x41, 0x74, 0x22, 0x18, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x53, 0x79, 0x73, 0x74, 0x65,
+	0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x05,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
+	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x37, 0x0a, 0x09, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x73,
+	0x65, 0x65, 0x6e, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67,
+	0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65,
+	0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x08, 0x6c, 0x61, 0x73, 0x74, 0x53, 0x65, 0x65, 0x6e, 0x12,
+	0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x22, 0x0a, 0x0c, 0x63,
+	0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73, 0x18, 0x09, 0x20, 0x03, 0x28,
+	0x09, 0x52, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73, 0x12,
+	0x4b, 0x0a, 0x12, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x5f, 0x6d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x6f,
+	0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72,
+	0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x11, 0x64, 0x69, 0x73, 0x63, 0x6f,
+	0x76, 0x65, 0x72, 0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22, 0x56, 0x0a, 0x20,
+	0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x45,
+	0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x22, 0x18, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x53, 0x79, 0x73, 0x74, 0x65,
 	0x6d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x4b,
 	0x0a, 0x17, 0x47, 0x65, 0x74, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x75,
 	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x30, 0x0a, 0x06, 0x73, 0x74, 0x61,
@@ -2952,7 +3156,7 @@ var file_manager_v1_manager_proto_rawDesc = []byte{
 	0x18, 0x09, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
 	0x2e, 0x76, 0x31, 0x2e, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
 	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x07, 0x73, 0x65, 0x72,
-	0x76, 0x65, 0x72, 0x73, 0x22, 0x91, 0x03, 0x0a, 0x17, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53,
+	0x76, 0x65, 0x72, 0x73, 0x22, 0xc3, 0x03, 0x0a, 0x17, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x53,
 	0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x45, 0x6e, 0x74, 0x72, 0x79,
 	0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x12, 0x1f, 0x0a,
@@ -2963,183 +3167,24 @@ var file_manager_v1_manager_proto_rawDesc = []byte{
 	0x72, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x5f,
 	0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x11, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61,
-	0x79, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x62, 0x6d, 0x63, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
-	0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e,
-	0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x07, 0x62, 0x6d, 0x63, 0x54,
-	0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18,
-	0x06, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12,
-	0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20,
+	0x79, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18,
+	0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12,
+	0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x06, 0x20,
 	0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52,
 	0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x39, 0x0a, 0x0a, 0x75, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a,
+	0x64, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a,
 	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
 	0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x75, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x6d, 0x63, 0x5f, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x62, 0x6d, 0x63,
-	0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x22, 0x2f, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x53,
-	0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09,
-	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x08, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x64, 0x22, 0x3f, 0x0a, 0x11, 0x47, 0x65, 0x74,
-	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a,
-	0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12,
-	0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76,
-	0x65, 0x72, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0x50, 0x0a, 0x12, 0x4c, 0x69,
-	0x73, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x1b, 0x0a, 0x09, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x08, 0x70, 0x61, 0x67, 0x65, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x1d, 0x0a,
-	0x0a, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x09, 0x70, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x6b, 0x0a, 0x13,
-	0x4c, 0x69, 0x73, 0x74, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
-	0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72,
-	0x73, 0x12, 0x26, 0x0a, 0x0f, 0x6e, 0x65, 0x78, 0x74, 0x5f, 0x70, 0x61, 0x67, 0x65, 0x5f, 0x74,
-	0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x6e, 0x65, 0x78, 0x74,
-	0x50, 0x61, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x93, 0x05, 0x0a, 0x06, 0x53, 0x65,
-	0x72, 0x76, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x02, 0x69, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x63, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x65, 0x72,
-	0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x63, 0x75, 0x73, 0x74, 0x6f,
-	0x6d, 0x65, 0x72, 0x49, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e,
-	0x74, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x61,
-	0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x12, 0x49, 0x0a, 0x10, 0x63, 0x6f,
-	0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x04,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
-	0x31, 0x2e, 0x42, 0x4d, 0x43, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70,
-	0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x3a, 0x0a, 0x0c, 0x73, 0x6f, 0x6c, 0x5f, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6d, 0x61,
-	0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x4f, 0x4c, 0x45, 0x6e, 0x64, 0x70,
-	0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0b, 0x73, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
-	0x74, 0x12, 0x3a, 0x0a, 0x0c, 0x76, 0x6e, 0x63, 0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
-	0x74, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65,
-	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x4e, 0x43, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x52, 0x0b, 0x76, 0x6e, 0x63, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x0a,
-	0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x09, 0x52,
-	0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61,
-	0x74, 0x75, 0x73, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x12, 0x39, 0x0a, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18,
-	0x09, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
-	0x70, 0x52, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x39, 0x0a, 0x0a,
-	0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
-	0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x75, 0x70,
-	0x64, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x3c, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64,
-	0x61, 0x74, 0x61, 0x18, 0x0b, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x6d, 0x61, 0x6e, 0x61,
-	0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2e, 0x4d, 0x65,
-	0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x08, 0x6d, 0x65, 0x74,
-	0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x4b, 0x0a, 0x12, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65,
-	0x72, 0x79, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0c, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x69,
-	0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52,
-	0x11, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
-	0x74, 0x61, 0x1a, 0x3b, 0x0a, 0x0d, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x45, 0x6e,
-	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22,
-	0xde, 0x01, 0x0a, 0x12, 0x42, 0x4d, 0x43, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e,
-	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69,
-	0x6e, 0x74, 0x12, 0x27, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e,
-	0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d,
-	0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x75,
-	0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75,
-	0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77,
-	0x6f, 0x72, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77,
-	0x6f, 0x72, 0x64, 0x12, 0x27, 0x0a, 0x03, 0x74, 0x6c, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x15, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x4c,
-	0x53, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x03, 0x74, 0x6c, 0x73, 0x12, 0x22, 0x0a, 0x0c,
-	0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73, 0x18, 0x06, 0x20, 0x03,
-	0x28, 0x09, 0x52, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65, 0x73,
-	0x22, 0xb9, 0x01, 0x0a, 0x0b, 0x53, 0x4f, 0x4c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x12, 0x27, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13,
-	0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x4f, 0x4c, 0x54,
-	0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d,
-	0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x2d, 0x0a,
-	0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e,
-	0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x4f, 0x4c, 0x43, 0x6f,
-	0x6e, 0x66, 0x69, 0x67, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x22, 0xb9, 0x01, 0x0a,
-	0x0b, 0x56, 0x4e, 0x43, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x27, 0x0a, 0x04,
-	0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e,
-	0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x4e, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52,
-	0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
-	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e,
-	0x74, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a,
-	0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x2d, 0x0a, 0x06, 0x63, 0x6f, 0x6e,
-	0x66, 0x69, 0x67, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6d, 0x61, 0x6e, 0x61,
-	0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x56, 0x4e, 0x43, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
-	0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x22, 0x70, 0x0a, 0x09, 0x54, 0x4c, 0x53, 0x43,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x65, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x64, 0x12,
-	0x30, 0x0a, 0x14, 0x69, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x5f, 0x73, 0x6b, 0x69, 0x70,
-	0x5f, 0x76, 0x65, 0x72, 0x69, 0x66, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x12, 0x69,
-	0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x53, 0x6b, 0x69, 0x70, 0x56, 0x65, 0x72, 0x69, 0x66,
-	0x79, 0x12, 0x17, 0x0a, 0x07, 0x63, 0x61, 0x5f, 0x63, 0x65, 0x72, 0x74, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x06, 0x63, 0x61, 0x43, 0x65, 0x72, 0x74, 0x22, 0x74, 0x0a, 0x09, 0x53, 0x4f,
-	0x4c, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x1b, 0x0a, 0x09, 0x62, 0x61, 0x75, 0x64, 0x5f,
-	0x72, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x62, 0x61, 0x75, 0x64,
-	0x52, 0x61, 0x74, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x66, 0x6c, 0x6f, 0x77, 0x5f, 0x63, 0x6f, 0x6e,
-	0x74, 0x72, 0x6f, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x66, 0x6c, 0x6f, 0x77,
-	0x43, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x12, 0x27, 0x0a, 0x0f, 0x74, 0x69, 0x6d, 0x65, 0x6f,
-	0x75, 0x74, 0x5f, 0x73, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x0e, 0x74, 0x69, 0x6d, 0x65, 0x6f, 0x75, 0x74, 0x53, 0x65, 0x63, 0x6f, 0x6e, 0x64, 0x73,
-	0x22, 0x72, 0x0a, 0x09, 0x56, 0x4e, 0x43, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x1a, 0x0a,
-	0x08, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x08, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x12, 0x12, 0x0a, 0x04, 0x70, 0x61, 0x74,
-	0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x70, 0x61, 0x74, 0x68, 0x12, 0x18, 0x0a,
-	0x07, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07,
-	0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x65, 0x61, 0x64, 0x5f,
-	0x6f, 0x6e, 0x6c, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x72, 0x65, 0x61, 0x64,
-	0x4f, 0x6e, 0x6c, 0x79, 0x22, 0xa2, 0x01, 0x0a, 0x1f, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x41,
-	0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x6c, 0x65, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x67, 0x61, 0x74, 0x65,
-	0x77, 0x61, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x67, 0x61,
-	0x74, 0x65, 0x77, 0x61, 0x79, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f,
-	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x67, 0x69, 0x6f, 0x6e, 0x12,
-	0x48, 0x0a, 0x0d, 0x62, 0x6d, 0x63, 0x5f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73,
-	0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
-	0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x41,
-	0x76, 0x61, 0x69, 0x6c, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x79, 0x52, 0x0c, 0x62, 0x6d, 0x63,
-	0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x22, 0xa6, 0x03, 0x0a, 0x17, 0x42, 0x4d,
-	0x43, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x61, 0x62,
-	0x69, 0x6c, 0x69, 0x74, 0x79, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x6d, 0x63, 0x5f, 0x65, 0x6e, 0x64,
-	0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x62, 0x6d, 0x63,
-	0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x61, 0x67, 0x65, 0x6e,
-	0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x67, 0x65, 0x6e,
-	0x74, 0x49, 0x64, 0x12, 0x23, 0x0a, 0x0d, 0x64, 0x61, 0x74, 0x61, 0x63, 0x65, 0x6e, 0x74, 0x65,
-	0x72, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x64, 0x61, 0x74, 0x61,
-	0x63, 0x65, 0x6e, 0x74, 0x65, 0x72, 0x49, 0x64, 0x12, 0x2e, 0x0a, 0x08, 0x62, 0x6d, 0x63, 0x5f,
-	0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e,
-	0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52,
-	0x07, 0x62, 0x6d, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74,
-	0x75, 0x72, 0x65, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x08, 0x66, 0x65, 0x61, 0x74,
-	0x75, 0x72, 0x65, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x06,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x37, 0x0a, 0x09,
-	0x6c, 0x61, 0x73, 0x74, 0x5f, 0x73, 0x65, 0x65, 0x6e, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x08, 0x6c, 0x61, 0x73,
-	0x74, 0x53, 0x65, 0x65, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d,
-	0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x75, 0x73, 0x65, 0x72, 0x6e, 0x61, 0x6d,
-	0x65, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c, 0x69, 0x74, 0x69, 0x65,
-	0x73, 0x18, 0x09, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x61, 0x70, 0x61, 0x62, 0x69, 0x6c,
-	0x69, 0x74, 0x69, 0x65, 0x73, 0x12, 0x4b, 0x0a, 0x12, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65,
-	0x72, 0x79, 0x5f, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18, 0x0a, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x1c, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x69,
-	0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52,
-	0x11, 0x64, 0x69, 0x73, 0x63, 0x6f, 0x76, 0x65, 0x72, 0x79, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
-	0x74, 0x61, 0x22, 0x56, 0x0a, 0x20, 0x52, 0x65, 0x70, 0x6f, 0x72, 0x74, 0x41, 0x76, 0x61, 0x69,
-	0x6c, 0x61, 0x62, 0x6c, 0x65, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73,
-	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73,
-	0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2a, 0x3d, 0x0a, 0x07, 0x42, 0x4d,
+	0x74, 0x65, 0x64, 0x41, 0x74, 0x12, 0x43, 0x0a, 0x0d, 0x62, 0x6d, 0x63, 0x5f, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x18, 0x08, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x6d,
+	0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x4d, 0x43, 0x43, 0x6f, 0x6e,
+	0x74, 0x72, 0x6f, 0x6c, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x52, 0x0c, 0x62, 0x6d,
+	0x63, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x73, 0x12, 0x3e, 0x0a, 0x10, 0x70, 0x72,
+	0x69, 0x6d, 0x61, 0x72, 0x79, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x18, 0x09,
+	0x20, 0x01, 0x28, 0x0e, 0x32, 0x13, 0x2e, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76,
+	0x31, 0x2e, 0x42, 0x4d, 0x43, 0x54, 0x79, 0x70, 0x65, 0x52, 0x0f, 0x70, 0x72, 0x69, 0x6d, 0x61,
+	0x72, 0x79, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2a, 0x3d, 0x0a, 0x07, 0x42, 0x4d,
 	0x43, 0x54, 0x79, 0x70, 0x65, 0x12, 0x13, 0x0a, 0x0f, 0x42, 0x4d, 0x43, 0x5f, 0x55, 0x4e, 0x53,
 	0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0c, 0x0a, 0x08, 0x42, 0x4d,
 	0x43, 0x5f, 0x49, 0x50, 0x4d, 0x49, 0x10, 0x01, 0x12, 0x0f, 0x0a, 0x0b, 0x42, 0x4d, 0x43, 0x5f,
@@ -3238,117 +3283,122 @@ var file_manager_v1_manager_proto_goTypes = []interface{}{
 	(BMCType)(0),                             // 0: manager.v1.BMCType
 	(SOLType)(0),                             // 1: manager.v1.SOLType
 	(VNCType)(0),                             // 2: manager.v1.VNCType
-	(*AuthenticateRequest)(nil),              // 3: manager.v1.AuthenticateRequest
-	(*AuthenticateResponse)(nil),             // 4: manager.v1.AuthenticateResponse
-	(*RefreshTokenRequest)(nil),              // 5: manager.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),             // 6: manager.v1.RefreshTokenResponse
-	(*GetServerTokenRequest)(nil),            // 7: manager.v1.GetServerTokenRequest
-	(*GetServerTokenResponse)(nil),           // 8: manager.v1.GetServerTokenResponse
-	(*RegisterServerRequest)(nil),            // 9: manager.v1.RegisterServerRequest
-	(*RegisterServerResponse)(nil),           // 10: manager.v1.RegisterServerResponse
-	(*GetServerLocationRequest)(nil),         // 11: manager.v1.GetServerLocationRequest
-	(*GetServerLocationResponse)(nil),        // 12: manager.v1.GetServerLocationResponse
-	(*RegisterGatewayRequest)(nil),           // 13: manager.v1.RegisterGatewayRequest
-	(*RegisterGatewayResponse)(nil),          // 14: manager.v1.RegisterGatewayResponse
-	(*ListGatewaysRequest)(nil),              // 15: manager.v1.ListGatewaysRequest
-	(*ListGatewaysResponse)(nil),             // 16: manager.v1.ListGatewaysResponse
-	(*Customer)(nil),                         // 17: manager.v1.Customer
-	(*RegionalGateway)(nil),                  // 18: manager.v1.RegionalGateway
-	(*ServerLocation)(nil),                   // 19: manager.v1.ServerLocation
-	(*GetSystemStatusRequest)(nil),           // 20: manager.v1.GetSystemStatusRequest
-	(*GetSystemStatusResponse)(nil),          // 21: manager.v1.GetSystemStatusResponse
-	(*SystemStatus)(nil),                     // 22: manager.v1.SystemStatus
-	(*GatewayStatus)(nil),                    // 23: manager.v1.GatewayStatus
-	(*SystemStatusServerEntry)(nil),          // 24: manager.v1.SystemStatusServerEntry
-	(*GetServerRequest)(nil),                 // 25: manager.v1.GetServerRequest
-	(*GetServerResponse)(nil),                // 26: manager.v1.GetServerResponse
-	(*ListServersRequest)(nil),               // 27: manager.v1.ListServersRequest
-	(*ListServersResponse)(nil),              // 28: manager.v1.ListServersResponse
-	(*Server)(nil),                           // 29: manager.v1.Server
-	(*BMCControlEndpoint)(nil),               // 30: manager.v1.BMCControlEndpoint
-	(*SOLEndpoint)(nil),                      // 31: manager.v1.SOLEndpoint
-	(*VNCEndpoint)(nil),                      // 32: manager.v1.VNCEndpoint
-	(*TLSConfig)(nil),                        // 33: manager.v1.TLSConfig
-	(*SOLConfig)(nil),                        // 34: manager.v1.SOLConfig
-	(*VNCConfig)(nil),                        // 35: manager.v1.VNCConfig
-	(*ReportAvailableEndpointsRequest)(nil),  // 36: manager.v1.ReportAvailableEndpointsRequest
-	(*BMCEndpointAvailability)(nil),          // 37: manager.v1.BMCEndpointAvailability
-	(*ReportAvailableEndpointsResponse)(nil), // 38: manager.v1.ReportAvailableEndpointsResponse
+	(*Customer)(nil),                         // 3: manager.v1.Customer
+	(*Server)(nil),                           // 4: manager.v1.Server
+	(*BMCControlEndpoint)(nil),               // 5: manager.v1.BMCControlEndpoint
+	(*SOLEndpoint)(nil),                      // 6: manager.v1.SOLEndpoint
+	(*VNCEndpoint)(nil),                      // 7: manager.v1.VNCEndpoint
+	(*TLSConfig)(nil),                        // 8: manager.v1.TLSConfig
+	(*SOLConfig)(nil),                        // 9: manager.v1.SOLConfig
+	(*VNCConfig)(nil),                        // 10: manager.v1.VNCConfig
+	(*RegionalGateway)(nil),                  // 11: manager.v1.RegionalGateway
+	(*ServerLocation)(nil),                   // 12: manager.v1.ServerLocation
+	(*AuthenticateRequest)(nil),              // 13: manager.v1.AuthenticateRequest
+	(*AuthenticateResponse)(nil),             // 14: manager.v1.AuthenticateResponse
+	(*RefreshTokenRequest)(nil),              // 15: manager.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),             // 16: manager.v1.RefreshTokenResponse
+	(*GetServerTokenRequest)(nil),            // 17: manager.v1.GetServerTokenRequest
+	(*GetServerTokenResponse)(nil),           // 18: manager.v1.GetServerTokenResponse
+	(*RegisterServerRequest)(nil),            // 19: manager.v1.RegisterServerRequest
+	(*RegisterServerResponse)(nil),           // 20: manager.v1.RegisterServerResponse
+	(*GetServerRequest)(nil),                 // 21: manager.v1.GetServerRequest
+	(*GetServerResponse)(nil),                // 22: manager.v1.GetServerResponse
+	(*ListServersRequest)(nil),               // 23: manager.v1.ListServersRequest
+	(*ListServersResponse)(nil),              // 24: manager.v1.ListServersResponse
+	(*GetServerLocationRequest)(nil),         // 25: manager.v1.GetServerLocationRequest
+	(*GetServerLocationResponse)(nil),        // 26: manager.v1.GetServerLocationResponse
+	(*RegisterGatewayRequest)(nil),           // 27: manager.v1.RegisterGatewayRequest
+	(*RegisterGatewayResponse)(nil),          // 28: manager.v1.RegisterGatewayResponse
+	(*ListGatewaysRequest)(nil),              // 29: manager.v1.ListGatewaysRequest
+	(*ListGatewaysResponse)(nil),             // 30: manager.v1.ListGatewaysResponse
+	(*ReportAvailableEndpointsRequest)(nil),  // 31: manager.v1.ReportAvailableEndpointsRequest
+	(*BMCEndpointAvailability)(nil),          // 32: manager.v1.BMCEndpointAvailability
+	(*ReportAvailableEndpointsResponse)(nil), // 33: manager.v1.ReportAvailableEndpointsResponse
+	(*GetSystemStatusRequest)(nil),           // 34: manager.v1.GetSystemStatusRequest
+	(*GetSystemStatusResponse)(nil),          // 35: manager.v1.GetSystemStatusResponse
+	(*SystemStatus)(nil),                     // 36: manager.v1.SystemStatus
+	(*GatewayStatus)(nil),                    // 37: manager.v1.GatewayStatus
+	(*SystemStatusServerEntry)(nil),          // 38: manager.v1.SystemStatusServerEntry
 	nil,                                      // 39: manager.v1.Server.MetadataEntry
 	(*timestamppb.Timestamp)(nil),            // 40: google.protobuf.Timestamp
 	(*v1.DiscoveryMetadata)(nil),             // 41: common.v1.DiscoveryMetadata
 }
 var file_manager_v1_manager_proto_depIdxs = []int32{
-	40, // 0: manager.v1.AuthenticateResponse.expires_at:type_name -> google.protobuf.Timestamp
-	17, // 1: manager.v1.AuthenticateResponse.customer:type_name -> manager.v1.Customer
-	40, // 2: manager.v1.RefreshTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	40, // 3: manager.v1.GetServerTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	0,  // 4: manager.v1.RegisterServerRequest.bmc_type:type_name -> manager.v1.BMCType
-	0,  // 5: manager.v1.GetServerLocationResponse.bmc_type:type_name -> manager.v1.BMCType
-	18, // 6: manager.v1.ListGatewaysResponse.gateways:type_name -> manager.v1.RegionalGateway
-	40, // 7: manager.v1.Customer.created_at:type_name -> google.protobuf.Timestamp
-	40, // 8: manager.v1.RegionalGateway.last_seen:type_name -> google.protobuf.Timestamp
-	40, // 9: manager.v1.RegionalGateway.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 10: manager.v1.ServerLocation.bmc_type:type_name -> manager.v1.BMCType
-	40, // 11: manager.v1.ServerLocation.created_at:type_name -> google.protobuf.Timestamp
-	40, // 12: manager.v1.ServerLocation.updated_at:type_name -> google.protobuf.Timestamp
-	22, // 13: manager.v1.GetSystemStatusResponse.status:type_name -> manager.v1.SystemStatus
-	40, // 14: manager.v1.SystemStatus.started_at:type_name -> google.protobuf.Timestamp
-	40, // 15: manager.v1.SystemStatus.status_time:type_name -> google.protobuf.Timestamp
-	23, // 16: manager.v1.SystemStatus.gateways:type_name -> manager.v1.GatewayStatus
-	24, // 17: manager.v1.SystemStatus.servers:type_name -> manager.v1.SystemStatusServerEntry
-	40, // 18: manager.v1.GatewayStatus.last_seen:type_name -> google.protobuf.Timestamp
-	40, // 19: manager.v1.GatewayStatus.created_at:type_name -> google.protobuf.Timestamp
-	24, // 20: manager.v1.GatewayStatus.servers:type_name -> manager.v1.SystemStatusServerEntry
-	0,  // 21: manager.v1.SystemStatusServerEntry.bmc_type:type_name -> manager.v1.BMCType
-	40, // 22: manager.v1.SystemStatusServerEntry.created_at:type_name -> google.protobuf.Timestamp
-	40, // 23: manager.v1.SystemStatusServerEntry.updated_at:type_name -> google.protobuf.Timestamp
-	29, // 24: manager.v1.GetServerResponse.server:type_name -> manager.v1.Server
-	29, // 25: manager.v1.ListServersResponse.servers:type_name -> manager.v1.Server
-	30, // 26: manager.v1.Server.control_endpoint:type_name -> manager.v1.BMCControlEndpoint
-	31, // 27: manager.v1.Server.sol_endpoint:type_name -> manager.v1.SOLEndpoint
-	32, // 28: manager.v1.Server.vnc_endpoint:type_name -> manager.v1.VNCEndpoint
-	40, // 29: manager.v1.Server.created_at:type_name -> google.protobuf.Timestamp
-	40, // 30: manager.v1.Server.updated_at:type_name -> google.protobuf.Timestamp
-	39, // 31: manager.v1.Server.metadata:type_name -> manager.v1.Server.MetadataEntry
-	41, // 32: manager.v1.Server.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
-	0,  // 33: manager.v1.BMCControlEndpoint.type:type_name -> manager.v1.BMCType
-	33, // 34: manager.v1.BMCControlEndpoint.tls:type_name -> manager.v1.TLSConfig
-	1,  // 35: manager.v1.SOLEndpoint.type:type_name -> manager.v1.SOLType
-	34, // 36: manager.v1.SOLEndpoint.config:type_name -> manager.v1.SOLConfig
-	2,  // 37: manager.v1.VNCEndpoint.type:type_name -> manager.v1.VNCType
-	35, // 38: manager.v1.VNCEndpoint.config:type_name -> manager.v1.VNCConfig
-	37, // 39: manager.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> manager.v1.BMCEndpointAvailability
-	0,  // 40: manager.v1.BMCEndpointAvailability.bmc_type:type_name -> manager.v1.BMCType
-	40, // 41: manager.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
-	41, // 42: manager.v1.BMCEndpointAvailability.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
-	3,  // 43: manager.v1.BMCManagerService.Authenticate:input_type -> manager.v1.AuthenticateRequest
-	5,  // 44: manager.v1.BMCManagerService.RefreshToken:input_type -> manager.v1.RefreshTokenRequest
-	7,  // 45: manager.v1.BMCManagerService.GetServerToken:input_type -> manager.v1.GetServerTokenRequest
-	9,  // 46: manager.v1.BMCManagerService.RegisterServer:input_type -> manager.v1.RegisterServerRequest
-	11, // 47: manager.v1.BMCManagerService.GetServerLocation:input_type -> manager.v1.GetServerLocationRequest
-	13, // 48: manager.v1.BMCManagerService.RegisterGateway:input_type -> manager.v1.RegisterGatewayRequest
-	15, // 49: manager.v1.BMCManagerService.ListGateways:input_type -> manager.v1.ListGatewaysRequest
-	20, // 50: manager.v1.BMCManagerService.GetSystemStatus:input_type -> manager.v1.GetSystemStatusRequest
-	25, // 51: manager.v1.BMCManagerService.GetServer:input_type -> manager.v1.GetServerRequest
-	27, // 52: manager.v1.BMCManagerService.ListServers:input_type -> manager.v1.ListServersRequest
-	36, // 53: manager.v1.BMCManagerService.ReportAvailableEndpoints:input_type -> manager.v1.ReportAvailableEndpointsRequest
-	4,  // 54: manager.v1.BMCManagerService.Authenticate:output_type -> manager.v1.AuthenticateResponse
-	6,  // 55: manager.v1.BMCManagerService.RefreshToken:output_type -> manager.v1.RefreshTokenResponse
-	8,  // 56: manager.v1.BMCManagerService.GetServerToken:output_type -> manager.v1.GetServerTokenResponse
-	10, // 57: manager.v1.BMCManagerService.RegisterServer:output_type -> manager.v1.RegisterServerResponse
-	12, // 58: manager.v1.BMCManagerService.GetServerLocation:output_type -> manager.v1.GetServerLocationResponse
-	14, // 59: manager.v1.BMCManagerService.RegisterGateway:output_type -> manager.v1.RegisterGatewayResponse
-	16, // 60: manager.v1.BMCManagerService.ListGateways:output_type -> manager.v1.ListGatewaysResponse
-	21, // 61: manager.v1.BMCManagerService.GetSystemStatus:output_type -> manager.v1.GetSystemStatusResponse
-	26, // 62: manager.v1.BMCManagerService.GetServer:output_type -> manager.v1.GetServerResponse
-	28, // 63: manager.v1.BMCManagerService.ListServers:output_type -> manager.v1.ListServersResponse
-	38, // 64: manager.v1.BMCManagerService.ReportAvailableEndpoints:output_type -> manager.v1.ReportAvailableEndpointsResponse
-	54, // [54:65] is the sub-list for method output_type
-	43, // [43:54] is the sub-list for method input_type
-	43, // [43:43] is the sub-list for extension type_name
-	43, // [43:43] is the sub-list for extension extendee
-	0,  // [0:43] is the sub-list for field type_name
+	40, // 0: manager.v1.Customer.created_at:type_name -> google.protobuf.Timestamp
+	5,  // 1: manager.v1.Server.control_endpoints:type_name -> manager.v1.BMCControlEndpoint
+	0,  // 2: manager.v1.Server.primary_protocol:type_name -> manager.v1.BMCType
+	6,  // 3: manager.v1.Server.sol_endpoint:type_name -> manager.v1.SOLEndpoint
+	7,  // 4: manager.v1.Server.vnc_endpoint:type_name -> manager.v1.VNCEndpoint
+	40, // 5: manager.v1.Server.created_at:type_name -> google.protobuf.Timestamp
+	40, // 6: manager.v1.Server.updated_at:type_name -> google.protobuf.Timestamp
+	39, // 7: manager.v1.Server.metadata:type_name -> manager.v1.Server.MetadataEntry
+	41, // 8: manager.v1.Server.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
+	0,  // 9: manager.v1.BMCControlEndpoint.type:type_name -> manager.v1.BMCType
+	8,  // 10: manager.v1.BMCControlEndpoint.tls:type_name -> manager.v1.TLSConfig
+	1,  // 11: manager.v1.SOLEndpoint.type:type_name -> manager.v1.SOLType
+	9,  // 12: manager.v1.SOLEndpoint.config:type_name -> manager.v1.SOLConfig
+	2,  // 13: manager.v1.VNCEndpoint.type:type_name -> manager.v1.VNCType
+	10, // 14: manager.v1.VNCEndpoint.config:type_name -> manager.v1.VNCConfig
+	40, // 15: manager.v1.RegionalGateway.last_seen:type_name -> google.protobuf.Timestamp
+	40, // 16: manager.v1.RegionalGateway.created_at:type_name -> google.protobuf.Timestamp
+	40, // 17: manager.v1.ServerLocation.created_at:type_name -> google.protobuf.Timestamp
+	40, // 18: manager.v1.ServerLocation.updated_at:type_name -> google.protobuf.Timestamp
+	5,  // 19: manager.v1.ServerLocation.bmc_protocols:type_name -> manager.v1.BMCControlEndpoint
+	0,  // 20: manager.v1.ServerLocation.primary_protocol:type_name -> manager.v1.BMCType
+	40, // 21: manager.v1.AuthenticateResponse.expires_at:type_name -> google.protobuf.Timestamp
+	3,  // 22: manager.v1.AuthenticateResponse.customer:type_name -> manager.v1.Customer
+	40, // 23: manager.v1.RefreshTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	40, // 24: manager.v1.GetServerTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	5,  // 25: manager.v1.RegisterServerRequest.bmc_protocols:type_name -> manager.v1.BMCControlEndpoint
+	0,  // 26: manager.v1.RegisterServerRequest.primary_protocol:type_name -> manager.v1.BMCType
+	4,  // 27: manager.v1.GetServerResponse.server:type_name -> manager.v1.Server
+	4,  // 28: manager.v1.ListServersResponse.servers:type_name -> manager.v1.Server
+	5,  // 29: manager.v1.GetServerLocationResponse.bmc_protocols:type_name -> manager.v1.BMCControlEndpoint
+	0,  // 30: manager.v1.GetServerLocationResponse.primary_protocol:type_name -> manager.v1.BMCType
+	11, // 31: manager.v1.ListGatewaysResponse.gateways:type_name -> manager.v1.RegionalGateway
+	32, // 32: manager.v1.ReportAvailableEndpointsRequest.bmc_endpoints:type_name -> manager.v1.BMCEndpointAvailability
+	0,  // 33: manager.v1.BMCEndpointAvailability.bmc_type:type_name -> manager.v1.BMCType
+	40, // 34: manager.v1.BMCEndpointAvailability.last_seen:type_name -> google.protobuf.Timestamp
+	41, // 35: manager.v1.BMCEndpointAvailability.discovery_metadata:type_name -> common.v1.DiscoveryMetadata
+	36, // 36: manager.v1.GetSystemStatusResponse.status:type_name -> manager.v1.SystemStatus
+	40, // 37: manager.v1.SystemStatus.started_at:type_name -> google.protobuf.Timestamp
+	40, // 38: manager.v1.SystemStatus.status_time:type_name -> google.protobuf.Timestamp
+	37, // 39: manager.v1.SystemStatus.gateways:type_name -> manager.v1.GatewayStatus
+	38, // 40: manager.v1.SystemStatus.servers:type_name -> manager.v1.SystemStatusServerEntry
+	40, // 41: manager.v1.GatewayStatus.last_seen:type_name -> google.protobuf.Timestamp
+	40, // 42: manager.v1.GatewayStatus.created_at:type_name -> google.protobuf.Timestamp
+	38, // 43: manager.v1.GatewayStatus.servers:type_name -> manager.v1.SystemStatusServerEntry
+	40, // 44: manager.v1.SystemStatusServerEntry.created_at:type_name -> google.protobuf.Timestamp
+	40, // 45: manager.v1.SystemStatusServerEntry.updated_at:type_name -> google.protobuf.Timestamp
+	5,  // 46: manager.v1.SystemStatusServerEntry.bmc_protocols:type_name -> manager.v1.BMCControlEndpoint
+	0,  // 47: manager.v1.SystemStatusServerEntry.primary_protocol:type_name -> manager.v1.BMCType
+	13, // 48: manager.v1.BMCManagerService.Authenticate:input_type -> manager.v1.AuthenticateRequest
+	15, // 49: manager.v1.BMCManagerService.RefreshToken:input_type -> manager.v1.RefreshTokenRequest
+	17, // 50: manager.v1.BMCManagerService.GetServerToken:input_type -> manager.v1.GetServerTokenRequest
+	19, // 51: manager.v1.BMCManagerService.RegisterServer:input_type -> manager.v1.RegisterServerRequest
+	25, // 52: manager.v1.BMCManagerService.GetServerLocation:input_type -> manager.v1.GetServerLocationRequest
+	27, // 53: manager.v1.BMCManagerService.RegisterGateway:input_type -> manager.v1.RegisterGatewayRequest
+	29, // 54: manager.v1.BMCManagerService.ListGateways:input_type -> manager.v1.ListGatewaysRequest
+	34, // 55: manager.v1.BMCManagerService.GetSystemStatus:input_type -> manager.v1.GetSystemStatusRequest
+	21, // 56: manager.v1.BMCManagerService.GetServer:input_type -> manager.v1.GetServerRequest
+	23, // 57: manager.v1.BMCManagerService.ListServers:input_type -> manager.v1.ListServersRequest
+	31, // 58: manager.v1.BMCManagerService.ReportAvailableEndpoints:input_type -> manager.v1.ReportAvailableEndpointsRequest
+	14, // 59: manager.v1.BMCManagerService.Authenticate:output_type -> manager.v1.AuthenticateResponse
+	16, // 60: manager.v1.BMCManagerService.RefreshToken:output_type -> manager.v1.RefreshTokenResponse
+	18, // 61: manager.v1.BMCManagerService.GetServerToken:output_type -> manager.v1.GetServerTokenResponse
+	20, // 62: manager.v1.BMCManagerService.RegisterServer:output_type -> manager.v1.RegisterServerResponse
+	26, // 63: manager.v1.BMCManagerService.GetServerLocation:output_type -> manager.v1.GetServerLocationResponse
+	28, // 64: manager.v1.BMCManagerService.RegisterGateway:output_type -> manager.v1.RegisterGatewayResponse
+	30, // 65: manager.v1.BMCManagerService.ListGateways:output_type -> manager.v1.ListGatewaysResponse
+	35, // 66: manager.v1.BMCManagerService.GetSystemStatus:output_type -> manager.v1.GetSystemStatusResponse
+	22, // 67: manager.v1.BMCManagerService.GetServer:output_type -> manager.v1.GetServerResponse
+	24, // 68: manager.v1.BMCManagerService.ListServers:output_type -> manager.v1.ListServersResponse
+	33, // 69: manager.v1.BMCManagerService.ReportAvailableEndpoints:output_type -> manager.v1.ReportAvailableEndpointsResponse
+	59, // [59:70] is the sub-list for method output_type
+	48, // [48:59] is the sub-list for method input_type
+	48, // [48:48] is the sub-list for extension type_name
+	48, // [48:48] is the sub-list for extension extendee
+	0,  // [0:48] is the sub-list for field type_name
 }
 
 func init() { file_manager_v1_manager_proto_init() }
@@ -3358,174 +3408,6 @@ func file_manager_v1_manager_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_manager_v1_manager_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthenticateRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AuthenticateResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RefreshTokenRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RefreshTokenResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetServerTokenRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetServerTokenResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterServerRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterServerResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetServerLocationRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetServerLocationResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterGatewayRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterGatewayResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListGatewaysRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListGatewaysResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Customer); i {
 			case 0:
 				return &v.state
@@ -3537,139 +3419,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegionalGateway); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ServerLocation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSystemStatusRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSystemStatusResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SystemStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GatewayStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SystemStatusServerEntry); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetServerRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetServerResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListServersRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListServersResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_manager_v1_manager_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Server); i {
 			case 0:
 				return &v.state
@@ -3681,7 +3431,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BMCControlEndpoint); i {
 			case 0:
 				return &v.state
@@ -3693,7 +3443,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SOLEndpoint); i {
 			case 0:
 				return &v.state
@@ -3705,7 +3455,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VNCEndpoint); i {
 			case 0:
 				return &v.state
@@ -3717,7 +3467,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TLSConfig); i {
 			case 0:
 				return &v.state
@@ -3729,7 +3479,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SOLConfig); i {
 			case 0:
 				return &v.state
@@ -3741,7 +3491,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VNCConfig); i {
 			case 0:
 				return &v.state
@@ -3753,7 +3503,247 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegionalGateway); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerLocation); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AuthenticateRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AuthenticateResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RefreshTokenRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RefreshTokenResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetServerTokenRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetServerTokenResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegisterServerRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegisterServerResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetServerRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetServerResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListServersRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListServersResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetServerLocationRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetServerLocationResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegisterGatewayRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RegisterGatewayResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListGatewaysRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListGatewaysResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReportAvailableEndpointsRequest); i {
 			case 0:
 				return &v.state
@@ -3765,7 +3755,7 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BMCEndpointAvailability); i {
 			case 0:
 				return &v.state
@@ -3777,8 +3767,68 @@ func file_manager_v1_manager_proto_init() {
 				return nil
 			}
 		}
-		file_manager_v1_manager_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+		file_manager_v1_manager_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReportAvailableEndpointsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSystemStatusRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSystemStatusResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GatewayStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_manager_v1_manager_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SystemStatusServerEntry); i {
 			case 0:
 				return &v.state
 			case 1:

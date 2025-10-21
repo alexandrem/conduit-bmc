@@ -51,8 +51,8 @@ func TestServerInfo(t *testing.T) {
 		t.Errorf("Expected ID 'server-1', got '%s'", server.ID)
 	}
 
-	if server.ControlEndpoint.Type != "ipmi" {
-		t.Errorf("Expected BMC type 'ipmi', got '%s'", server.ControlEndpoint.Type)
+	if server.GetPrimaryControlEndpoint().Type != "ipmi" {
+		t.Errorf("Expected BMC type 'ipmi', got '%s'", server.GetPrimaryControlEndpoint().Type)
 	}
 
 	if len(server.Features) != 2 {
