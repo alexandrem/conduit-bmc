@@ -161,17 +161,17 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
 		}
 
 		// Convert control endpoints
-		clientServer.ControlEndpoints = make([]*BMCControlEndpoint, 0, len(server.ControlEndpoints))
+		clientServer.ControlEndpoints = make([]*types.BMCControlEndpoint, 0, len(server.ControlEndpoints))
 		for _, endpoint := range server.ControlEndpoints {
-			bmcEndpoint := &BMCControlEndpoint{
+			bmcEndpoint := &types.BMCControlEndpoint{
 				Endpoint:     endpoint.Endpoint,
-				Type:         endpoint.Type.String(),
+				Type:         types.BMCType(endpoint.Type),
 				Username:     endpoint.Username,
 				Password:     endpoint.Password,
 				Capabilities: endpoint.Capabilities,
 			}
 			if endpoint.Tls != nil {
-				bmcEndpoint.TLS = &TLSConfig{
+				bmcEndpoint.TLS = &types.TLSConfig{
 					Enabled:            endpoint.Tls.Enabled,
 					InsecureSkipVerify: endpoint.Tls.InsecureSkipVerify,
 					CACert:             endpoint.Tls.CaCert,
@@ -179,18 +179,18 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
 			}
 			clientServer.ControlEndpoints = append(clientServer.ControlEndpoints, bmcEndpoint)
 		}
-		clientServer.PrimaryProtocol = server.PrimaryProtocol.String()
+		clientServer.PrimaryProtocol = types.BMCType(server.PrimaryProtocol)
 
 		// Convert SOL endpoint
 		if server.SolEndpoint != nil {
-			clientServer.SOLEndpoint = &SOLEndpoint{
-				Type:     server.SolEndpoint.Type.String(),
+			clientServer.SOLEndpoint = &types.SOLEndpoint{
+				Type:     types.SOLType(server.SolEndpoint.Type),
 				Endpoint: server.SolEndpoint.Endpoint,
 				Username: server.SolEndpoint.Username,
 				Password: server.SolEndpoint.Password,
 			}
 			if server.SolEndpoint.Config != nil {
-				clientServer.SOLEndpoint.Config = &SOLConfig{
+				clientServer.SOLEndpoint.Config = &types.SOLConfig{
 					BaudRate:       int(server.SolEndpoint.Config.BaudRate),
 					FlowControl:    server.SolEndpoint.Config.FlowControl,
 					TimeoutSeconds: int(server.SolEndpoint.Config.TimeoutSeconds),
@@ -200,14 +200,14 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
 
 		// Convert VNC endpoint
 		if server.VncEndpoint != nil {
-			clientServer.VNCEndpoint = &VNCEndpoint{
-				Type:     server.VncEndpoint.Type.String(),
+			clientServer.VNCEndpoint = &types.VNCEndpoint{
+				Type:     types.VNCType(server.VncEndpoint.Type),
 				Endpoint: server.VncEndpoint.Endpoint,
 				Username: server.VncEndpoint.Username,
 				Password: server.VncEndpoint.Password,
 			}
 			if server.VncEndpoint.Config != nil {
-				clientServer.VNCEndpoint.Config = &VNCConfig{
+				clientServer.VNCEndpoint.Config = &types.VNCConfig{
 					Protocol: server.VncEndpoint.Config.Protocol,
 					Path:     server.VncEndpoint.Config.Path,
 					Display:  int(server.VncEndpoint.Config.Display),
@@ -245,17 +245,17 @@ func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Ser
 	}
 
 	// Convert control endpoints
-	clientServer.ControlEndpoints = make([]*BMCControlEndpoint, 0, len(server.ControlEndpoints))
+	clientServer.ControlEndpoints = make([]*types.BMCControlEndpoint, 0, len(server.ControlEndpoints))
 	for _, endpoint := range server.ControlEndpoints {
-		bmcEndpoint := &BMCControlEndpoint{
+		bmcEndpoint := &types.BMCControlEndpoint{
 			Endpoint:     endpoint.Endpoint,
-			Type:         endpoint.Type.String(),
+			Type:         convertProtoBMCTypeToTypes(endpoint.Type),
 			Username:     endpoint.Username,
 			Password:     endpoint.Password,
 			Capabilities: endpoint.Capabilities,
 		}
 		if endpoint.Tls != nil {
-			bmcEndpoint.TLS = &TLSConfig{
+			bmcEndpoint.TLS = &types.TLSConfig{
 				Enabled:            endpoint.Tls.Enabled,
 				InsecureSkipVerify: endpoint.Tls.InsecureSkipVerify,
 				CACert:             endpoint.Tls.CaCert,
@@ -263,18 +263,18 @@ func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Ser
 		}
 		clientServer.ControlEndpoints = append(clientServer.ControlEndpoints, bmcEndpoint)
 	}
-	clientServer.PrimaryProtocol = server.PrimaryProtocol.String()
+	clientServer.PrimaryProtocol = convertProtoBMCTypeToTypes(server.PrimaryProtocol)
 
 	// Convert SOL endpoint
 	if server.SolEndpoint != nil {
-		clientServer.SOLEndpoint = &SOLEndpoint{
-			Type:     server.SolEndpoint.Type.String(),
+		clientServer.SOLEndpoint = &types.SOLEndpoint{
+			Type:     convertProtoSOLTypeToTypes(server.SolEndpoint.Type),
 			Endpoint: server.SolEndpoint.Endpoint,
 			Username: server.SolEndpoint.Username,
 			Password: server.SolEndpoint.Password,
 		}
 		if server.SolEndpoint.Config != nil {
-			clientServer.SOLEndpoint.Config = &SOLConfig{
+			clientServer.SOLEndpoint.Config = &types.SOLConfig{
 				BaudRate:       int(server.SolEndpoint.Config.BaudRate),
 				FlowControl:    server.SolEndpoint.Config.FlowControl,
 				TimeoutSeconds: int(server.SolEndpoint.Config.TimeoutSeconds),
@@ -284,14 +284,14 @@ func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Ser
 
 	// Convert VNC endpoint
 	if server.VncEndpoint != nil {
-		clientServer.VNCEndpoint = &VNCEndpoint{
-			Type:     server.VncEndpoint.Type.String(),
+		clientServer.VNCEndpoint = &types.VNCEndpoint{
+			Type:     convertProtoVNCTypeToTypes(server.VncEndpoint.Type),
 			Endpoint: server.VncEndpoint.Endpoint,
 			Username: server.VncEndpoint.Username,
 			Password: server.VncEndpoint.Password,
 		}
 		if server.VncEndpoint.Config != nil {
-			clientServer.VNCEndpoint.Config = &VNCConfig{
+			clientServer.VNCEndpoint.Config = &types.VNCConfig{
 				Protocol: server.VncEndpoint.Config.Protocol,
 				Path:     server.VncEndpoint.Config.Path,
 				Display:  int(server.VncEndpoint.Config.Display),
@@ -399,10 +399,10 @@ type Server struct {
 	ID                string
 	CustomerID        string
 	DatacenterID      string
-	ControlEndpoints  []*BMCControlEndpoint
-	PrimaryProtocol   string
-	SOLEndpoint       *SOLEndpoint
-	VNCEndpoint       *VNCEndpoint
+	ControlEndpoints  []*types.BMCControlEndpoint
+	PrimaryProtocol   types.BMCType
+	SOLEndpoint       *types.SOLEndpoint
+	VNCEndpoint       *types.VNCEndpoint
 	Features          []string
 	Status            string
 	Metadata          map[string]string
@@ -411,13 +411,13 @@ type Server struct {
 
 // GetPrimaryControlEndpoint returns the primary control endpoint.
 // Looks for endpoint matching PrimaryProtocol, otherwise returns first endpoint.
-func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+func (s *Server) GetPrimaryControlEndpoint() *types.BMCControlEndpoint {
 	if len(s.ControlEndpoints) == 0 {
 		return nil
 	}
 
 	// Try to find endpoint matching PrimaryProtocol
-	if s.PrimaryProtocol != "" {
+	if s.PrimaryProtocol != types.BMCTypeNone {
 		for _, ep := range s.ControlEndpoints {
 			if ep.Type == s.PrimaryProtocol {
 				return ep
@@ -434,3 +434,37 @@ type ServerTokenResult struct {
 	ExpiresAt time.Time
 }
 
+// Helper functions to convert protobuf enums to core types
+
+func convertProtoBMCTypeToTypes(protoType managerv1.BMCType) types.BMCType {
+	switch protoType {
+	case managerv1.BMCType_BMC_IPMI:
+		return types.BMCTypeIPMI
+	case managerv1.BMCType_BMC_REDFISH:
+		return types.BMCTypeRedfish
+	default:
+		return types.BMCTypeNone
+	}
+}
+
+func convertProtoSOLTypeToTypes(protoType managerv1.SOLType) types.SOLType {
+	switch protoType {
+	case managerv1.SOLType_SOL_IPMI:
+		return types.SOLTypeIPMI
+	case managerv1.SOLType_SOL_REDFISH_SERIAL:
+		return types.SOLTypeRedfishSerial
+	default:
+		return types.SOLTypeNone
+	}
+}
+
+func convertProtoVNCTypeToTypes(protoType managerv1.VNCType) types.VNCType {
+	switch protoType {
+	case managerv1.VNCType_VNC_NATIVE:
+		return types.VNCTypeNative
+	case managerv1.VNCType_VNC_WEBSOCKET:
+		return types.VNCTypeWebSocket
+	default:
+		return types.VNCTypeNone
+	}
+}

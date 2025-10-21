@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"core/types"
 	"local-agent/internal/discovery"
 	"local-agent/pkg/ipmi"
 	"local-agent/pkg/redfish"
@@ -55,7 +56,7 @@ func TestClient_GetPowerState_UnsupportedType(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoints: []*discovery.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "unknown://192.168.1.100",
 			Type:     "unknown",
 			Username: "admin",
@@ -99,7 +100,7 @@ func TestClient_PowerOff_UnsupportedType(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoints: []*discovery.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "unknown://192.168.1.100",
 			Type:     "unsupported",
 			Username: "admin",
@@ -187,7 +188,7 @@ func TestClient_AllOperations_UnsupportedType(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoints: []*discovery.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "unknown://192.168.1.100",
 			Type:     "invalid_type",
 			Username: "admin",
@@ -230,7 +231,7 @@ func TestClient_IPMI_Routing(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoints: []*discovery.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
 			Type:     "ipmi",
 			Username: "admin",
@@ -259,7 +260,7 @@ func TestClient_Redfish_Routing(t *testing.T) {
 	client := NewClient(ipmi.NewClient(), redfish.NewClient())
 
 	server := &discovery.Server{
-		ControlEndpoints: []*discovery.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "https://192.168.1.100",
 			Type:     "redfish",
 			Username: "admin",

@@ -26,13 +26,13 @@ func TestJWTManager_GenerateServerToken(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -116,13 +116,13 @@ func TestJWTManager_ValidateServerToken_WrongSigningKey(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeIPMI,
+				Type:     types.BMCTypeIPMI,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -150,13 +150,13 @@ func TestJWTManager_ValidateServerToken_CustomerMismatch(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "different-customer", // Different customer ID
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeIPMI,
+				Type:     types.BMCTypeIPMI,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -208,13 +208,13 @@ func TestJWTManager_EmptySecretKey(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeIPMI,
+				Type:     types.BMCTypeIPMI,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -237,13 +237,13 @@ func TestJWTManager_ServerTokenExpirationMatches(t *testing.T) {
 	server := &models.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -274,13 +274,13 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 		{
 			ID:         "server-001",
 			CustomerID: "customer-123",
-			ControlEndpoints: []*models.BMCControlEndpoint{
+			ControlEndpoints: []*types.BMCControlEndpoint{
 				{
 					Endpoint: "http://localhost:9001",
-					Type:     models.BMCTypeRedfish,
+					Type:     types.BMCTypeRedfish,
 				},
 			},
-			PrimaryProtocol: models.BMCTypeRedfish,
+			PrimaryProtocol: types.BMCTypeRedfish,
 			Features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 			}),
@@ -289,13 +289,13 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 		{
 			ID:         "server-002",
 			CustomerID: "customer-123",
-			ControlEndpoints: []*models.BMCControlEndpoint{
+			ControlEndpoints: []*types.BMCControlEndpoint{
 				{
 					Endpoint: "http://localhost:9002",
-					Type:     models.BMCTypeIPMI,
+					Type:     types.BMCTypeIPMI,
 				},
 			},
-			PrimaryProtocol: models.BMCTypeIPMI,
+			PrimaryProtocol: types.BMCTypeIPMI,
 			Features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,

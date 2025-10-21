@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"cli/pkg/config"
+	"core/types"
 )
 
 func TestNew(t *testing.T) {
@@ -39,8 +40,10 @@ func TestNew(t *testing.T) {
 func TestServerInfo(t *testing.T) {
 	server := ServerInfo{
 		ID: "server-1",
-		ControlEndpoint: &BMCControlEndpoint{
-			Type: "ipmi",
+		ControlEndpoints: []*types.BMCControlEndpoint{
+			{
+				Type: types.BMCTypeIPMI,
+			},
 		},
 		Features:     []string{"power", "console"},
 		Status:       "active",

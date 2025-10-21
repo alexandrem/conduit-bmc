@@ -35,26 +35,26 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-1",
 				CustomerID: "customer-1",
-				ControlEndpoints: []*BMCControlEndpoint{
+				ControlEndpoints: []*types.BMCControlEndpoint{
 					{
 						Endpoint: "https://192.168.1.100:8000",
 						Type:     types.BMCTypeRedfish,
 						Username: "admin",
 						Password: "password",
-						TLS: &TLSConfig{
+						TLS: &types.TLSConfig{
 							Enabled:            true,
 							InsecureSkipVerify: true,
 						},
 					},
 				},
 				PrimaryProtocol: types.BMCTypeRedfish,
-				SOLEndpoint: &SOLEndpoint{
+				SOLEndpoint: &types.SOLEndpoint{
 					Type:     types.SOLTypeRedfishSerial,
 					Endpoint: "https://192.168.1.100:8000/redfish/v1/Systems/1/SerialConsole",
 					Username: "admin",
 					Password: "password",
 				},
-				VNCEndpoint: &VNCEndpoint{
+				VNCEndpoint: &types.VNCEndpoint{
 					Type:     types.VNCTypeWebSocket,
 					Endpoint: "ws://novnc:6080/websockify",
 					Username: "",
@@ -80,7 +80,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-2",
 				CustomerID: "customer-1",
-				ControlEndpoints: []*BMCControlEndpoint{
+				ControlEndpoints: []*types.BMCControlEndpoint{
 					{
 						Endpoint: "192.168.1.101:623",
 						Type:     types.BMCTypeIPMI,
@@ -89,7 +89,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 					},
 				},
 				PrimaryProtocol: types.BMCTypeIPMI,
-				SOLEndpoint: &SOLEndpoint{
+				SOLEndpoint: &types.SOLEndpoint{
 					Type:     types.SOLTypeIPMI,
 					Endpoint: "192.168.1.101:623",
 					Username: "admin",
@@ -113,20 +113,20 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-3",
 				CustomerID: "customer-1",
-				ControlEndpoints: []*BMCControlEndpoint{
+				ControlEndpoints: []*types.BMCControlEndpoint{
 					{
 						Endpoint: "https://192.168.1.102:8000",
 						Type:     types.BMCTypeRedfish,
 						Username: "admin",
 						Password: "password",
-						TLS: &TLSConfig{
+						TLS: &types.TLSConfig{
 							Enabled:            true,
 							InsecureSkipVerify: false,
 						},
 					},
 				},
 				PrimaryProtocol: types.BMCTypeRedfish,
-				SOLEndpoint: &SOLEndpoint{
+				SOLEndpoint: &types.SOLEndpoint{
 					Type:     types.SOLTypeIPMI,
 					Endpoint: "192.168.1.102:623",
 					Username: "admin",
@@ -153,7 +153,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 			server: &Server{
 				ID:         "test-server-4",
 				CustomerID: "customer-1",
-				ControlEndpoints: []*BMCControlEndpoint{
+				ControlEndpoints: []*types.BMCControlEndpoint{
 					{
 						Endpoint: "https://192.168.1.103:8000",
 						Type:     types.BMCTypeRedfish,
@@ -341,13 +341,13 @@ func TestDiscoveryMetadata_Integration(t *testing.T) {
 				{
 					ID:         "test-server-static",
 					CustomerID: "customer-1",
-					ControlEndpoints: []*config.BMCControlEndpoint{{
+					ControlEndpoints: []*config.ConfigBMCControlEndpoint{{
 						Endpoint: "192.168.1.100:623", // Use IPMI to avoid Redfish client call
 						Type:     "ipmi",
 						Username: "admin",
 						Password: "password",
 					}},
-					SOLEndpoint: &config.SOLEndpoint{
+					SOLEndpoint: &config.ConfigSOLEndpoint{
 						Endpoint: "192.168.1.100:623",
 						Type:     "ipmi",
 						Username: "admin",

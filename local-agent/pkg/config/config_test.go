@@ -835,12 +835,12 @@ func TestBMCControlEndpointInferType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bmc := &BMCControlEndpoint{
+			bmc := &ConfigBMCControlEndpoint{
 				Type:     tt.explicitType,
 				Endpoint: tt.endpoint,
 			}
 
-			result := bmc.InferType()
+			result := bmc.ToTypesEndpoint().Type
 			if result != tt.expected {
 				t.Errorf("Expected type '%s', got '%s'", tt.expected, result)
 			}
@@ -895,12 +895,12 @@ func TestSOLEndpointInferType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sol := &SOLEndpoint{
+			sol := &ConfigSOLEndpoint{
 				Type:     tt.explicitType,
 				Endpoint: tt.endpoint,
 			}
 
-			result := sol.InferType()
+			result := sol.ToTypesEndpoint().Type
 			if result != tt.expected {
 				t.Errorf("Expected type '%s', got '%s'", tt.expected, result)
 			}
@@ -955,12 +955,12 @@ func TestVNCEndpointInferType(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			vnc := &VNCEndpoint{
+			vnc := &ConfigVNCEndpoint{
 				Type:     tt.explicitType,
 				Endpoint: tt.endpoint,
 			}
 
-			result := vnc.InferType()
+			result := vnc.ToTypesEndpoint().Type
 			if result != tt.expected {
 				t.Errorf("Expected type '%s', got '%s'", tt.expected, result)
 			}
@@ -1022,20 +1022,20 @@ static:
 
 	// Test Redfish server
 	redfishHost := cfg.Static.Hosts[0]
-	if redfishHost.SOLEndpoint.InferType() != types.SOLTypeRedfishSerial {
-		t.Errorf("Expected SOL type '%s' for HTTPS endpoint, got '%s'", types.SOLTypeRedfishSerial, redfishHost.SOLEndpoint.InferType())
+	if redfishHost.SOLEndpoint.ToTypesEndpoint().Type != types.SOLTypeRedfishSerial {
+		t.Errorf("Expected SOL type '%s' for HTTPS endpoint, got '%s'", types.SOLTypeRedfishSerial, redfishHost.SOLEndpoint.ToTypesEndpoint().Type)
 	}
-	if redfishHost.VNCEndpoint.InferType() != types.VNCTypeWebSocket {
-		t.Errorf("Expected VNC type '%s' for WSS endpoint, got '%s'", types.VNCTypeWebSocket, redfishHost.VNCEndpoint.InferType())
+	if redfishHost.VNCEndpoint.ToTypesEndpoint().Type != types.VNCTypeWebSocket {
+		t.Errorf("Expected VNC type '%s' for WSS endpoint, got '%s'", types.VNCTypeWebSocket, redfishHost.VNCEndpoint.ToTypesEndpoint().Type)
 	}
 
 	// Test IPMI server
 	ipmiHost := cfg.Static.Hosts[1]
-	if ipmiHost.SOLEndpoint.InferType() != types.SOLTypeIPMI {
-		t.Errorf("Expected SOL type '%s' for host:port endpoint, got '%s'", types.SOLTypeIPMI, ipmiHost.SOLEndpoint.InferType())
+	if ipmiHost.SOLEndpoint.ToTypesEndpoint().Type != types.SOLTypeIPMI {
+		t.Errorf("Expected SOL type '%s' for host:port endpoint, got '%s'", types.SOLTypeIPMI, ipmiHost.SOLEndpoint.ToTypesEndpoint().Type)
 	}
-	if ipmiHost.VNCEndpoint.InferType() != types.VNCTypeNative {
-		t.Errorf("Expected VNC type '%s' for vnc:// endpoint, got '%s'", types.VNCTypeNative, ipmiHost.VNCEndpoint.InferType())
+	if ipmiHost.VNCEndpoint.ToTypesEndpoint().Type != types.VNCTypeNative {
+		t.Errorf("Expected VNC type '%s' for vnc:// endpoint, got '%s'", types.VNCTypeNative, ipmiHost.VNCEndpoint.ToTypesEndpoint().Type)
 	}
 }
 

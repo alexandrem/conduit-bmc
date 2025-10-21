@@ -18,23 +18,23 @@ import (
 
 // Server represents a discovered BMC server with separate endpoint types
 type Server struct {
-	ID                string                   `json:"id"`
-	CustomerID        string                   `json:"customer_id"`
-	ControlEndpoints  []*BMCControlEndpoint    `json:"control_endpoints"`  // Multiple BMC control APIs (RFD 006)
-	PrimaryProtocol   types.BMCType            `json:"primary_protocol"`   // Preferred protocol for operations (RFD 006)
-	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint"`       // Serial-over-LAN (optional)
-	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint"`       // VNC/KVM access (optional)
-	Features          []string                 `json:"features"`           // High-level features
-	Status            string                   `json:"status"`             // "active", "inactive", etc.
-	Metadata          map[string]string        `json:"metadata"`           // Additional metadata
-	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata"` // Discovery metadata (RFD 017)
+	ID                string                      `json:"id"`
+	CustomerID        string                      `json:"customer_id"`
+	ControlEndpoints  []*types.BMCControlEndpoint `json:"control_endpoints"`  // Multiple BMC control APIs (RFD 006)
+	PrimaryProtocol   types.BMCType               `json:"primary_protocol"`   // Preferred protocol for operations (RFD 006)
+	SOLEndpoint       *types.SOLEndpoint          `json:"sol_endpoint"`       // Serial-over-LAN (optional)
+	VNCEndpoint       *types.VNCEndpoint          `json:"vnc_endpoint"`       // VNC/KVM access (optional)
+	Features          []string                    `json:"features"`           // High-level features
+	Status            string                      `json:"status"`             // "active", "inactive", etc.
+	Metadata          map[string]string           `json:"metadata"`           // Additional metadata
+	DiscoveryMetadata *types.DiscoveryMetadata    `json:"discovery_metadata"` // Discovery metadata (RFD 017)
 }
 
 // GetPrimaryControlEndpoint returns the control endpoint matching PrimaryProtocol.
 // If PrimaryProtocol is set and found, returns that endpoint.
 // Otherwise, falls back to the first endpoint in the array.
 // Returns nil if no endpoints are available.
-func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+func (s *Server) GetPrimaryControlEndpoint() *types.BMCControlEndpoint {
 	if len(s.ControlEndpoints) == 0 {
 		return nil
 	}
@@ -50,38 +50,6 @@ func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
 
 	// Fallback to first endpoint
 	return s.ControlEndpoints[0]
-}
-
-// BMCControlEndpoint represents BMC control API
-type BMCControlEndpoint struct {
-	Endpoint     string        `json:"endpoint"`
-	Type         types.BMCType `json:"type"` // ipmi or redfish
-	Username     string        `json:"username"`
-	Password     string        `json:"password"`
-	Capabilities []string      `json:"capabilities"`
-	TLS          *TLSConfig    `json:"tls"`
-}
-
-type TLSConfig struct {
-	Enabled            bool `json:"enabled"`
-	InsecureSkipVerify bool `json:"insecure_skip_verify"`
-}
-
-// SOLEndpoint represents Serial-over-LAN access
-type SOLEndpoint struct {
-	Type     types.SOLType `json:"type"` // ipmi or redfish_serial
-	Endpoint string        `json:"endpoint"`
-	Username string        `json:"username"`
-	Password string        `json:"password"`
-}
-
-// VNCEndpoint represents VNC/KVM access
-type VNCEndpoint struct {
-	Type     types.VNCType `json:"type"`     // native or websocket
-	Endpoint string        `json:"endpoint"` // Full connection URL (e.g., "ws://novnc:6080/websockify")
-	Username string        `json:"username"`
-	Password string        `json:"password"`
-	TLS      *TLSConfig    `json:"tls"` // Optional TLS configuration for VeNCrypt/RFB-over-TLS
 }
 
 // Service handles BMC discovery in the local datacenter
@@ -154,15 +122,9 @@ func (s *Service) loadStaticServers() []*Server {
 
 		// Convert control endpoints
 		if len(host.ControlEndpoints) > 0 {
-			server.ControlEndpoints = make([]*BMCControlEndpoint, len(host.ControlEndpoints))
+			server.ControlEndpoints = make([]*types.BMCControlEndpoint, len(host.ControlEndpoints))
 			for i, endpoint := range host.ControlEndpoints {
-				server.ControlEndpoints[i] = &BMCControlEndpoint{
-					Endpoint:     endpoint.Endpoint,
-					Type:         endpoint.InferType(), // Infer from endpoint if not specified
-					Username:     endpoint.Username,
-					Password:     endpoint.Password,
-					Capabilities: endpoint.Capabilities,
-				}
+				server.ControlEndpoints[i] = endpoint.ToTypesEndpoint()
 			}
 			// Set primary protocol to first endpoint's type
 			if len(server.ControlEndpoints) > 0 {
@@ -172,37 +134,17 @@ func (s *Service) loadStaticServers() []*Server {
 
 		// Convert SOL endpoint
 		if host.SOLEndpoint != nil {
-			server.SOLEndpoint = &SOLEndpoint{
-				Type:     host.SOLEndpoint.InferType(), // Infer from endpoint if not specified
-				Endpoint: host.SOLEndpoint.Endpoint,
-				Username: host.SOLEndpoint.Username,
-				Password: host.SOLEndpoint.Password,
-			}
+			server.SOLEndpoint = host.SOLEndpoint.ToTypesEndpoint()
 		}
 
 		// Convert VNC endpoint
 		if host.VNCEndpoint != nil {
-			vncEndpoint := &VNCEndpoint{
-				Type:     host.VNCEndpoint.InferType(), // Infer from endpoint scheme if not specified
-				Endpoint: host.VNCEndpoint.Endpoint,
-				Username: host.VNCEndpoint.Username,
-				Password: host.VNCEndpoint.Password,
-			}
-
-			// Copy TLS configuration if present
-			if host.VNCEndpoint.TLS != nil {
-				vncEndpoint.TLS = &TLSConfig{
-					Enabled:            host.VNCEndpoint.TLS.Enabled,
-					InsecureSkipVerify: host.VNCEndpoint.TLS.InsecureSkipVerify,
-				}
-			}
-
-			server.VNCEndpoint = vncEndpoint
+			server.VNCEndpoint = host.VNCEndpoint.ToTypesEndpoint()
 		}
 
 		// If Redfish, perform API discovery if enabled
 		// Check primary endpoint (first in list) for Redfish protocol
-		if len(server.ControlEndpoints) > 0 && server.GetPrimaryControlEndpoint().Type == "redfish" {
+		if len(server.ControlEndpoints) > 0 && server.GetPrimaryControlEndpoint().Type == types.BMCTypeRedfish {
 			endpoint := server.GetPrimaryControlEndpoint().Endpoint
 			info, err := s.redfishClient.DiscoverSerialConsole(context.Background(), endpoint, server.GetPrimaryControlEndpoint().Username, server.GetPrimaryControlEndpoint().Password)
 			if err != nil {
@@ -226,8 +168,8 @@ func (s *Service) loadStaticServers() []*Server {
 				// This ensures vendor-specific behavior (like iDRAC requiring IPMI fallback) is respected
 				if info.Supported && info.SerialPath != "" {
 					// Use Redfish serial console if supported
-					server.SOLEndpoint = &SOLEndpoint{
-						Type:     "redfish_serial",
+					server.SOLEndpoint = &types.SOLEndpoint{
+						Type:     types.SOLTypeRedfishSerial,
 						Endpoint: endpoint + info.SerialPath,
 						Username: server.GetPrimaryControlEndpoint().Username,
 						Password: server.GetPrimaryControlEndpoint().Password,
@@ -241,8 +183,8 @@ func (s *Service) loadStaticServers() []*Server {
 						log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to build IPMI endpoint")
 					} else {
 						log.Debug().Str("ipmiEndpoint", ipmiEndpoint).Msg("Built IPMI endpoint successfully")
-						server.SOLEndpoint = &SOLEndpoint{
-							Type:     "ipmi",
+						server.SOLEndpoint = &types.SOLEndpoint{
+							Type:     types.SOLTypeIPMI,
 							Endpoint: ipmiEndpoint,
 							Username: server.GetPrimaryControlEndpoint().Username,
 							Password: server.GetPrimaryControlEndpoint().Password,
@@ -387,16 +329,16 @@ func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*Server, e
 			server := &Server{
 				ID:         fmt.Sprintf("server-%s", strings.ReplaceAll(ip.String(), ".", "-")),
 				CustomerID: "customer-1", // TODO: Determine customer ownership
-				ControlEndpoints: []*BMCControlEndpoint{
+				ControlEndpoints: []*types.BMCControlEndpoint{
 					{
 						Endpoint:     endpoint,
-						Type:         "ipmi",
+						Type:         types.BMCTypeIPMI,
 						Username:     "admin",    // Default credentials
 						Password:     "password", // Default credentials
 						Capabilities: types.CapabilitiesToStrings(types.IPMICapabilities()),
 					},
 				},
-				PrimaryProtocol: "ipmi",
+				PrimaryProtocol: types.BMCTypeIPMI,
 				Features: types.FeaturesToStrings([]types.Feature{
 					types.FeaturePower,
 					types.FeatureConsole,
@@ -443,16 +385,16 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 				server := &Server{
 					ID:         fmt.Sprintf("server-%s-%d", strings.ReplaceAll(ip.String(), ".", "-"), port),
 					CustomerID: "customer-1", // TODO: Determine customer ownership
-					ControlEndpoints: []*BMCControlEndpoint{
+					ControlEndpoints: []*types.BMCControlEndpoint{
 						{
 							Endpoint:     endpoint,
-							Type:         "redfish",
+							Type:         types.BMCTypeRedfish,
 							Username:     "admin",    // Default credentials
 							Password:     "password", // Default credentials
 							Capabilities: types.CapabilitiesToStrings(types.RedfishCapabilities()),
 						},
 					},
-					PrimaryProtocol: "redfish",
+					PrimaryProtocol: types.BMCTypeRedfish,
 					Features: types.FeaturesToStrings([]types.Feature{
 						types.FeaturePower,
 						types.FeatureConsole,
@@ -469,8 +411,8 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 					log.Warn().Err(err).Str("endpoint", endpoint).Msg("Failed to discover SerialConsole")
 					server.Metadata["discovery_error"] = err.Error()
 				} else if info.Supported {
-					server.SOLEndpoint = &SOLEndpoint{
-						Type:     "redfish_serial",
+					server.SOLEndpoint = &types.SOLEndpoint{
+						Type:     types.SOLTypeRedfishSerial,
 						Endpoint: endpoint + "/redfish/v1/Managers/1/SerialConsole", // Adjust based on actual path
 						Username: server.GetPrimaryControlEndpoint().Username,
 						Password: server.GetPrimaryControlEndpoint().Password,

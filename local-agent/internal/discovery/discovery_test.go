@@ -40,7 +40,7 @@ func TestService_LoadStaticServers(t *testing.T) {
 			Hosts: []config.BMCHost{
 				{
 					ID: "test-server-1",
-					ControlEndpoints: []*config.BMCControlEndpoint{{
+					ControlEndpoints: []*config.ConfigBMCControlEndpoint{{
 						Type:     "ipmi",
 						Endpoint: "192.168.1.100:623",
 						Username: "admin",
@@ -49,7 +49,7 @@ func TestService_LoadStaticServers(t *testing.T) {
 				},
 				{
 					ID: "test-server-2",
-					ControlEndpoints: []*config.BMCControlEndpoint{{
+					ControlEndpoints: []*config.ConfigBMCControlEndpoint{{
 						Type:     "redfish",
 						Endpoint: "https://192.168.1.101",
 						Username: "root",
@@ -120,7 +120,7 @@ func TestService_DiscoverServers_StaticOnly(t *testing.T) {
 			Hosts: []config.BMCHost{
 				{
 					ID: "static-server-1",
-					ControlEndpoints: []*config.BMCControlEndpoint{{
+					ControlEndpoints: []*config.ConfigBMCControlEndpoint{{
 						Type:     "ipmi",
 						Endpoint: "192.168.1.100:623",
 						Username: "admin",
@@ -155,16 +155,16 @@ func TestService_FilterDuplicates(t *testing.T) {
 	existing := []*Server{
 		{
 			ID: "server-1",
-			ControlEndpoints: []*BMCControlEndpoint{{
+			ControlEndpoints: []*types.BMCControlEndpoint{{
 				Endpoint: "192.168.1.100:623",
-				Type:     "ipmi",
+				Type:     types.BMCTypeIPMI,
 			}},
 		},
 		{
 			ID: "server-2",
-			ControlEndpoints: []*BMCControlEndpoint{{
+			ControlEndpoints: []*types.BMCControlEndpoint{{
 				Endpoint: "192.168.1.101:623",
-				Type:     "ipmi",
+				Type:     types.BMCTypeIPMI,
 			}},
 		},
 	}
@@ -172,16 +172,16 @@ func TestService_FilterDuplicates(t *testing.T) {
 	discovered := []*Server{
 		{
 			ID: "discovered-1",
-			ControlEndpoints: []*BMCControlEndpoint{{
+			ControlEndpoints: []*types.BMCControlEndpoint{{
 				Endpoint: "192.168.1.100:623", // Duplicate
-				Type:     "ipmi",
+				Type:     types.BMCTypeIPMI,
 			}},
 		},
 		{
 			ID: "discovered-2",
-			ControlEndpoints: []*BMCControlEndpoint{{
+			ControlEndpoints: []*types.BMCControlEndpoint{{
 				Endpoint: "192.168.1.102:623", // New
-				Type:     "ipmi",
+				Type:     types.BMCTypeIPMI,
 			}},
 		},
 	}
@@ -201,9 +201,9 @@ func TestService_FilterDuplicates(t *testing.T) {
 func TestServer_Features(t *testing.T) {
 	server := &Server{
 		ID: "test-server",
-		ControlEndpoints: []*BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint:     "192.168.1.100:623",
-			Type:         "ipmi",
+			Type:         types.BMCTypeIPMI,
 			Capabilities: []string{"power", "sensors"}},
 		},
 		Features: []string{"power_management", "monitoring"},
@@ -226,14 +226,14 @@ func TestServer_Features(t *testing.T) {
 func TestBMCControlEndpoint_Validation(t *testing.T) {
 	tests := []struct {
 		name     string
-		endpoint *BMCControlEndpoint
+		endpoint *types.BMCControlEndpoint
 		valid    bool
 	}{
 		{
 			name: "valid IPMI endpoint",
-			endpoint: &BMCControlEndpoint{
+			endpoint: &types.BMCControlEndpoint{
 				Endpoint: "192.168.1.100:623",
-				Type:     "ipmi",
+				Type:     types.BMCTypeIPMI,
 				Username: "admin",
 				Password: "password",
 			},
@@ -241,9 +241,9 @@ func TestBMCControlEndpoint_Validation(t *testing.T) {
 		},
 		{
 			name: "valid Redfish endpoint",
-			endpoint: &BMCControlEndpoint{
+			endpoint: &types.BMCControlEndpoint{
 				Endpoint: "https://192.168.1.100",
-				Type:     "redfish",
+				Type:     types.BMCTypeRedfish,
 				Username: "root",
 				Password: "secret",
 			},
@@ -251,9 +251,9 @@ func TestBMCControlEndpoint_Validation(t *testing.T) {
 		},
 		{
 			name: "missing type",
-			endpoint: &BMCControlEndpoint{
+			endpoint: &types.BMCControlEndpoint{
 				Endpoint: "192.168.1.100:623",
-				Type:     "",
+				Type:     types.BMCTypeNone,
 				Username: "admin",
 				Password: "password",
 			},
@@ -261,9 +261,9 @@ func TestBMCControlEndpoint_Validation(t *testing.T) {
 		},
 		{
 			name: "missing endpoint",
-			endpoint: &BMCControlEndpoint{
+			endpoint: &types.BMCControlEndpoint{
 				Endpoint: "",
-				Type:     "ipmi",
+				Type:     types.BMCTypeIPMI,
 				Username: "admin",
 				Password: "password",
 			},
@@ -298,7 +298,7 @@ func TestSOLEndpoint_Types(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sol := &SOLEndpoint{
+			sol := &types.SOLEndpoint{
 				Type:     tt.solType,
 				Endpoint: "test-endpoint",
 			}
@@ -326,7 +326,7 @@ func TestVNCEndpoint_Types(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			vnc := &VNCEndpoint{
+			vnc := &types.VNCEndpoint{
 				Type:     tt.vncType,
 				Endpoint: "ws://test:6080",
 			}

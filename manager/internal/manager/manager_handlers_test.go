@@ -264,8 +264,8 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		features        []string
 		expectSOL       bool
 		expectVNC       bool
-		expectedSOLType models.SOLType
-		expectedVNCType models.VNCType
+		expectedSOLType types.SOLType
+		expectedVNCType types.VNCType
 	}{
 		{
 			name:    "IPMI with console and VNC features",
@@ -278,8 +278,8 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			}),
 			expectSOL:       true,
 			expectVNC:       true,
-			expectedSOLType: models.SOLTypeIPMI,
-			expectedVNCType: models.VNCTypeNative,
+			expectedSOLType: types.SOLTypeIPMI,
+			expectedVNCType: types.VNCTypeNative,
 		},
 		{
 			name:    "Redfish with console and VNC features",
@@ -291,8 +291,8 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			}),
 			expectSOL:       true,
 			expectVNC:       true,
-			expectedSOLType: models.SOLTypeRedfishSerial,
-			expectedVNCType: models.VNCTypeNative,
+			expectedSOLType: types.SOLTypeRedfishSerial,
+			expectedVNCType: types.VNCTypeNative,
 		},
 		{
 			name:    "IPMI with only power features",
@@ -313,7 +313,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			}),
 			expectSOL:       true,
 			expectVNC:       false,
-			expectedSOLType: models.SOLTypeIPMI,
+			expectedSOLType: types.SOLTypeIPMI,
 		},
 		{
 			name:    "IPMI with only VNC",
@@ -324,7 +324,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			}),
 			expectSOL:       false,
 			expectVNC:       true,
-			expectedVNCType: models.VNCTypeNative,
+			expectedVNCType: types.VNCTypeNative,
 		},
 	}
 
@@ -462,7 +462,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		features        []string
 		expectSOL       bool
 		expectVNC       bool
-		expectedSOLType models.SOLType
+		expectedSOLType types.SOLType
 	}{
 		{
 			name:    "IPMI with console and VNC features",
@@ -475,7 +475,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			}),
 			expectSOL:       true,
 			expectVNC:       true,
-			expectedSOLType: models.SOLTypeIPMI,
+			expectedSOLType: types.SOLTypeIPMI,
 		},
 		{
 			name:    "Redfish with console and VNC features",
@@ -488,7 +488,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 			}),
 			expectSOL:       true,
 			expectVNC:       true,
-			expectedSOLType: models.SOLTypeRedfishSerial,
+			expectedSOLType: types.SOLTypeRedfishSerial,
 		},
 		{
 			name:    "IPMI without console features",
@@ -542,7 +542,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 
 			if tc.expectVNC {
 				require.NotNil(t, server.VNCEndpoint, "VNC endpoint should be populated")
-				assert.Equal(t, models.VNCTypeNative, server.VNCEndpoint.Type)
+				assert.Equal(t, types.VNCTypeNative, server.VNCEndpoint.Type)
 				assert.Equal(t, bmcEndpoint, server.VNCEndpoint.Endpoint)
 			} else {
 				assert.Nil(t, server.VNCEndpoint, "VNC endpoint should not be populated")
@@ -561,10 +561,10 @@ func TestDatabaseRoundTrip_PreservesSOLAndVNCEndpoints(t *testing.T) {
 		ID:           "test-server-roundtrip",
 		CustomerID:   "test-customer",
 		DatacenterID: "dc-test-01",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "192.168.1.100:623",
-				Type:     models.BMCTypeIPMI,
+				Type:     types.BMCTypeIPMI,
 				Username: "admin",
 				Password: "",
 				Capabilities: types.CapabilitiesToStrings([]types.Capability{
@@ -573,24 +573,24 @@ func TestDatabaseRoundTrip_PreservesSOLAndVNCEndpoints(t *testing.T) {
 				}),
 			},
 		},
-		PrimaryProtocol: models.BMCTypeIPMI,
-		SOLEndpoint: &models.SOLEndpoint{
-			Type:     models.SOLTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
+		SOLEndpoint: &types.SOLEndpoint{
+			Type:     types.SOLTypeIPMI,
 			Endpoint: "192.168.1.100:623",
 			Username: "admin",
 			Password: "",
-			Config: &models.SOLConfig{
+			Config: &types.SOLConfig{
 				BaudRate:       115200,
 				FlowControl:    "none",
 				TimeoutSeconds: 30,
 			},
 		},
-		VNCEndpoint: &models.VNCEndpoint{
-			Type:     models.VNCTypeNative,
+		VNCEndpoint: &types.VNCEndpoint{
+			Type:     types.VNCTypeNative,
 			Endpoint: "192.168.1.100:5900",
 			Username: "admin",
 			Password: "",
-			Config: &models.VNCConfig{
+			Config: &types.VNCConfig{
 				Protocol: "vnc",
 				Path:     "/vnc",
 				Display:  1,

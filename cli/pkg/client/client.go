@@ -84,22 +84,21 @@ func (c *Client) getGatewayClient(ctx context.Context, serverID string) (*Region
 // Updated methods that use the new architecture
 
 type ServerInfo struct {
-	ID                string                   `json:"id"`
-	ControlEndpoint   *BMCControlEndpoint      `json:"control_endpoint"` // Deprecated: use ControlEndpoints
-	ControlEndpoints  []*BMCControlEndpoint    `json:"control_endpoints"`
-	PrimaryProtocol   string                   `json:"primary_protocol"`
-	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint"`
-	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint"`
-	Features          []string                 `json:"features"`
-	Status            string                   `json:"status"`
-	DatacenterID      string                   `json:"datacenter_id"`
-	Metadata          map[string]string        `json:"metadata"`
-	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata,omitempty"`
+	ID                string                      `json:"id"`
+	ControlEndpoints  []*types.BMCControlEndpoint `json:"control_endpoints"`
+	PrimaryProtocol   types.BMCType               `json:"primary_protocol"`
+	SOLEndpoint       *types.SOLEndpoint          `json:"sol_endpoint"`
+	VNCEndpoint       *types.VNCEndpoint          `json:"vnc_endpoint"`
+	Features          []string                    `json:"features"`
+	Status            string                      `json:"status"`
+	DatacenterID      string                      `json:"datacenter_id"`
+	Metadata          map[string]string           `json:"metadata"`
+	DiscoveryMetadata *types.DiscoveryMetadata    `json:"discovery_metadata,omitempty"`
 }
 
 // GetPrimaryControlEndpoint returns the primary control endpoint.
 // Looks for endpoint matching PrimaryProtocol, otherwise returns first endpoint or the deprecated ControlEndpoint.
-func (s *ServerInfo) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+func (s *ServerInfo) GetPrimaryControlEndpoint() *types.BMCControlEndpoint {
 	if len(s.ControlEndpoints) > 0 {
 		// Try to find endpoint matching PrimaryProtocol
 		if s.PrimaryProtocol != "" {
@@ -112,52 +111,7 @@ func (s *ServerInfo) GetPrimaryControlEndpoint() *BMCControlEndpoint {
 		// Fallback to first endpoint
 		return s.ControlEndpoints[0]
 	}
-	// Fallback to deprecated ControlEndpoint field
-	return s.ControlEndpoint
-}
-
-type BMCControlEndpoint struct {
-	Endpoint     string     `json:"endpoint"`
-	Type         string     `json:"type"`
-	Username     string     `json:"username"`
-	Password     string     `json:"password"`
-	TLS          *TLSConfig `json:"tls"`
-	Capabilities []string   `json:"capabilities"`
-}
-
-type SOLEndpoint struct {
-	Type     string     `json:"type"`
-	Endpoint string     `json:"endpoint"`
-	Username string     `json:"username"`
-	Password string     `json:"password"`
-	Config   *SOLConfig `json:"config"`
-}
-
-type VNCEndpoint struct {
-	Type     string     `json:"type"`
-	Endpoint string     `json:"endpoint"`
-	Username string     `json:"username"`
-	Password string     `json:"password"`
-	Config   *VNCConfig `json:"config"`
-}
-
-type TLSConfig struct {
-	Enabled            bool   `json:"enabled"`
-	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
-	CACert             string `json:"ca_cert"`
-}
-
-type SOLConfig struct {
-	BaudRate       int    `json:"baud_rate"`
-	FlowControl    string `json:"flow_control"`
-	TimeoutSeconds int    `json:"timeout_seconds"`
-}
-
-type VNCConfig struct {
-	Protocol string `json:"protocol"`
-	Path     string `json:"path"`
-	Display  int    `json:"display"`
-	ReadOnly bool   `json:"read_only"`
+	return &types.BMCControlEndpoint{}
 }
 
 type ProxySession struct {
@@ -179,77 +133,19 @@ func (c *Client) GetServer(ctx context.Context, serverID string) (*ServerInfo, e
 	}
 
 	// Convert from manager Server type to client ServerInfo type
+	// Since both now use core/types, most fields can be copied directly
 	serverInfo := &ServerInfo{
-		ID:           server.ID,
-		Features:     server.Features,
-		Status:       server.Status,
-		DatacenterID: server.DatacenterID,
-		Metadata:     server.Metadata,
+		ID:                server.ID,
+		ControlEndpoints:  server.ControlEndpoints,
+		PrimaryProtocol:   server.PrimaryProtocol,
+		SOLEndpoint:       server.SOLEndpoint,
+		VNCEndpoint:       server.VNCEndpoint,
+		Features:          server.Features,
+		Status:            server.Status,
+		DatacenterID:      server.DatacenterID,
+		Metadata:          server.Metadata,
+		DiscoveryMetadata: server.DiscoveryMetadata,
 	}
-
-	// Convert control endpoints
-	serverInfo.ControlEndpoints = make([]*BMCControlEndpoint, 0, len(server.ControlEndpoints))
-	for _, endpoint := range server.ControlEndpoints {
-		bmcEndpoint := &BMCControlEndpoint{
-			Endpoint:     endpoint.Endpoint,
-			Type:         endpoint.Type,
-			Username:     endpoint.Username,
-			Password:     endpoint.Password,
-			Capabilities: endpoint.Capabilities,
-		}
-		if endpoint.TLS != nil {
-			bmcEndpoint.TLS = &TLSConfig{
-				Enabled:            endpoint.TLS.Enabled,
-				InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
-				CACert:             endpoint.TLS.CACert,
-			}
-		}
-		serverInfo.ControlEndpoints = append(serverInfo.ControlEndpoints, bmcEndpoint)
-	}
-	serverInfo.PrimaryProtocol = server.PrimaryProtocol
-
-	// For backwards compatibility, also set the deprecated ControlEndpoint field
-	if server.GetPrimaryControlEndpoint() != nil {
-		serverInfo.ControlEndpoint = serverInfo.GetPrimaryControlEndpoint()
-	}
-
-	// Convert SOL endpoint
-	if server.SOLEndpoint != nil {
-		serverInfo.SOLEndpoint = &SOLEndpoint{
-			Type:     server.SOLEndpoint.Type,
-			Endpoint: server.SOLEndpoint.Endpoint,
-			Username: server.SOLEndpoint.Username,
-			Password: server.SOLEndpoint.Password,
-		}
-		if server.SOLEndpoint.Config != nil {
-			serverInfo.SOLEndpoint.Config = &SOLConfig{
-				BaudRate:       int(server.SOLEndpoint.Config.BaudRate),
-				FlowControl:    server.SOLEndpoint.Config.FlowControl,
-				TimeoutSeconds: int(server.SOLEndpoint.Config.TimeoutSeconds),
-			}
-		}
-	}
-
-	// Convert VNC endpoint
-	if server.VNCEndpoint != nil {
-		serverInfo.VNCEndpoint = &VNCEndpoint{
-			Type:     server.VNCEndpoint.Type,
-			Endpoint: server.VNCEndpoint.Endpoint,
-			Username: server.VNCEndpoint.Username,
-			Password: server.VNCEndpoint.Password,
-		}
-		if server.VNCEndpoint.Config != nil {
-			serverInfo.VNCEndpoint.Config = &VNCConfig{
-				Protocol: server.VNCEndpoint.Config.Protocol,
-				Path:     server.VNCEndpoint.Config.Path,
-				Display:  int(server.VNCEndpoint.Config.Display),
-				ReadOnly: server.VNCEndpoint.Config.ReadOnly,
-			}
-		}
-	}
-
-	// Copy discovery metadata
-	serverInfo.DiscoveryMetadata = server.DiscoveryMetadata
 
 	return serverInfo, nil
 }
@@ -267,67 +163,20 @@ func (c *Client) ListServers(ctx context.Context) ([]ServerInfo, error) {
 	}
 
 	// Convert from manager Server type to client ServerInfo type
+	// Since both now use core/types, most fields can be copied directly
 	var serverInfos []ServerInfo
 	for _, server := range servers {
 		serverInfo := ServerInfo{
-			ID:           server.ID,
-			Features:     server.Features,
-			Status:       server.Status,
-			DatacenterID: server.DatacenterID,
-			Metadata:     server.Metadata,
-		}
-
-		// Convert control endpoint (use primary/first endpoint for backwards compatibility)
-		if server.GetPrimaryControlEndpoint() != nil {
-			serverInfo.ControlEndpoint = &BMCControlEndpoint{
-				Endpoint:     server.GetPrimaryControlEndpoint().Endpoint,
-				Type:         server.GetPrimaryControlEndpoint().Type,
-				Username:     server.GetPrimaryControlEndpoint().Username,
-				Password:     server.GetPrimaryControlEndpoint().Password,
-				Capabilities: server.GetPrimaryControlEndpoint().Capabilities,
-			}
-			if server.GetPrimaryControlEndpoint().TLS != nil {
-				serverInfo.ControlEndpoint.TLS = &TLSConfig{
-					Enabled:            server.GetPrimaryControlEndpoint().TLS.Enabled,
-					InsecureSkipVerify: server.GetPrimaryControlEndpoint().TLS.InsecureSkipVerify,
-					CACert:             server.GetPrimaryControlEndpoint().TLS.CACert,
-				}
-			}
-		}
-
-		// Convert SOL endpoint
-		if server.SOLEndpoint != nil {
-			serverInfo.SOLEndpoint = &SOLEndpoint{
-				Type:     server.SOLEndpoint.Type,
-				Endpoint: server.SOLEndpoint.Endpoint,
-				Username: server.SOLEndpoint.Username,
-				Password: server.SOLEndpoint.Password,
-			}
-			if server.SOLEndpoint.Config != nil {
-				serverInfo.SOLEndpoint.Config = &SOLConfig{
-					BaudRate:       int(server.SOLEndpoint.Config.BaudRate),
-					FlowControl:    server.SOLEndpoint.Config.FlowControl,
-					TimeoutSeconds: int(server.SOLEndpoint.Config.TimeoutSeconds),
-				}
-			}
-		}
-
-		// Convert VNC endpoint
-		if server.VNCEndpoint != nil {
-			serverInfo.VNCEndpoint = &VNCEndpoint{
-				Type:     server.VNCEndpoint.Type,
-				Endpoint: server.VNCEndpoint.Endpoint,
-				Username: server.VNCEndpoint.Username,
-				Password: server.VNCEndpoint.Password,
-			}
-			if server.VNCEndpoint.Config != nil {
-				serverInfo.VNCEndpoint.Config = &VNCConfig{
-					Protocol: server.VNCEndpoint.Config.Protocol,
-					Path:     server.VNCEndpoint.Config.Path,
-					Display:  int(server.VNCEndpoint.Config.Display),
-					ReadOnly: server.VNCEndpoint.Config.ReadOnly,
-				}
-			}
+			ID:                server.ID,
+			ControlEndpoints:  server.ControlEndpoints,
+			PrimaryProtocol:   server.PrimaryProtocol,
+			SOLEndpoint:       server.SOLEndpoint,
+			VNCEndpoint:       server.VNCEndpoint,
+			Features:          server.Features,
+			Status:            server.Status,
+			DatacenterID:      server.DatacenterID,
+			Metadata:          server.Metadata,
+			DiscoveryMetadata: server.DiscoveryMetadata,
 		}
 
 		serverInfos = append(serverInfos, serverInfo)

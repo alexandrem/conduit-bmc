@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -14,53 +13,28 @@ import (
 	"core/types"
 )
 
-// formatBMCType converts protobuf enum string to human-readable format
-func formatBMCType(protoType string) string {
-	switch protoType {
-	case "BMC_IPMI":
-		return "ipmi"
-	case "BMC_REDFISH":
-		return "redfish"
-	default:
-		// Handle lowercase already formatted values
-		lower := strings.ToLower(protoType)
-		if lower == "ipmi" || lower == "redfish" {
-			return lower
-		}
-		return protoType
+// formatBMCType converts BMC type to human-readable format
+func formatBMCType(bmcType types.BMCType) string {
+	if bmcType == "" {
+		return "unknown"
 	}
+	return string(bmcType)
 }
 
-// formatSOLType converts protobuf enum string to human-readable format
-func formatSOLType(protoType string) string {
-	switch protoType {
-	case "SOL_IPMI":
-		return "ipmi"
-	case "SOL_REDFISH_SERIAL":
-		return "redfish_serial"
-	default:
-		lower := strings.ToLower(protoType)
-		if lower == "ipmi" || lower == "redfish_serial" {
-			return lower
-		}
-		return protoType
+// formatSOLType converts SOL type to human-readable format
+func formatSOLType(solType types.SOLType) string {
+	if solType == "" {
+		return "unknown"
 	}
+	return string(solType)
 }
 
-// formatVNCType converts protobuf enum string to human-readable format
-func formatVNCType(protoType string) string {
-	switch protoType {
-	case "VNC_NATIVE":
-		return "native"
-	case "VNC_WEBSOCKET":
-		return "websocket"
-	default:
-		lower := strings.ToLower(protoType)
-		if lower == "native" || lower == "websocket" {
-			return lower
-		}
-		return protoType
+// formatVNCType converts VNC type to human-readable format
+func formatVNCType(vncType types.VNCType) string {
+	if vncType == "" {
+		return "unknown"
 	}
+	return string(vncType)
 }
 
 // formatDiscoveryMethod converts discovery method enum to human-readable format
@@ -155,7 +129,7 @@ var showCmd = &cobra.Command{
 			}
 			fmt.Fprintf(w, "  Endpoint:\t%s (%s, %s)\n",
 				endpointDisplay,
-				formatBMCType(server.GetPrimaryControlEndpoint().Type),
+				formatBMCType(server.PrimaryProtocol),
 				authMethod)
 
 			fmt.Fprintf(w, "  Credentials:\t%s (configured)\n", server.GetPrimaryControlEndpoint().Username)

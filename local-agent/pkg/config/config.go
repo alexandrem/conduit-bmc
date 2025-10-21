@@ -272,95 +272,93 @@ type StaticConfig struct {
 }
 
 type BMCHost struct {
-	ID               string                `yaml:"id"`
-	CustomerID       string                `yaml:"customer_id"`
-	ControlEndpoints []*BMCControlEndpoint `yaml:"control_endpoints"` // Multiple protocol support (required for RFD 006)
-	SOLEndpoint      *SOLEndpoint          `yaml:"sol_endpoint"`
-	VNCEndpoint      *VNCEndpoint          `yaml:"vnc_endpoint"`
-	Features         []string              `yaml:"features"`
-	Metadata         map[string]string     `yaml:"metadata"`
+	ID               string                      `yaml:"id"`
+	CustomerID       string                      `yaml:"customer_id"`
+	ControlEndpoints []*ConfigBMCControlEndpoint `yaml:"control_endpoints"` // Multiple protocol support (required for RFD 006)
+	SOLEndpoint      *ConfigSOLEndpoint          `yaml:"sol_endpoint"`
+	VNCEndpoint      *ConfigVNCEndpoint          `yaml:"vnc_endpoint"`
+	Features         []string                    `yaml:"features"`
+	Metadata         map[string]string           `yaml:"metadata"`
 }
 
-type BMCControlEndpoint struct {
-	Endpoint     string     `yaml:"endpoint"`
-	Type         string     `yaml:"type,omitempty"` // Optional: inferred from endpoint if not specified
-	Username     string     `yaml:"username"`
-	Password     string     `yaml:"password"`
-	TLS          *TLSConfig `yaml:"tls"`
-	Capabilities []string   `yaml:"capabilities"`
+// ConfigBMCControlEndpoint is a config-specific wrapper around types.BMCControlEndpoint
+// that allows optional Type field for YAML parsing (type can be inferred from endpoint)
+type ConfigBMCControlEndpoint struct {
+	Endpoint     string           `yaml:"endpoint"`
+	Type         string           `yaml:"type,omitempty"` // Optional: inferred from endpoint if not specified
+	Username     string           `yaml:"username"`
+	Password     string           `yaml:"password"`
+	TLS          *types.TLSConfig `yaml:"tls"`
+	Capabilities []string         `yaml:"capabilities"`
 }
 
-// InferType infers the BMC type from the endpoint URL
-// Returns: types.BMCTypeRedfish for https:// endpoints, types.BMCTypeIPMI for others
-func (b *BMCControlEndpoint) InferType() types.BMCType {
-	if b.Type != "" {
-		return types.BMCType(b.Type)
+// ToTypesEndpoint converts this config endpoint to a core types endpoint
+func (b *ConfigBMCControlEndpoint) ToTypesEndpoint() *types.BMCControlEndpoint {
+	bmcType := types.BMCType(b.Type)
+	if b.Type == "" {
+		bmcType = types.InferBMCType(b.Endpoint)
 	}
 
-	endpoint := b.Endpoint
-	if strings.HasPrefix(endpoint, "https://") || strings.HasPrefix(endpoint, "http://") {
-		return types.BMCTypeRedfish
+	return &types.BMCControlEndpoint{
+		Endpoint:     b.Endpoint,
+		Type:         bmcType,
+		Username:     b.Username,
+		Password:     b.Password,
+		TLS:          b.TLS,
+		Capabilities: b.Capabilities,
 	}
-	// ipmi://, host:port, or no scheme defaults to ipmi
-	return types.BMCTypeIPMI
 }
 
-type SOLEndpoint struct {
-	Type     string     `yaml:"type,omitempty"` // Optional: inferred from endpoint if not specified
-	Endpoint string     `yaml:"endpoint"`
-	Username string     `yaml:"username"`
-	Password string     `yaml:"password"`
-	Config   *SOLConfig `yaml:"config"`
+// ConfigSOLEndpoint is a config-specific wrapper around types.SOLEndpoint
+// that allows optional Type field for YAML parsing (type can be inferred from endpoint)
+type ConfigSOLEndpoint struct {
+	Type     string           `yaml:"type,omitempty"` // Optional: inferred from endpoint if not specified
+	Endpoint string           `yaml:"endpoint"`
+	Username string           `yaml:"username"`
+	Password string           `yaml:"password"`
+	Config   *types.SOLConfig `yaml:"config"`
 }
 
-// InferType infers the SOL type from the endpoint URL
-// Returns: types.SOLTypeRedfishSerial for https:// endpoints, types.SOLTypeIPMI for ipmi:// or host:port
-func (s *SOLEndpoint) InferType() types.SOLType {
-	if s.Type != "" {
-		return types.SOLType(s.Type)
-	}
-
-	endpoint := s.Endpoint
-	if strings.HasPrefix(endpoint, "https://") || strings.HasPrefix(endpoint, "http://") {
-		return types.SOLTypeRedfishSerial
-	}
-	// ipmi://, host:port, or no scheme defaults to ipmi
-	return types.SOLTypeIPMI
-}
-
-type VNCEndpoint struct {
-	Type     string     `yaml:"type,omitempty"` // Optional: inferred from endpoint scheme if not specified
-	Endpoint string     `yaml:"endpoint"`       // URL with scheme (ws://, wss://, vnc://) or host:port
-	Username string     `yaml:"username"`
-	Password string     `yaml:"password"`
-	TLS      *TLSConfig `yaml:"tls"` // Optional TLS configuration for VeNCrypt/RFB-over-TLS
-}
-
-// InferType infers the VNC transport type from the endpoint URL scheme
-// Returns: types.VNCTypeNative for vnc:// or host:port, types.VNCTypeWebSocket for ws:// or wss://
-func (v *VNCEndpoint) InferType() types.VNCType {
-	if v.Type != "" {
-		return types.VNCType(v.Type)
+// ToTypesEndpoint converts this config endpoint to a core types endpoint
+func (s *ConfigSOLEndpoint) ToTypesEndpoint() *types.SOLEndpoint {
+	solType := types.SOLType(s.Type)
+	if s.Type == "" {
+		solType = types.InferSOLType(s.Endpoint)
 	}
 
-	endpoint := v.Endpoint
-	if strings.HasPrefix(endpoint, "ws://") || strings.HasPrefix(endpoint, "wss://") {
-		return types.VNCTypeWebSocket
+	return &types.SOLEndpoint{
+		Type:     solType,
+		Endpoint: s.Endpoint,
+		Username: s.Username,
+		Password: s.Password,
+		Config:   s.Config,
 	}
-	// vnc://, host:port, or no scheme defaults to native
-	return types.VNCTypeNative
 }
 
-type TLSConfig struct {
-	Enabled            bool   `yaml:"enabled"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify"`
-	CACert             string `yaml:"ca_cert"`
+// ConfigVNCEndpoint is a config-specific wrapper around types.VNCEndpoint
+// that allows optional Type field for YAML parsing (type can be inferred from endpoint)
+type ConfigVNCEndpoint struct {
+	Type     string           `yaml:"type,omitempty"` // Optional: inferred from endpoint scheme if not specified
+	Endpoint string           `yaml:"endpoint"`       // URL with scheme (ws://, wss://, vnc://) or host:port
+	Username string           `yaml:"username"`
+	Password string           `yaml:"password"`
+	Config   *types.VNCConfig `yaml:"config"`
 }
 
-type SOLConfig struct {
-	BaudRate       int    `yaml:"baud_rate"`
-	FlowControl    string `yaml:"flow_control"`
-	TimeoutSeconds int    `yaml:"timeout_seconds"`
+// ToTypesEndpoint converts this config endpoint to a core types endpoint
+func (v *ConfigVNCEndpoint) ToTypesEndpoint() *types.VNCEndpoint {
+	vncType := types.VNCType(v.Type)
+	if v.Type == "" {
+		vncType = types.InferVNCType(v.Endpoint)
+	}
+
+	return &types.VNCEndpoint{
+		Type:     vncType,
+		Endpoint: v.Endpoint,
+		Username: v.Username,
+		Password: v.Password,
+		Config:   v.Config,
+	}
 }
 
 // GetControlEndpoint returns the primary BMC control endpoint (first in array)
@@ -372,7 +370,7 @@ func (h *BMCHost) GetControlEndpoint() string {
 }
 
 // GetPrimaryControlEndpoint returns the primary BMC control endpoint (first in array)
-func (h *BMCHost) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+func (h *BMCHost) GetPrimaryControlEndpoint() *ConfigBMCControlEndpoint {
 	if len(h.ControlEndpoints) == 0 {
 		return nil
 	}

@@ -33,16 +33,16 @@ func convertCustomerToManager(customer *domain.Customer) *managermodels.Customer
 
 // convertServerToManager converts common/domain.Server to manager/pkg/domain.Server
 func convertServerToManager(server *domain.Server) *managermodels.Server {
-	var controlEndpoints []*managermodels.BMCControlEndpoint
-	var primaryProtocol managermodels.BMCType
+	var controlEndpoints []*types.BMCControlEndpoint
+	var primaryProtocol types.BMCType
 	if server.BMCEndpoint != "" {
-		controlEndpoints = []*managermodels.BMCControlEndpoint{
+		controlEndpoints = []*types.BMCControlEndpoint{
 			{
 				Endpoint: server.BMCEndpoint,
-				Type:     managermodels.BMCType(server.BMCType),
+				Type:     types.BMCType(server.BMCType),
 			},
 		}
-		primaryProtocol = managermodels.BMCType(server.BMCType)
+		primaryProtocol = types.BMCType(server.BMCType)
 	}
 
 	return &managermodels.Server{

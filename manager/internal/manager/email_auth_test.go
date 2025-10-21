@@ -124,13 +124,13 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		ID:           "server-alice-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -144,13 +144,13 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		ID:           "server-bob-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9002",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -164,13 +164,13 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		ID:           "server-alice-02",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9003",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -289,13 +289,13 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 		ID:           "server-alice-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -309,13 +309,13 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 		ID:           "server-bob-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
-		ControlEndpoints: []*models.BMCControlEndpoint{
+		ControlEndpoints: []*types.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9002",
-				Type:     models.BMCTypeRedfish,
+				Type:     types.BMCTypeRedfish,
 			},
 		},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,

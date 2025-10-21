@@ -186,19 +186,19 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	}
 
 	// Convert BMC protocols from protobuf to models
-	controlEndpoints := make([]*models.BMCControlEndpoint, 0, len(req.Msg.BmcProtocols))
+	controlEndpoints := make([]*types.BMCControlEndpoint, 0, len(req.Msg.BmcProtocols))
 	for _, protoEndpoint := range req.Msg.BmcProtocols {
-		var bmcType models.BMCType
+		var bmcType types.BMCType
 		switch protoEndpoint.Type {
 		case managerv1.BMCType_BMC_IPMI:
-			bmcType = models.BMCTypeIPMI
+			bmcType = types.BMCTypeIPMI
 		case managerv1.BMCType_BMC_REDFISH:
-			bmcType = models.BMCTypeRedfish
+			bmcType = types.BMCTypeRedfish
 		default:
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid BMC type"))
 		}
 
-		endpoint := &models.BMCControlEndpoint{
+		endpoint := &types.BMCControlEndpoint{
 			Endpoint:     protoEndpoint.Endpoint,
 			Type:         bmcType,
 			Username:     protoEndpoint.Username,
@@ -209,12 +209,12 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	}
 
 	// Determine primary protocol
-	var primaryProtocol models.BMCType = models.BMCTypeIPMI // Default
+	var primaryProtocol types.BMCType = types.BMCTypeIPMI // Default
 	switch req.Msg.PrimaryProtocol {
 	case managerv1.BMCType_BMC_IPMI:
-		primaryProtocol = models.BMCTypeIPMI
+		primaryProtocol = types.BMCTypeIPMI
 	case managerv1.BMCType_BMC_REDFISH:
-		primaryProtocol = models.BMCTypeRedfish
+		primaryProtocol = types.BMCTypeRedfish
 	}
 
 	// Create server record with BMC endpoint information
@@ -246,11 +246,11 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	for _, feature := range req.Msg.Features {
 		if feature == types.FeatureConsole.String() {
 			// Determine SOL type based on primary protocol
-			solType := models.SOLTypeIPMI
-			if primaryProtocol == models.BMCTypeRedfish {
-				solType = models.SOLTypeRedfishSerial
+			solType := types.SOLTypeIPMI
+			if primaryProtocol == types.BMCTypeRedfish {
+				solType = types.SOLTypeRedfishSerial
 			}
-			server.SOLEndpoint = &models.SOLEndpoint{
+			server.SOLEndpoint = &types.SOLEndpoint{
 				Type:     solType,
 				Endpoint: primaryEndpoint,
 				Username: "", // Will be filled later
@@ -267,8 +267,8 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	// Populate VNC endpoint if feature is present
 	for _, feature := range req.Msg.Features {
 		if feature == types.FeatureVNC.String() {
-			server.VNCEndpoint = &models.VNCEndpoint{
-				Type:     models.VNCTypeNative, // Default to native VNC
+			server.VNCEndpoint = &types.VNCEndpoint{
+				Type:     types.VNCTypeNative, // Default to native VNC
 				Endpoint: primaryEndpoint,
 				Username: "", // Will be filled later
 				Password: "", // Will be filled later
@@ -347,9 +347,9 @@ func (h *BMCManagerServiceHandler) GetServerLocation(
 	// Convert primary protocol to protobuf
 	var primaryProtocol managerv1.BMCType
 	switch location.PrimaryProtocol {
-	case models.BMCTypeIPMI:
+	case types.BMCTypeIPMI:
 		primaryProtocol = managerv1.BMCType_BMC_IPMI
-	case models.BMCTypeRedfish:
+	case types.BMCTypeRedfish:
 		primaryProtocol = managerv1.BMCType_BMC_REDFISH
 	default:
 		primaryProtocol = managerv1.BMCType_BMC_UNSPECIFIED
@@ -491,7 +491,7 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 		CustomerID        string
 		DatacenterID      string
 		RegionalGatewayID string
-		BMCType           models.BMCType
+		BMCType           types.BMCType
 		BMCEndpoint       string
 		Features          []string
 		CreatedAt         time.Time
@@ -613,11 +613,11 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 }
 
 // Helper function to convert BMCType from models to protobuf
-func convertBMCTypeToProto(bmcType models.BMCType) managerv1.BMCType {
+func convertBMCTypeToProto(bmcType types.BMCType) managerv1.BMCType {
 	switch bmcType {
-	case models.BMCTypeIPMI:
+	case types.BMCTypeIPMI:
 		return managerv1.BMCType_BMC_IPMI
-	case models.BMCTypeRedfish:
+	case types.BMCTypeRedfish:
 		return managerv1.BMCType_BMC_REDFISH
 	default:
 		return managerv1.BMCType_BMC_UNSPECIFIED
@@ -625,11 +625,11 @@ func convertBMCTypeToProto(bmcType models.BMCType) managerv1.BMCType {
 }
 
 // Helper function to convert SOLType from models to protobuf
-func convertSOLTypeToProto(solType models.SOLType) managerv1.SOLType {
+func convertSOLTypeToProto(solType types.SOLType) managerv1.SOLType {
 	switch solType {
-	case models.SOLTypeIPMI:
+	case types.SOLTypeIPMI:
 		return managerv1.SOLType_SOL_IPMI
-	case models.SOLTypeRedfishSerial:
+	case types.SOLTypeRedfishSerial:
 		return managerv1.SOLType_SOL_REDFISH_SERIAL
 	default:
 		return managerv1.SOLType_SOL_UNSPECIFIED
@@ -637,11 +637,11 @@ func convertSOLTypeToProto(solType models.SOLType) managerv1.SOLType {
 }
 
 // Helper function to convert VNCType from models to protobuf
-func convertVNCTypeToProto(vncType models.VNCType) managerv1.VNCType {
+func convertVNCTypeToProto(vncType types.VNCType) managerv1.VNCType {
 	switch vncType {
-	case models.VNCTypeNative:
+	case types.VNCTypeNative:
 		return managerv1.VNCType_VNC_NATIVE
-	case models.VNCTypeWebSocket:
+	case types.VNCTypeWebSocket:
 		return managerv1.VNCType_VNC_WEBSOCKET
 	default:
 		return managerv1.VNCType_VNC_UNSPECIFIED
@@ -902,14 +902,14 @@ func (h *BMCManagerServiceHandler) ReportAvailableEndpoints(
 // from gateway endpoint reports
 func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Context, endpoint *managerv1.BMCEndpointAvailability, gatewayID string) error {
 	// Convert BMC type from protobuf to models
-	var bmcType models.BMCType
+	var bmcType types.BMCType
 	switch endpoint.BmcType {
 	case managerv1.BMCType_BMC_IPMI:
-		bmcType = models.BMCTypeIPMI
+		bmcType = types.BMCTypeIPMI
 	case managerv1.BMCType_BMC_REDFISH:
-		bmcType = models.BMCTypeRedfish
+		bmcType = types.BMCTypeRedfish
 	default:
-		bmcType = models.BMCTypeIPMI // Default fallback
+		bmcType = types.BMCTypeIPMI // Default fallback
 	}
 
 	// For servers reported by gateways, we need to create a synthetic server ID
@@ -917,7 +917,7 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 	serverID := models.GenerateServerIDFromBMCEndpoint(endpoint.DatacenterId, endpoint.BmcEndpoint)
 
 	// Create or update server record
-	controlEndpoint := &models.BMCControlEndpoint{
+	controlEndpoint := &types.BMCControlEndpoint{
 		Endpoint:     endpoint.BmcEndpoint,
 		Type:         bmcType,
 		Username:     endpoint.Username,
@@ -928,7 +928,7 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 		ID:                serverID,
 		CustomerID:        "system", // System-managed servers from gateway reports
 		DatacenterID:      endpoint.DatacenterId,
-		ControlEndpoints:  []*models.BMCControlEndpoint{controlEndpoint},
+		ControlEndpoints:  []*types.BMCControlEndpoint{controlEndpoint},
 		PrimaryProtocol:   bmcType,
 		Features:          endpoint.Features,
 		Status:            endpoint.Status,
@@ -946,11 +946,11 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 	for _, feature := range endpoint.Features {
 		if feature == types.FeatureConsole.String() {
 			// Determine SOL type based on BMC type
-			solType := models.SOLTypeIPMI
-			if bmcType == models.BMCTypeRedfish {
-				solType = models.SOLTypeRedfishSerial
+			solType := types.SOLTypeIPMI
+			if bmcType == types.BMCTypeRedfish {
+				solType = types.SOLTypeRedfishSerial
 			}
-			server.SOLEndpoint = &models.SOLEndpoint{
+			server.SOLEndpoint = &types.SOLEndpoint{
 				Type:     solType,
 				Endpoint: endpoint.BmcEndpoint,
 				Username: endpoint.Username,
@@ -967,8 +967,8 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 	// Populate VNC endpoint if feature is present
 	for _, feature := range endpoint.Features {
 		if feature == types.FeatureVNC.String() {
-			server.VNCEndpoint = &models.VNCEndpoint{
-				Type:     models.VNCTypeNative, // Default to native VNC
+			server.VNCEndpoint = &types.VNCEndpoint{
+				Type:     types.VNCTypeNative, // Default to native VNC
 				Endpoint: endpoint.BmcEndpoint,
 				Username: endpoint.Username,
 				Password: "", // Will be filled later
@@ -1004,7 +1004,7 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 		CustomerID:        "system", // System-managed servers from gateway reports
 		DatacenterID:      endpoint.DatacenterId,
 		RegionalGatewayID: gatewayID,
-		ControlEndpoints:  []*models.BMCControlEndpoint{controlEndpoint},
+		ControlEndpoints:  []*types.BMCControlEndpoint{controlEndpoint},
 		PrimaryProtocol:   bmcType,
 		Features:          endpoint.Features,
 		CreatedAt:         time.Now(),

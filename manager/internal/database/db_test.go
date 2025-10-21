@@ -86,16 +86,16 @@ func TestServerRepository_CRUD(t *testing.T) {
 			types.FeatureConsole,
 			types.FeatureVNC,
 		}),
-		ControlEndpoints: []*models.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
-			Type:     models.BMCTypeIPMI,
+			Type:     types.BMCTypeIPMI,
 			Username: "admin",
 			Capabilities: types.CapabilitiesToStrings([]types.Capability{
 				types.CapabilityIPMISEL,
 				types.CapabilityIPMISDR,
 			}),
 		}},
-		PrimaryProtocol: models.BMCTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
 		Status:          "active",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
@@ -111,7 +111,7 @@ func TestServerRepository_CRUD(t *testing.T) {
 	assert.Equal(t, server.CustomerID, retrieved.CustomerID)
 	assert.Equal(t, server.Features, retrieved.Features)
 	assert.NotEmpty(t, retrieved.ControlEndpoints)
-	assert.Equal(t, models.BMCTypeIPMI, retrieved.ControlEndpoints[0].Type)
+	assert.Equal(t, types.BMCTypeIPMI, retrieved.ControlEndpoints[0].Type)
 
 	// Test List
 	servers, err := db.Servers.List(ctx, "customer-123")
@@ -158,26 +158,26 @@ func TestServer_JSONFields(t *testing.T) {
 		DatacenterID: "dc-test-01",
 		Features:     []string{"power", "console", "vnc", "sensors"}, // ✅ JSON array
 		Status:       "active",
-		SOLEndpoint: &models.SOLEndpoint{
-			Type:     models.SOLTypeRedfishSerial,
+		SOLEndpoint: &types.SOLEndpoint{
+			Type:     types.SOLTypeRedfishSerial,
 			Endpoint: "http://192.168.1.100:8000",
 			Username: "admin",
 			Password: "password",
 		},
-		VNCEndpoint: &models.VNCEndpoint{
-			Type:     models.VNCTypeNative,
+		VNCEndpoint: &types.VNCEndpoint{
+			Type:     types.VNCTypeNative,
 			Endpoint: "192.168.1.100:5901",
 			Username: "admin",
 			Password: "password",
 		},
-		ControlEndpoints: []*models.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint:     "http://192.168.1.100:8000",
-			Type:         models.BMCTypeRedfish,
+			Type:         types.BMCTypeRedfish,
 			Username:     "admin",
 			Password:     "password",
 			Capabilities: []string{"Systems", "Chassis"},
 		}},
-		PrimaryProtocol: models.BMCTypeRedfish,
+		PrimaryProtocol: types.BMCTypeRedfish,
 		Metadata: map[string]string{
 			"location": "rack-1",
 			"model":    "Dell R750",
@@ -209,16 +209,16 @@ func TestServer_JSONFields(t *testing.T) {
 
 	// Verify SOLEndpoint
 	require.NotNil(t, retrieved.SOLEndpoint)
-	assert.Equal(t, models.SOLTypeRedfishSerial, retrieved.SOLEndpoint.Type)
+	assert.Equal(t, types.SOLTypeRedfishSerial, retrieved.SOLEndpoint.Type)
 	assert.Equal(t, "http://192.168.1.100:8000", retrieved.SOLEndpoint.Endpoint)
 
 	// Verify VNCEndpoint
 	require.NotNil(t, retrieved.VNCEndpoint)
-	assert.Equal(t, models.VNCTypeNative, retrieved.VNCEndpoint.Type)
+	assert.Equal(t, types.VNCTypeNative, retrieved.VNCEndpoint.Type)
 	assert.Equal(t, "192.168.1.100:5901", retrieved.VNCEndpoint.Endpoint)
 
 	// Verify ControlEndpoints (already checked above, but double-check Type)
-	assert.Equal(t, models.BMCTypeRedfish, retrieved.ControlEndpoints[0].Type)
+	assert.Equal(t, types.BMCTypeRedfish, retrieved.ControlEndpoints[0].Type)
 
 	// Verify Metadata
 	assert.Len(t, retrieved.Metadata, 2)
@@ -268,11 +268,11 @@ func TestServerLocationRepository_Upsert(t *testing.T) {
 		CustomerID:        "customer-123",
 		DatacenterID:      "dc-us-east-1a",
 		RegionalGatewayID: "gateway-us-east-1",
-		ControlEndpoints: []*models.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
-			Type:     models.BMCTypeIPMI,
+			Type:     types.BMCTypeIPMI,
 		}},
-		PrimaryProtocol: models.BMCTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
 		Features:        []string{"power", "console"},
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
@@ -344,11 +344,11 @@ func TestProxySessionRepository_ListActive(t *testing.T) {
 		CustomerID:   "customer-123",
 		DatacenterID: "dc-01",
 		Features:     []string{"power"},
-		ControlEndpoints: []*models.BMCControlEndpoint{{
+		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint: "192.168.1.100:623",
-			Type:     models.BMCTypeIPMI,
+			Type:     types.BMCTypeIPMI,
 		}},
-		PrimaryProtocol: models.BMCTypeIPMI,
+		PrimaryProtocol: types.BMCTypeIPMI,
 		Status:          "active",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),

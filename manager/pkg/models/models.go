@@ -10,34 +10,27 @@ import (
 	"core/types"
 )
 
-type BMCType string
-
-const (
-	BMCTypeIPMI    BMCType = "ipmi"
-	BMCTypeRedfish BMCType = "redfish"
-)
-
 type Server struct {
-	ID                string                   `json:"id" db:"id"`
-	CustomerID        string                   `json:"customer_id" db:"customer_id"`
-	DatacenterID      string                   `json:"datacenter_id" db:"datacenter_id"`
-	ControlEndpoints  []*BMCControlEndpoint    `json:"control_endpoints" db:"control_endpoints"`
-	PrimaryProtocol   BMCType                  `json:"primary_protocol" db:"primary_protocol"`
-	SOLEndpoint       *SOLEndpoint             `json:"sol_endpoint" db:"sol_endpoint"`
-	VNCEndpoint       *VNCEndpoint             `json:"vnc_endpoint" db:"vnc_endpoint"`
-	Features          []string                 `json:"features" db:"features"`
-	Status            string                   `json:"status" db:"status"`
-	Metadata          map[string]string        `json:"metadata" db:"metadata"`
-	DiscoveryMetadata *types.DiscoveryMetadata `json:"discovery_metadata,omitempty" db:"discovery_metadata"`
-	CreatedAt         time.Time                `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time                `json:"updated_at" db:"updated_at"`
+	ID                string                      `json:"id" db:"id"`
+	CustomerID        string                      `json:"customer_id" db:"customer_id"`
+	DatacenterID      string                      `json:"datacenter_id" db:"datacenter_id"`
+	ControlEndpoints  []*types.BMCControlEndpoint `json:"control_endpoints" db:"control_endpoints"`
+	PrimaryProtocol   types.BMCType               `json:"primary_protocol" db:"primary_protocol"`
+	SOLEndpoint       *types.SOLEndpoint          `json:"sol_endpoint" db:"sol_endpoint"`
+	VNCEndpoint       *types.VNCEndpoint          `json:"vnc_endpoint" db:"vnc_endpoint"`
+	Features          []string                    `json:"features" db:"features"`
+	Status            string                      `json:"status" db:"status"`
+	Metadata          map[string]string           `json:"metadata" db:"metadata"`
+	DiscoveryMetadata *types.DiscoveryMetadata    `json:"discovery_metadata,omitempty" db:"discovery_metadata"`
+	CreatedAt         time.Time                   `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time                   `json:"updated_at" db:"updated_at"`
 }
 
 // GetPrimaryControlEndpoint returns the control endpoint matching PrimaryProtocol.
 // If PrimaryProtocol is set and found, returns that endpoint.
 // Otherwise, falls back to the first endpoint in the array.
 // Returns nil if no endpoints are available.
-func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
+func (s *Server) GetPrimaryControlEndpoint() *types.BMCControlEndpoint {
 	if len(s.ControlEndpoints) == 0 {
 		return nil
 	}
@@ -54,70 +47,6 @@ func (s *Server) GetPrimaryControlEndpoint() *BMCControlEndpoint {
 	// Fallback to first endpoint
 	return s.ControlEndpoints[0]
 }
-
-// BMCControlEndpoint represents BMC control API configuration
-type BMCControlEndpoint struct {
-	Endpoint     string     `json:"endpoint"`
-	Type         BMCType    `json:"type"`
-	Username     string     `json:"username"`
-	Password     string     `json:"password"`
-	TLS          *TLSConfig `json:"tls"`
-	Capabilities []string   `json:"capabilities"`
-}
-
-// SOLEndpoint represents Serial-over-LAN configuration
-type SOLEndpoint struct {
-	Type     SOLType    `json:"type"`
-	Endpoint string     `json:"endpoint"`
-	Username string     `json:"username"`
-	Password string     `json:"password"`
-	Config   *SOLConfig `json:"config"`
-}
-
-// VNCEndpoint represents VNC/KVM access configuration
-type VNCEndpoint struct {
-	Type     VNCType    `json:"type"`
-	Endpoint string     `json:"endpoint"`
-	Username string     `json:"username"`
-	Password string     `json:"password"`
-	Config   *VNCConfig `json:"config"`
-}
-
-// TLSConfig holds TLS-specific configuration
-type TLSConfig struct {
-	Enabled            bool   `json:"enabled"`
-	InsecureSkipVerify bool   `json:"insecure_skip_verify"`
-	CACert             string `json:"ca_cert"`
-}
-
-// SOLConfig holds SOL-specific configuration
-type SOLConfig struct {
-	BaudRate       int    `json:"baud_rate"`
-	FlowControl    string `json:"flow_control"`
-	TimeoutSeconds int    `json:"timeout_seconds"`
-}
-
-// VNCConfig holds VNC-specific configuration
-type VNCConfig struct {
-	Protocol string `json:"protocol"`
-	Path     string `json:"path"`
-	Display  int    `json:"display"`
-	ReadOnly bool   `json:"read_only"`
-}
-
-type SOLType string
-
-const (
-	SOLTypeIPMI          SOLType = "ipmi"
-	SOLTypeRedfishSerial SOLType = "redfish_serial"
-)
-
-type VNCType string
-
-const (
-	VNCTypeNative    VNCType = "native"
-	VNCTypeWebSocket VNCType = "websocket"
-)
 
 type Agent struct {
 	ID           string    `json:"id" db:"id"`
@@ -156,15 +85,15 @@ type CreateProxyResponse struct {
 }
 
 type ServerInfo struct {
-	ID               string                `json:"id"`
-	ControlEndpoints []*BMCControlEndpoint `json:"control_endpoints"`
-	PrimaryProtocol  BMCType               `json:"primary_protocol"`
-	SOLEndpoint      *SOLEndpoint          `json:"sol_endpoint"`
-	VNCEndpoint      *VNCEndpoint          `json:"vnc_endpoint"`
-	Features         []string              `json:"features"`
-	Status           string                `json:"status"`
-	DatacenterID     string                `json:"datacenter_id"`
-	Metadata         map[string]string     `json:"metadata"`
+	ID               string                      `json:"id"`
+	ControlEndpoints []*types.BMCControlEndpoint `json:"control_endpoints"`
+	PrimaryProtocol  types.BMCType               `json:"primary_protocol"`
+	SOLEndpoint      *types.SOLEndpoint          `json:"sol_endpoint"`
+	VNCEndpoint      *types.VNCEndpoint          `json:"vnc_endpoint"`
+	Features         []string                    `json:"features"`
+	Status           string                      `json:"status"`
+	DatacenterID     string                      `json:"datacenter_id"`
+	Metadata         map[string]string           `json:"metadata"`
 }
 
 type AuthClaims struct {
@@ -188,15 +117,15 @@ type RegionalGateway struct {
 
 // ServerLocation maps servers to their regional gateways (for BMC Manager)
 type ServerLocation struct {
-	ServerID          string                `json:"server_id" db:"server_id"`
-	CustomerID        string                `json:"customer_id" db:"customer_id"`
-	DatacenterID      string                `json:"datacenter_id" db:"datacenter_id"`
-	RegionalGatewayID string                `json:"regional_gateway_id" db:"regional_gateway_id"`
-	ControlEndpoints  []*BMCControlEndpoint `json:"control_endpoints" db:"control_endpoints"`
-	PrimaryProtocol   BMCType               `json:"primary_protocol" db:"primary_protocol"`
-	Features          []string              `json:"features" db:"features"`
-	CreatedAt         time.Time             `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time             `json:"updated_at" db:"updated_at"`
+	ServerID          string                      `json:"server_id" db:"server_id"`
+	CustomerID        string                      `json:"customer_id" db:"customer_id"`
+	DatacenterID      string                      `json:"datacenter_id" db:"datacenter_id"`
+	RegionalGatewayID string                      `json:"regional_gateway_id" db:"regional_gateway_id"`
+	ControlEndpoints  []*types.BMCControlEndpoint `json:"control_endpoints" db:"control_endpoints"`
+	PrimaryProtocol   types.BMCType               `json:"primary_protocol" db:"primary_protocol"`
+	Features          []string                    `json:"features" db:"features"`
+	CreatedAt         time.Time                   `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time                   `json:"updated_at" db:"updated_at"`
 }
 
 // ServerCustomerMapping represents the mapping between servers and customers
@@ -225,7 +154,7 @@ type AgentBMCMapping struct {
 	BMCEndpoint  string            // The BMC network endpoint (e.g., "192.168.1.100:623")
 	AgentID      string            // Agent that provides access to this BMC
 	DatacenterID string            // Datacenter containing this BMC
-	BMCType      BMCType           // Type of BMC interface (IPMI/Redfish)
+	BMCType      types.BMCType     // Type of BMC interface (IPMI/Redfish)
 	Features     []string          // BMC capabilities
 	Status       string            // BMC reachability status
 	LastSeen     time.Time         // When this BMC was last verified

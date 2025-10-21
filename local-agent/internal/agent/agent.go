@@ -89,11 +89,11 @@ func (a *LocalAgent) validateDependencies() error {
 	hasStaticIPMI := false
 	for _, host := range a.config.Static.Hosts {
 		primaryEndpoint := host.GetPrimaryControlEndpoint()
-		if primaryEndpoint != nil && primaryEndpoint.InferType() == types.BMCTypeIPMI {
+		if primaryEndpoint != nil && primaryEndpoint.ToTypesEndpoint().Type == types.BMCTypeIPMI {
 			hasStaticIPMI = true
 			break
 		}
-		if host.SOLEndpoint != nil && host.SOLEndpoint.InferType() == types.SOLTypeIPMI {
+		if host.SOLEndpoint != nil && host.SOLEndpoint.ToTypesEndpoint().Type == types.SOLTypeIPMI {
 			hasStaticIPMI = true
 			break
 		}
