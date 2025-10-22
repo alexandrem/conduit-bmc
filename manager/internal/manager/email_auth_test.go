@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/pkg/models"
@@ -86,13 +87,13 @@ func TestRegisterServer_WithEmailCustomerID(t *testing.T) {
 		ServerId:          "server-01",
 		DatacenterId:      "dc-test-01",
 		RegionalGatewayId: "test-gateway-1",
-		BmcProtocols: []*managerv1.BMCControlEndpoint{
+		BmcProtocols: []*commonv1.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     managerv1.BMCType_BMC_REDFISH,
+				Type:     commonv1.BMCType_BMC_REDFISH,
 			},
 		},
-		PrimaryProtocol: managerv1.BMCType_BMC_REDFISH,
+		PrimaryProtocol: commonv1.BMCType_BMC_REDFISH,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -401,13 +402,13 @@ func TestEmailBasedCustomerID_EndToEndFlow(t *testing.T) {
 		ServerId:          "test-server-01",
 		DatacenterId:      "dc-test-01",
 		RegionalGatewayId: "test-gateway-1",
-		BmcProtocols: []*managerv1.BMCControlEndpoint{
+		BmcProtocols: []*commonv1.BMCControlEndpoint{
 			{
 				Endpoint: "http://localhost:9001",
-				Type:     managerv1.BMCType_BMC_REDFISH,
+				Type:     commonv1.BMCType_BMC_REDFISH,
 			},
 		},
-		PrimaryProtocol: managerv1.BMCType_BMC_REDFISH,
+		PrimaryProtocol: commonv1.BMCType_BMC_REDFISH,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,

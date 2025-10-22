@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/gen/manager/v1/managerv1connect"
@@ -166,7 +167,7 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]domain.Server, er
 		for _, endpoint := range server.ControlEndpoints {
 			bmcEndpoint := &types.BMCControlEndpoint{
 				Endpoint:     endpoint.Endpoint,
-				Type:         types.BMCType(endpoint.Type),
+				Type:         convertProtoBMCTypeToTypes(endpoint.Type),
 				Username:     endpoint.Username,
 				Password:     endpoint.Password,
 				Capabilities: endpoint.Capabilities,
@@ -180,12 +181,12 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]domain.Server, er
 			}
 			clientServer.ControlEndpoints = append(clientServer.ControlEndpoints, bmcEndpoint)
 		}
-		clientServer.PrimaryProtocol = types.BMCType(server.PrimaryProtocol)
+		clientServer.PrimaryProtocol = convertProtoBMCTypeToTypes(server.PrimaryProtocol)
 
 		// Convert SOL endpoint
 		if server.SolEndpoint != nil {
 			clientServer.SOLEndpoint = &types.SOLEndpoint{
-				Type:     types.SOLType(server.SolEndpoint.Type),
+				Type:     convertProtoSOLTypeToTypes(server.SolEndpoint.Type),
 				Endpoint: server.SolEndpoint.Endpoint,
 				Username: server.SolEndpoint.Username,
 				Password: server.SolEndpoint.Password,
@@ -202,7 +203,7 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]domain.Server, er
 		// Convert VNC endpoint
 		if server.VncEndpoint != nil {
 			clientServer.VNCEndpoint = &types.VNCEndpoint{
-				Type:     types.VNCType(server.VncEndpoint.Type),
+				Type:     convertProtoVNCTypeToTypes(server.VncEndpoint.Type),
 				Endpoint: server.VncEndpoint.Endpoint,
 				Username: server.VncEndpoint.Username,
 				Password: server.VncEndpoint.Password,
@@ -405,33 +406,33 @@ type ServerTokenResult struct {
 
 // Helper functions to convert protobuf enums to core types
 
-func convertProtoBMCTypeToTypes(protoType managerv1.BMCType) types.BMCType {
+func convertProtoBMCTypeToTypes(protoType commonv1.BMCType) types.BMCType {
 	switch protoType {
-	case managerv1.BMCType_BMC_IPMI:
+	case commonv1.BMCType_BMC_IPMI:
 		return types.BMCTypeIPMI
-	case managerv1.BMCType_BMC_REDFISH:
+	case commonv1.BMCType_BMC_REDFISH:
 		return types.BMCTypeRedfish
 	default:
 		return types.BMCTypeNone
 	}
 }
 
-func convertProtoSOLTypeToTypes(protoType managerv1.SOLType) types.SOLType {
+func convertProtoSOLTypeToTypes(protoType commonv1.SOLType) types.SOLType {
 	switch protoType {
-	case managerv1.SOLType_SOL_IPMI:
+	case commonv1.SOLType_SOL_IPMI:
 		return types.SOLTypeIPMI
-	case managerv1.SOLType_SOL_REDFISH_SERIAL:
+	case commonv1.SOLType_SOL_REDFISH_SERIAL:
 		return types.SOLTypeRedfishSerial
 	default:
 		return types.SOLTypeNone
 	}
 }
 
-func convertProtoVNCTypeToTypes(protoType managerv1.VNCType) types.VNCType {
+func convertProtoVNCTypeToTypes(protoType commonv1.VNCType) types.VNCType {
 	switch protoType {
-	case managerv1.VNCType_VNC_NATIVE:
+	case commonv1.VNCType_VNC_NATIVE:
 		return types.VNCTypeNative
-	case managerv1.VNCType_VNC_WEBSOCKET:
+	case commonv1.VNCType_VNC_WEBSOCKET:
 		return types.VNCTypeWebSocket
 	default:
 		return types.VNCTypeNone

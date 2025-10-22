@@ -10,6 +10,7 @@ replace (
 
 require (
 	connectrpc.com/connect v1.19.0
+	core v0.0.0-00010101000000-000000000000
 	gateway v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0

@@ -18,6 +18,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/identity"
 	"core/types"
 	gatewayv1 "gateway/gen/gateway/v1"
@@ -352,25 +353,25 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*domain.
 
 		// Convert all control endpoints (RFD 006 multi-protocol support)
 		if len(server.ControlEndpoints) > 0 {
-			bmcEndpoint.ControlEndpoints = make([]*gatewayv1.BMCControlEndpoint, len(server.ControlEndpoints))
+			bmcEndpoint.ControlEndpoints = make([]*commonv1.BMCControlEndpoint, len(server.ControlEndpoints))
 			for i, endpoint := range server.ControlEndpoints {
-				var bmcType gatewayv1.BMCType
+				var bmcType commonv1.BMCType
 				switch endpoint.Type {
 				case "ipmi":
-					bmcType = gatewayv1.BMCType_BMC_IPMI
+					bmcType = commonv1.BMCType_BMC_IPMI
 				case "redfish":
-					bmcType = gatewayv1.BMCType_BMC_REDFISH
+					bmcType = commonv1.BMCType_BMC_REDFISH
 				default:
-					bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
+					bmcType = commonv1.BMCType_BMC_UNSPECIFIED
 				}
 
-				bmcEndpoint.ControlEndpoints[i] = &gatewayv1.BMCControlEndpoint{
+				bmcEndpoint.ControlEndpoints[i] = &commonv1.BMCControlEndpoint{
 					Endpoint:     endpoint.Endpoint,
 					Type:         bmcType,
 					Username:     endpoint.Username,
 					Password:     endpoint.Password,
 					Capabilities: endpoint.Capabilities,
-					Tls: &gatewayv1.TLSConfig{
+					Tls: &commonv1.TLSConfig{
 						Enabled:            true,
 						InsecureSkipVerify: true, // Default for dev
 					},
@@ -378,36 +379,36 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*domain.
 			}
 
 			// Set primary protocol
-			var primaryProto gatewayv1.BMCType
+			var primaryProto commonv1.BMCType
 			switch server.PrimaryProtocol {
 			case "ipmi":
-				primaryProto = gatewayv1.BMCType_BMC_IPMI
+				primaryProto = commonv1.BMCType_BMC_IPMI
 			case "redfish":
-				primaryProto = gatewayv1.BMCType_BMC_REDFISH
+				primaryProto = commonv1.BMCType_BMC_REDFISH
 			default:
-				primaryProto = gatewayv1.BMCType_BMC_UNSPECIFIED
+				primaryProto = commonv1.BMCType_BMC_UNSPECIFIED
 			}
 			bmcEndpoint.PrimaryProtocol = primaryProto
 		}
 
 		// Convert SOL endpoint
 		if server.SOLEndpoint != nil {
-			var solType gatewayv1.SOLType
+			var solType commonv1.SOLType
 			switch server.SOLEndpoint.Type {
 			case types.SOLTypeIPMI:
-				solType = gatewayv1.SOLType_SOL_IPMI
+				solType = commonv1.SOLType_SOL_IPMI
 			case types.SOLTypeRedfishSerial:
-				solType = gatewayv1.SOLType_SOL_REDFISH_SERIAL
+				solType = commonv1.SOLType_SOL_REDFISH_SERIAL
 			default:
-				solType = gatewayv1.SOLType_SOL_UNSPECIFIED
+				solType = commonv1.SOLType_SOL_UNSPECIFIED
 			}
 
-			bmcEndpoint.SolEndpoint = &gatewayv1.SOLEndpoint{
+			bmcEndpoint.SolEndpoint = &commonv1.SOLEndpoint{
 				Type:     solType,
 				Endpoint: server.SOLEndpoint.Endpoint,
 				Username: server.SOLEndpoint.Username,
 				Password: server.SOLEndpoint.Password,
-				Config: &gatewayv1.SOLConfig{
+				Config: &commonv1.SOLConfig{
 					BaudRate:       115200,
 					TimeoutSeconds: 300,
 				},
@@ -416,17 +417,17 @@ func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*domain.
 
 		// Convert VNC endpoint
 		if server.VNCEndpoint != nil {
-			var vncType gatewayv1.VNCType
+			var vncType commonv1.VNCType
 			switch server.VNCEndpoint.Type {
 			case types.VNCTypeNative:
-				vncType = gatewayv1.VNCType_VNC_NATIVE
+				vncType = commonv1.VNCType_VNC_NATIVE
 			case types.VNCTypeWebSocket:
-				vncType = gatewayv1.VNCType_VNC_WEBSOCKET
+				vncType = commonv1.VNCType_VNC_WEBSOCKET
 			default:
-				vncType = gatewayv1.VNCType_VNC_UNSPECIFIED
+				vncType = commonv1.VNCType_VNC_UNSPECIFIED
 			}
 
-			bmcEndpoint.VncEndpoint = &gatewayv1.VNCEndpoint{
+			bmcEndpoint.VncEndpoint = &commonv1.VNCEndpoint{
 				Type:     vncType,
 				Endpoint: server.VNCEndpoint.Endpoint,
 				Username: server.VNCEndpoint.Username,
@@ -485,19 +486,19 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 
 		// Convert all control endpoints (RFD 006 multi-protocol support)
 		if len(server.ControlEndpoints) > 0 {
-			bmcEndpoint.ControlEndpoints = make([]*gatewayv1.BMCControlEndpoint, len(server.ControlEndpoints))
+			bmcEndpoint.ControlEndpoints = make([]*commonv1.BMCControlEndpoint, len(server.ControlEndpoints))
 			for i, endpoint := range server.ControlEndpoints {
-				var bmcType gatewayv1.BMCType
+				var bmcType commonv1.BMCType
 				switch endpoint.Type {
 				case "ipmi":
-					bmcType = gatewayv1.BMCType_BMC_IPMI
+					bmcType = commonv1.BMCType_BMC_IPMI
 				case "redfish":
-					bmcType = gatewayv1.BMCType_BMC_REDFISH
+					bmcType = commonv1.BMCType_BMC_REDFISH
 				default:
-					bmcType = gatewayv1.BMCType_BMC_UNSPECIFIED
+					bmcType = commonv1.BMCType_BMC_UNSPECIFIED
 				}
 
-				bmcEndpoint.ControlEndpoints[i] = &gatewayv1.BMCControlEndpoint{
+				bmcEndpoint.ControlEndpoints[i] = &commonv1.BMCControlEndpoint{
 					Endpoint:     endpoint.Endpoint,
 					Type:         bmcType,
 					Username:     endpoint.Username,
@@ -507,31 +508,31 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 			}
 
 			// Set primary protocol
-			var primaryProto gatewayv1.BMCType
+			var primaryProto commonv1.BMCType
 			switch server.PrimaryProtocol {
 			case "ipmi":
-				primaryProto = gatewayv1.BMCType_BMC_IPMI
+				primaryProto = commonv1.BMCType_BMC_IPMI
 			case "redfish":
-				primaryProto = gatewayv1.BMCType_BMC_REDFISH
+				primaryProto = commonv1.BMCType_BMC_REDFISH
 			default:
-				primaryProto = gatewayv1.BMCType_BMC_UNSPECIFIED
+				primaryProto = commonv1.BMCType_BMC_UNSPECIFIED
 			}
 			bmcEndpoint.PrimaryProtocol = primaryProto
 		}
 
 		// Convert SOL endpoint
 		if server.SOLEndpoint != nil {
-			var solType gatewayv1.SOLType
+			var solType commonv1.SOLType
 			switch server.SOLEndpoint.Type {
 			case types.SOLTypeIPMI:
-				solType = gatewayv1.SOLType_SOL_IPMI
+				solType = commonv1.SOLType_SOL_IPMI
 			case types.SOLTypeRedfishSerial:
-				solType = gatewayv1.SOLType_SOL_REDFISH_SERIAL
+				solType = commonv1.SOLType_SOL_REDFISH_SERIAL
 			default:
-				solType = gatewayv1.SOLType_SOL_UNSPECIFIED
+				solType = commonv1.SOLType_SOL_UNSPECIFIED
 			}
 
-			bmcEndpoint.SolEndpoint = &gatewayv1.SOLEndpoint{
+			bmcEndpoint.SolEndpoint = &commonv1.SOLEndpoint{
 				Type:     solType,
 				Endpoint: server.SOLEndpoint.Endpoint,
 				Username: server.SOLEndpoint.Username,
@@ -541,17 +542,17 @@ func (a *LocalAgent) sendHeartbeat(ctx context.Context) error {
 
 		// Convert VNC endpoint
 		if server.VNCEndpoint != nil {
-			var vncType gatewayv1.VNCType
+			var vncType commonv1.VNCType
 			switch server.VNCEndpoint.Type {
 			case types.VNCTypeNative:
-				vncType = gatewayv1.VNCType_VNC_NATIVE
+				vncType = commonv1.VNCType_VNC_NATIVE
 			case types.VNCTypeWebSocket:
-				vncType = gatewayv1.VNCType_VNC_WEBSOCKET
+				vncType = commonv1.VNCType_VNC_WEBSOCKET
 			default:
-				vncType = gatewayv1.VNCType_VNC_UNSPECIFIED
+				vncType = commonv1.VNCType_VNC_UNSPECIFIED
 			}
 
-			bmcEndpoint.VncEndpoint = &gatewayv1.VNCEndpoint{
+			bmcEndpoint.VncEndpoint = &commonv1.VNCEndpoint{
 				Type:     vncType,
 				Endpoint: server.VNCEndpoint.Endpoint,
 				Username: server.VNCEndpoint.Username,

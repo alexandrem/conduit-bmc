@@ -4,6 +4,7 @@ package gateway.v1;
 
 import "google/protobuf/timestamp.proto";
 import "common/v1/discovery.proto";
+import "common/v1/server.proto";
 
 option go_package = "gateway/gen/gateway/v1;gatewayv1";
 
@@ -86,13 +87,6 @@ service GatewayService {
   rpc GetBMCInfo(GetBMCInfoRequest) returns (GetBMCInfoResponse);
 }
 
-// BMCType specifies the type of BMC interface available on a server
-enum BMCType {
-  BMC_UNSPECIFIED = 0;  // Unknown or not specified BMC type
-  BMC_IPMI = 1;         // Traditional IPMI interface (typically port 623)
-  BMC_REDFISH = 2;      // Modern Redfish REST API interface (typically HTTPS)
-}
-
 // HealthCheckRequest - empty request for service health verification
 message HealthCheckRequest {}
 
@@ -169,73 +163,14 @@ message AgentHeartbeatResponse {
 // Agents register servers with distinct control, SOL, and VNC endpoints
 message BMCEndpointRegistration {
   string server_id = 1;                    // Logical server identifier
-  repeated BMCControlEndpoint control_endpoints = 2;  // Multiple protocol support (RFD 006)
-  BMCType primary_protocol = 3;            // Preferred protocol for operations
-  SOLEndpoint sol_endpoint = 4;            // Serial-over-LAN access (optional)
-  VNCEndpoint vnc_endpoint = 5;            // VNC/KVM access (optional)
+  repeated common.v1.BMCControlEndpoint control_endpoints = 2;  // Multiple protocol support (RFD 006)
+  common.v1.BMCType primary_protocol = 3;            // Preferred protocol for operations
+  common.v1.SOLEndpoint sol_endpoint = 4;            // Serial-over-LAN access (optional)
+  common.v1.VNCEndpoint vnc_endpoint = 5;            // VNC/KVM access (optional)
   repeated string features = 6;            // High-level features (power, sensors, etc.)
   string status = 7;                       // Overall server status
   map<string, string> metadata = 8;        // Additional server metadata
   common.v1.DiscoveryMetadata discovery_metadata = 9; // Discovery metadata (RFD 017)
-}
-
-// BMC Control API endpoint (IPMI/Redfish)
-message BMCControlEndpoint {
-  string endpoint = 1;                     // BMC API endpoint (e.g., "192.168.1.100:623", "https://192.168.1.100")
-  BMCType type = 2;                        // IPMI or Redfish
-  string username = 3;                     // BMC credentials
-  string password = 4;                     // BMC credentials
-  TLSConfig tls = 5;                       // TLS configuration for Redfish
-  repeated string capabilities = 6;        // Control capabilities (power, sensors, sel, etc.)
-}
-
-// Serial-over-LAN console endpoint
-message SOLEndpoint {
-  SOLType type = 1;                        // IPMI SOL or Redfish serial console
-  string endpoint = 2;                     // SOL-specific endpoint (may differ from control)
-  string username = 3;                     // SOL credentials (may differ from BMC)
-  string password = 4;                     // SOL credentials
-  SOLConfig config = 5;                    // SOL-specific configuration
-}
-
-// VNC/KVM graphical console endpoint
-message VNCEndpoint {
-  VNCType type = 1;                        // BMC native VNC, noVNC proxy, or external KVM
-  string endpoint = 2;                     // VNC endpoint (websocket, TCP, or HTTP)
-  string username = 3;                     // VNC credentials
-  string password = 4;                     // VNC credentials
-  VNCConfig config = 5;                    // VNC-specific configuration
-}
-
-enum SOLType {
-  SOL_UNSPECIFIED = 0;
-  SOL_IPMI = 1;            // IPMI Serial-over-LAN
-  SOL_REDFISH_SERIAL = 2;  // Redfish serial console
-}
-
-enum VNCType {
-  VNC_UNSPECIFIED = 0;
-  VNC_NATIVE = 1;     // Native VNC TCP (port 5900)
-  VNC_WEBSOCKET = 2;  // WebSocket-wrapped VNC/RFB
-}
-
-message TLSConfig {
-  bool enabled = 1;
-  bool insecure_skip_verify = 2;
-  string ca_cert = 3;                      // Optional CA certificate
-}
-
-message SOLConfig {
-  int32 baud_rate = 1;                     // Serial baud rate (default: 115200)
-  string flow_control = 2;                 // Flow control settings
-  int32 timeout_seconds = 3;               // SOL session timeout
-}
-
-message VNCConfig {
-  string protocol = 1;                     // "websocket", "tcp", "http"
-  string path = 2;                         // URL path for HTTP/WebSocket
-  int32 display = 3;                       // VNC display number
-  bool read_only = 4;                      // Read-only access
 }
 
 // VNC Console Session Management Messages
@@ -351,7 +286,7 @@ message BMCEndpointAvailability {
   string bmc_endpoint = 1;        // BMC endpoint (e.g., "192.168.1.100:623")
   string agent_id = 2;            // Agent that provides access to this endpoint
   string datacenter_id = 3;       // Datacenter containing this BMC
-  BMCType bmc_type = 4;           // Type of BMC interface
+  common.v1.BMCType bmc_type = 4;           // Type of BMC interface
   repeated string features = 5;   // Available features
   string status = 6;              // Endpoint status
   google.protobuf.Timestamp last_seen = 7; // When this endpoint was last verified
@@ -486,5 +421,3 @@ message BootSourceOverride {
   string enabled = 2;                      // e.g., "Once", "Continuous", "Disabled"
   string mode = 3;                         // e.g., "UEFI", "Legacy"
 }
-
-// Discovery metadata is now defined in common/v1/discovery.proto (RFD 017)

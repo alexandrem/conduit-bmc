@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	commonv1 "core/gen/common/v1"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/pkg/models"
@@ -52,7 +53,7 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 		BmcEndpoint:  "192.168.1.100:623",
 		AgentId:      "agent-us-east",
 		DatacenterId: "dc-us-east-1a",
-		BmcType:      managerv1.BMCType_BMC_IPMI,
+		BmcType:      commonv1.BMCType_BMC_IPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -69,7 +70,7 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 		BmcEndpoint:  "192.168.2.100:623",
 		AgentId:      "agent-eu-west",
 		DatacenterId: "dc-eu-west-1a",
-		BmcType:      managerv1.BMCType_BMC_REDFISH,
+		BmcType:      commonv1.BMCType_BMC_REDFISH,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -116,7 +117,7 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 	assert.Equal(t, gatewayUSEast.ID, locationResp.Msg.RegionalGatewayId)
 	assert.Equal(t, gatewayUSEast.Endpoint, locationResp.Msg.RegionalGatewayEndpoint)
 	assert.Equal(t, "dc-us-east-1a", locationResp.Msg.DatacenterId)
-	assert.Equal(t, managerv1.BMCType_BMC_IPMI, locationResp.Msg.PrimaryProtocol)
+	assert.Equal(t, commonv1.BMCType_BMC_IPMI, locationResp.Msg.PrimaryProtocol)
 
 	// Get location for EU West server
 	euServerID := models.GenerateServerIDFromBMCEndpoint(euWestEndpoint.DatacenterId, euWestEndpoint.BmcEndpoint)
@@ -132,7 +133,7 @@ func TestGetServerLocation_ReturnsCorrectGateway(t *testing.T) {
 	assert.Equal(t, gatewayEUWest.ID, locationResp.Msg.RegionalGatewayId)
 	assert.Equal(t, gatewayEUWest.Endpoint, locationResp.Msg.RegionalGatewayEndpoint)
 	assert.Equal(t, "dc-eu-west-1a", locationResp.Msg.DatacenterId)
-	assert.Equal(t, managerv1.BMCType_BMC_REDFISH, locationResp.Msg.PrimaryProtocol)
+	assert.Equal(t, commonv1.BMCType_BMC_REDFISH, locationResp.Msg.PrimaryProtocol)
 }
 
 // TestGetServerLocation_MultipleDatacentersPerGateway tests that servers
@@ -165,7 +166,7 @@ func TestGetServerLocation_MultipleDatacentersPerGateway(t *testing.T) {
 			BmcEndpoint:  "192.168.1." + string(rune(100+i)) + ":623",
 			AgentId:      "agent-" + dc,
 			DatacenterId: dc,
-			BmcType:      managerv1.BMCType_BMC_IPMI,
+			BmcType:      commonv1.BMCType_BMC_IPMI,
 			Features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 			}),
@@ -217,7 +218,7 @@ func TestGetServerLocation_RequiresAuthentication(t *testing.T) {
 		BmcEndpoint:  "192.168.1.100:623",
 		AgentId:      "test-agent",
 		DatacenterId: "dc-test-01",
-		BmcType:      managerv1.BMCType_BMC_IPMI,
+		BmcType:      commonv1.BMCType_BMC_IPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 		}),
@@ -280,7 +281,7 @@ func TestGetServerLocation_IncludesFeatures(t *testing.T) {
 		BmcEndpoint:  "192.168.1.100:623",
 		AgentId:      "test-agent",
 		DatacenterId: "dc-test-01",
-		BmcType:      managerv1.BMCType_BMC_REDFISH,
+		BmcType:      commonv1.BMCType_BMC_REDFISH,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -331,18 +332,18 @@ func TestGetServerLocation_DifferentBMCTypes(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		bmcType         managerv1.BMCType
-		expectedBMCType managerv1.BMCType
+		bmcType         commonv1.BMCType
+		expectedBMCType commonv1.BMCType
 	}{
 		{
 			name:            "IPMI server",
-			bmcType:         managerv1.BMCType_BMC_IPMI,
-			expectedBMCType: managerv1.BMCType_BMC_IPMI,
+			bmcType:         commonv1.BMCType_BMC_IPMI,
+			expectedBMCType: commonv1.BMCType_BMC_IPMI,
 		},
 		{
 			name:            "Redfish server",
-			bmcType:         managerv1.BMCType_BMC_REDFISH,
-			expectedBMCType: managerv1.BMCType_BMC_REDFISH,
+			bmcType:         commonv1.BMCType_BMC_REDFISH,
+			expectedBMCType: commonv1.BMCType_BMC_REDFISH,
 		},
 	}
 
@@ -433,7 +434,7 @@ func TestGetServerLocation_GatewayEndpointFormat(t *testing.T) {
 				BmcEndpoint:  "192.168.1." + string(rune(100+i)) + ":623",
 				AgentId:      "test-agent",
 				DatacenterId: "dc-test-01",
-				BmcType:      managerv1.BMCType_BMC_IPMI,
+				BmcType:      commonv1.BMCType_BMC_IPMI,
 				Features: types.FeaturesToStrings([]types.Feature{
 					types.FeaturePower,
 				}),
@@ -483,7 +484,7 @@ func TestGetServerLocation_ConsistentResults(t *testing.T) {
 		BmcEndpoint:  "192.168.1.100:623",
 		AgentId:      "test-agent",
 		DatacenterId: "dc-test-01",
-		BmcType:      managerv1.BMCType_BMC_IPMI,
+		BmcType:      commonv1.BMCType_BMC_IPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,

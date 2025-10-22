@@ -9,6 +9,7 @@ replace (
 
 require (
 	connectrpc.com/connect v1.19.0
+	core v0.0.0-00010101000000-000000000000
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1

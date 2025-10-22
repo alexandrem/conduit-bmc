@@ -190,9 +190,9 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	for _, protoEndpoint := range req.Msg.BmcProtocols {
 		var bmcType types.BMCType
 		switch protoEndpoint.Type {
-		case managerv1.BMCType_BMC_IPMI:
+		case commonv1.BMCType_BMC_IPMI:
 			bmcType = types.BMCTypeIPMI
-		case managerv1.BMCType_BMC_REDFISH:
+		case commonv1.BMCType_BMC_REDFISH:
 			bmcType = types.BMCTypeRedfish
 		default:
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid BMC type"))
@@ -211,9 +211,9 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	// Determine primary protocol
 	var primaryProtocol types.BMCType = types.BMCTypeIPMI // Default
 	switch req.Msg.PrimaryProtocol {
-	case managerv1.BMCType_BMC_IPMI:
+	case commonv1.BMCType_BMC_IPMI:
 		primaryProtocol = types.BMCTypeIPMI
-	case managerv1.BMCType_BMC_REDFISH:
+	case commonv1.BMCType_BMC_REDFISH:
 		primaryProtocol = types.BMCTypeRedfish
 	}
 
@@ -345,14 +345,14 @@ func (h *BMCManagerServiceHandler) GetServerLocation(
 	}
 
 	// Convert primary protocol to protobuf
-	var primaryProtocol managerv1.BMCType
+	var primaryProtocol commonv1.BMCType
 	switch location.PrimaryProtocol {
 	case types.BMCTypeIPMI:
-		primaryProtocol = managerv1.BMCType_BMC_IPMI
+		primaryProtocol = commonv1.BMCType_BMC_IPMI
 	case types.BMCTypeRedfish:
-		primaryProtocol = managerv1.BMCType_BMC_REDFISH
+		primaryProtocol = commonv1.BMCType_BMC_REDFISH
 	default:
-		primaryProtocol = managerv1.BMCType_BMC_UNSPECIFIED
+		primaryProtocol = commonv1.BMCType_BMC_UNSPECIFIED
 	}
 
 	response := &managerv1.GetServerLocationResponse{
@@ -559,7 +559,7 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 					Features:          server.Features,
 					CreatedAt:         timestamppb.New(server.CreatedAt),
 					UpdatedAt:         timestamppb.New(server.UpdatedAt),
-					BmcProtocols:      []*managerv1.BMCControlEndpoint{{Endpoint: server.BMCEndpoint, Type: convertBMCTypeToProto(server.BMCType)}},
+					BmcProtocols:      []*commonv1.BMCControlEndpoint{{Endpoint: server.BMCEndpoint, Type: convertBMCTypeToProto(server.BMCType)}},
 				})
 			}
 		}
@@ -590,7 +590,7 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 			Features:          server.Features,
 			CreatedAt:         timestamppb.New(server.CreatedAt),
 			UpdatedAt:         timestamppb.New(server.UpdatedAt),
-			BmcProtocols:      []*managerv1.BMCControlEndpoint{{Endpoint: server.BMCEndpoint, Type: convertBMCTypeToProto(server.BMCType)}},
+			BmcProtocols:      []*commonv1.BMCControlEndpoint{{Endpoint: server.BMCEndpoint, Type: convertBMCTypeToProto(server.BMCType)}},
 		})
 	}
 
@@ -613,38 +613,38 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 }
 
 // Helper function to convert BMCType from models to protobuf
-func convertBMCTypeToProto(bmcType types.BMCType) managerv1.BMCType {
+func convertBMCTypeToProto(bmcType types.BMCType) commonv1.BMCType {
 	switch bmcType {
 	case types.BMCTypeIPMI:
-		return managerv1.BMCType_BMC_IPMI
+		return commonv1.BMCType_BMC_IPMI
 	case types.BMCTypeRedfish:
-		return managerv1.BMCType_BMC_REDFISH
+		return commonv1.BMCType_BMC_REDFISH
 	default:
-		return managerv1.BMCType_BMC_UNSPECIFIED
+		return commonv1.BMCType_BMC_UNSPECIFIED
 	}
 }
 
 // Helper function to convert SOLType from models to protobuf
-func convertSOLTypeToProto(solType types.SOLType) managerv1.SOLType {
+func convertSOLTypeToProto(solType types.SOLType) commonv1.SOLType {
 	switch solType {
 	case types.SOLTypeIPMI:
-		return managerv1.SOLType_SOL_IPMI
+		return commonv1.SOLType_SOL_IPMI
 	case types.SOLTypeRedfishSerial:
-		return managerv1.SOLType_SOL_REDFISH_SERIAL
+		return commonv1.SOLType_SOL_REDFISH_SERIAL
 	default:
-		return managerv1.SOLType_SOL_UNSPECIFIED
+		return commonv1.SOLType_SOL_UNSPECIFIED
 	}
 }
 
 // Helper function to convert VNCType from models to protobuf
-func convertVNCTypeToProto(vncType types.VNCType) managerv1.VNCType {
+func convertVNCTypeToProto(vncType types.VNCType) commonv1.VNCType {
 	switch vncType {
 	case types.VNCTypeNative:
-		return managerv1.VNCType_VNC_NATIVE
+		return commonv1.VNCType_VNC_NATIVE
 	case types.VNCTypeWebSocket:
-		return managerv1.VNCType_VNC_WEBSOCKET
+		return commonv1.VNCType_VNC_WEBSOCKET
 	default:
-		return managerv1.VNCType_VNC_UNSPECIFIED
+		return commonv1.VNCType_VNC_UNSPECIFIED
 	}
 }
 
@@ -690,9 +690,9 @@ func (h *BMCManagerServiceHandler) GetServer(
 	}
 
 	// Convert control endpoints (multi-protocol support)
-	protoServer.ControlEndpoints = make([]*managerv1.BMCControlEndpoint, 0, len(server.ControlEndpoints))
+	protoServer.ControlEndpoints = make([]*commonv1.BMCControlEndpoint, 0, len(server.ControlEndpoints))
 	for _, endpoint := range server.ControlEndpoints {
-		protoEndpoint := &managerv1.BMCControlEndpoint{
+		protoEndpoint := &commonv1.BMCControlEndpoint{
 			Endpoint:     endpoint.Endpoint,
 			Type:         convertBMCTypeToProto(endpoint.Type),
 			Username:     endpoint.Username,
@@ -700,7 +700,7 @@ func (h *BMCManagerServiceHandler) GetServer(
 			Capabilities: endpoint.Capabilities,
 		}
 		if endpoint.TLS != nil {
-			protoEndpoint.Tls = &managerv1.TLSConfig{
+			protoEndpoint.Tls = &commonv1.TLSConfig{
 				Enabled:            endpoint.TLS.Enabled,
 				InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
 				CaCert:             endpoint.TLS.CACert,
@@ -712,14 +712,14 @@ func (h *BMCManagerServiceHandler) GetServer(
 
 	// Convert SOL endpoint
 	if server.SOLEndpoint != nil {
-		protoServer.SolEndpoint = &managerv1.SOLEndpoint{
+		protoServer.SolEndpoint = &commonv1.SOLEndpoint{
 			Type:     convertSOLTypeToProto(server.SOLEndpoint.Type),
 			Endpoint: server.SOLEndpoint.Endpoint,
 			Username: server.SOLEndpoint.Username,
 			Password: server.SOLEndpoint.Password,
 		}
 		if server.SOLEndpoint.Config != nil {
-			protoServer.SolEndpoint.Config = &managerv1.SOLConfig{
+			protoServer.SolEndpoint.Config = &commonv1.SOLConfig{
 				BaudRate:       int32(server.SOLEndpoint.Config.BaudRate),
 				FlowControl:    server.SOLEndpoint.Config.FlowControl,
 				TimeoutSeconds: int32(server.SOLEndpoint.Config.TimeoutSeconds),
@@ -729,14 +729,14 @@ func (h *BMCManagerServiceHandler) GetServer(
 
 	// Convert VNC endpoint
 	if server.VNCEndpoint != nil {
-		protoServer.VncEndpoint = &managerv1.VNCEndpoint{
+		protoServer.VncEndpoint = &commonv1.VNCEndpoint{
 			Type:     convertVNCTypeToProto(server.VNCEndpoint.Type),
 			Endpoint: server.VNCEndpoint.Endpoint,
 			Username: server.VNCEndpoint.Username,
 			Password: server.VNCEndpoint.Password,
 		}
 		if server.VNCEndpoint.Config != nil {
-			protoServer.VncEndpoint.Config = &managerv1.VNCConfig{
+			protoServer.VncEndpoint.Config = &commonv1.VNCConfig{
 				Protocol: server.VNCEndpoint.Config.Protocol,
 				Path:     server.VNCEndpoint.Config.Path,
 				Display:  int32(server.VNCEndpoint.Config.Display),
@@ -794,9 +794,9 @@ func (h *BMCManagerServiceHandler) ListServers(
 		}
 
 		// Convert control endpoints (multi-protocol support)
-		protoServer.ControlEndpoints = make([]*managerv1.BMCControlEndpoint, 0, len(server.ControlEndpoints))
+		protoServer.ControlEndpoints = make([]*commonv1.BMCControlEndpoint, 0, len(server.ControlEndpoints))
 		for _, endpoint := range server.ControlEndpoints {
-			protoEndpoint := &managerv1.BMCControlEndpoint{
+			protoEndpoint := &commonv1.BMCControlEndpoint{
 				Endpoint:     endpoint.Endpoint,
 				Type:         convertBMCTypeToProto(endpoint.Type),
 				Username:     endpoint.Username,
@@ -804,7 +804,7 @@ func (h *BMCManagerServiceHandler) ListServers(
 				Capabilities: endpoint.Capabilities,
 			}
 			if endpoint.TLS != nil {
-				protoEndpoint.Tls = &managerv1.TLSConfig{
+				protoEndpoint.Tls = &commonv1.TLSConfig{
 					Enabled:            endpoint.TLS.Enabled,
 					InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
 					CaCert:             endpoint.TLS.CACert,
@@ -816,14 +816,14 @@ func (h *BMCManagerServiceHandler) ListServers(
 
 		// Convert SOL endpoint
 		if server.SOLEndpoint != nil {
-			protoServer.SolEndpoint = &managerv1.SOLEndpoint{
+			protoServer.SolEndpoint = &commonv1.SOLEndpoint{
 				Type:     convertSOLTypeToProto(server.SOLEndpoint.Type),
 				Endpoint: server.SOLEndpoint.Endpoint,
 				Username: server.SOLEndpoint.Username,
 				Password: server.SOLEndpoint.Password,
 			}
 			if server.SOLEndpoint.Config != nil {
-				protoServer.SolEndpoint.Config = &managerv1.SOLConfig{
+				protoServer.SolEndpoint.Config = &commonv1.SOLConfig{
 					BaudRate:       int32(server.SOLEndpoint.Config.BaudRate),
 					FlowControl:    server.SOLEndpoint.Config.FlowControl,
 					TimeoutSeconds: int32(server.SOLEndpoint.Config.TimeoutSeconds),
@@ -833,14 +833,14 @@ func (h *BMCManagerServiceHandler) ListServers(
 
 		// Convert VNC endpoint
 		if server.VNCEndpoint != nil {
-			protoServer.VncEndpoint = &managerv1.VNCEndpoint{
+			protoServer.VncEndpoint = &commonv1.VNCEndpoint{
 				Type:     convertVNCTypeToProto(server.VNCEndpoint.Type),
 				Endpoint: server.VNCEndpoint.Endpoint,
 				Username: server.VNCEndpoint.Username,
 				Password: server.VNCEndpoint.Password,
 			}
 			if server.VNCEndpoint.Config != nil {
-				protoServer.VncEndpoint.Config = &managerv1.VNCConfig{
+				protoServer.VncEndpoint.Config = &commonv1.VNCConfig{
 					Protocol: server.VNCEndpoint.Config.Protocol,
 					Path:     server.VNCEndpoint.Config.Path,
 					Display:  int32(server.VNCEndpoint.Config.Display),
@@ -904,9 +904,9 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 	// Convert BMC type from protobuf to models
 	var bmcType types.BMCType
 	switch endpoint.BmcType {
-	case managerv1.BMCType_BMC_IPMI:
+	case commonv1.BMCType_BMC_IPMI:
 		bmcType = types.BMCTypeIPMI
-	case managerv1.BMCType_BMC_REDFISH:
+	case commonv1.BMCType_BMC_REDFISH:
 		bmcType = types.BMCTypeRedfish
 	default:
 		bmcType = types.BMCTypeIPMI // Default fallback

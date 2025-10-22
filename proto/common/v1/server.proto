@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "core/gen/common/v1;commonv1";
+
+// Server resource types
+// These types are shared between gateway and manager services
+
+// BMCType specifies the type of BMC interface available on a server
+enum BMCType {
+  BMC_UNSPECIFIED = 0;  // Unknown or not specified BMC type
+  BMC_IPMI = 1;         // Traditional IPMI interface (typically port 623)
+  BMC_REDFISH = 2;      // Modern Redfish REST API interface (typically HTTPS)
+}
+
+// SOLType specifies the type of Serial-over-LAN endpoint
+enum SOLType {
+  SOL_UNSPECIFIED = 0;
+  SOL_IPMI = 1;            // IPMI Serial-over-LAN
+  SOL_REDFISH_SERIAL = 2;  // Redfish serial console
+}
+
+// VNCType specifies the type of VNC transport
+enum VNCType {
+  VNC_UNSPECIFIED = 0;
+  VNC_NATIVE = 1;     // Native VNC TCP (port 5900)
+  VNC_WEBSOCKET = 2;  // WebSocket-wrapped VNC/RFB
+}
+
+// BMC Control API endpoint (IPMI/Redfish)
+message BMCControlEndpoint {
+  string endpoint = 1;                     // BMC API endpoint (e.g., "192.168.1.100:623", "https://192.168.1.100")
+  BMCType type = 2;                        // IPMI or Redfish
+  string username = 3;                     // BMC credentials
+  string password = 4;                     // BMC credentials
+  TLSConfig tls = 5;                       // TLS configuration for Redfish
+  repeated string capabilities = 6;        // Control capabilities (power, sensors, sel, etc.)
+}
+
+// Serial-over-LAN console endpoint
+message SOLEndpoint {
+  SOLType type = 1;                        // IPMI SOL or Redfish serial console
+  string endpoint = 2;                     // SOL-specific endpoint (may differ from control)
+  string username = 3;                     // SOL credentials (may differ from BMC)
+  string password = 4;                     // SOL credentials
+  SOLConfig config = 5;                    // SOL-specific configuration
+}
+
+// VNC/KVM graphical console endpoint
+message VNCEndpoint {
+  VNCType type = 1;                        // BMC native VNC, noVNC proxy, or external KVM
+  string endpoint = 2;                     // VNC endpoint (websocket, TCP, or HTTP)
+  string username = 3;                     // VNC credentials
+  string password = 4;                     // VNC credentials
+  VNCConfig config = 5;                    // VNC-specific configuration
+}
+
+// TLSConfig holds TLS-specific configuration for BMC connections
+message TLSConfig {
+  bool enabled = 1;
+  bool insecure_skip_verify = 2;
+  string ca_cert = 3;                      // Optional CA certificate
+}
+
+// SOLConfig holds SOL-specific configuration
+message SOLConfig {
+  int32 baud_rate = 1;                     // Serial baud rate (default: 115200)
+  string flow_control = 2;                 // Flow control settings
+  int32 timeout_seconds = 3;               // SOL session timeout
+}
+
+// VNCConfig holds VNC-specific configuration
+message VNCConfig {
+  string protocol = 1;                     // "websocket", "tcp", "http"
+  string path = 2;                         // URL path for HTTP/WebSocket
+  int32 display = 3;                       // VNC display number
+  bool read_only = 4;                      // Read-only access
+}

@@ -13,6 +13,7 @@ import (
 
 	commonauth "core/auth"
 	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/types"
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
@@ -1249,23 +1250,23 @@ func (h *RegionalGatewayHandler) reportEndpointsToManager(ctx context.Context) e
 
 // convertBMCTypeToManagerProto converts model BMC type to manager protobuf BMC
 // type.
-func convertBMCTypeToManagerProto(bmcType types.BMCType) managerv1.BMCType {
+func convertBMCTypeToManagerProto(bmcType types.BMCType) commonv1.BMCType {
 	switch bmcType {
 	case types.BMCTypeIPMI:
-		return managerv1.BMCType_BMC_IPMI
+		return commonv1.BMCType_BMC_IPMI
 	case types.BMCTypeRedfish:
-		return managerv1.BMCType_BMC_REDFISH
+		return commonv1.BMCType_BMC_REDFISH
 	default:
-		return managerv1.BMCType_BMC_UNSPECIFIED
+		return commonv1.BMCType_BMC_UNSPECIFIED
 	}
 }
 
 // convertProtoBMCTypeToModels converts from gateway protobuf BMCType to types.BMCType
-func convertProtoBMCTypeToModels(protoType gatewayv1.BMCType) types.BMCType {
+func convertProtoBMCTypeToModels(protoType commonv1.BMCType) types.BMCType {
 	switch protoType {
-	case gatewayv1.BMCType_BMC_IPMI:
+	case commonv1.BMCType_BMC_IPMI:
 		return types.BMCTypeIPMI
-	case gatewayv1.BMCType_BMC_REDFISH:
+	case commonv1.BMCType_BMC_REDFISH:
 		return types.BMCTypeRedfish
 	default:
 		return types.BMCTypeIPMI // Default fallback, but this should be rare

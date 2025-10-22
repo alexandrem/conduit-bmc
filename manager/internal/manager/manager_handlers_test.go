@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/internal/database"
@@ -261,7 +262,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		bmcType         managerv1.BMCType
+		bmcType         commonv1.BMCType
 		features        []string
 		expectSOL       bool
 		expectVNC       bool
@@ -270,7 +271,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 	}{
 		{
 			name:    "IPMI with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_IPMI,
+			bmcType: commonv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureSensors,
@@ -284,7 +285,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "Redfish with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_REDFISH,
+			bmcType: commonv1.BMCType_BMC_REDFISH,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -297,7 +298,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI with only power features",
-			bmcType: managerv1.BMCType_BMC_IPMI,
+			bmcType: commonv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureSensors,
@@ -307,7 +308,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI with only console",
-			bmcType: managerv1.BMCType_BMC_IPMI,
+			bmcType: commonv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -318,7 +319,7 @@ func TestReportAvailableEndpoints_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI with only VNC",
-			bmcType: managerv1.BMCType_BMC_IPMI,
+			bmcType: commonv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureVNC,
@@ -401,7 +402,7 @@ func TestListServers_ReturnsSOLAndVNCEndpoints(t *testing.T) {
 		BmcEndpoint:  "192.168.1.100:623",
 		AgentId:      "test-agent-1",
 		DatacenterId: "dc-test-01",
-		BmcType:      managerv1.BMCType_BMC_IPMI,
+		BmcType:      commonv1.BMCType_BMC_IPMI,
 		Features: types.FeaturesToStrings([]types.Feature{
 			types.FeaturePower,
 			types.FeatureConsole,
@@ -437,13 +438,13 @@ func TestListServers_ReturnsSOLAndVNCEndpoints(t *testing.T) {
 
 	// Verify SOL endpoint is returned
 	require.NotNil(t, server.SolEndpoint, "SOL endpoint should be included in response")
-	assert.Equal(t, managerv1.SOLType_SOL_IPMI, server.SolEndpoint.Type)
+	assert.Equal(t, commonv1.SOLType_SOL_IPMI, server.SolEndpoint.Type)
 	assert.Equal(t, bmcEndpoint.BmcEndpoint, server.SolEndpoint.Endpoint)
 	assert.Equal(t, bmcEndpoint.Username, server.SolEndpoint.Username)
 
 	// Verify VNC endpoint is returned
 	require.NotNil(t, server.VncEndpoint, "VNC endpoint should be included in response")
-	assert.Equal(t, managerv1.VNCType_VNC_NATIVE, server.VncEndpoint.Type)
+	assert.Equal(t, commonv1.VNCType_VNC_NATIVE, server.VncEndpoint.Type)
 	assert.Equal(t, bmcEndpoint.BmcEndpoint, server.VncEndpoint.Endpoint)
 	assert.Equal(t, bmcEndpoint.Username, server.VncEndpoint.Username)
 }
@@ -459,7 +460,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		bmcType         managerv1.BMCType
+		bmcType         commonv1.BMCType
 		features        []string
 		expectSOL       bool
 		expectVNC       bool
@@ -467,7 +468,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 	}{
 		{
 			name:    "IPMI with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_IPMI,
+			bmcType: commonv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -480,7 +481,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "Redfish with console and VNC features",
-			bmcType: managerv1.BMCType_BMC_REDFISH,
+			bmcType: commonv1.BMCType_BMC_REDFISH,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureConsole,
@@ -493,7 +494,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 		},
 		{
 			name:    "IPMI without console features",
-			bmcType: managerv1.BMCType_BMC_IPMI,
+			bmcType: commonv1.BMCType_BMC_IPMI,
 			features: types.FeaturesToStrings([]types.Feature{
 				types.FeaturePower,
 				types.FeatureSensors,
@@ -513,7 +514,7 @@ func TestRegisterServer_PopulatesSOLAndVNCEndpoints(t *testing.T) {
 				CustomerId:        customer.ID,
 				DatacenterId:      "dc-test-01",
 				RegionalGatewayId: "gateway-1",
-				BmcProtocols: []*managerv1.BMCControlEndpoint{
+				BmcProtocols: []*commonv1.BMCControlEndpoint{
 					{
 						Endpoint: bmcEndpoint,
 						Type:     tc.bmcType,

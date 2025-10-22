@@ -4,6 +4,7 @@ package manager.v1;
 
 import "google/protobuf/timestamp.proto";
 import "common/v1/discovery.proto";
+import "common/v1/server.proto";
 
 option go_package = "manager/gen/manager/v1;managerv1";
 
@@ -75,24 +76,7 @@ service BMCManagerService {
 // Core Data Models
 // ============================================================================
 
-// BMCType specifies the type of BMC interface available on a server
-enum BMCType {
-  BMC_UNSPECIFIED = 0;  // Unknown or not specified BMC type
-  BMC_IPMI = 1;         // Traditional IPMI interface (typically port 623/UDP)
-  BMC_REDFISH = 2;      // Modern Redfish REST API interface (typically HTTPS/443)
-}
-
-enum SOLType {
-  SOL_UNSPECIFIED = 0;
-  SOL_IPMI = 1;            // IPMI Serial-over-LAN
-  SOL_REDFISH_SERIAL = 2;  // Redfish serial console
-}
-
-enum VNCType {
-  VNC_UNSPECIFIED = 0;
-  VNC_NATIVE = 1;     // Native VNC TCP (port 5900)
-  VNC_WEBSOCKET = 2;  // WebSocket-wrapped VNC/RFB
-}
+// Server resource types are now defined in common/v1/server.proto
 
 // Customer represents a customer/tenant in the system
 message Customer {
@@ -107,63 +91,16 @@ message Server {
   string id = 1;                               // Unique server identifier (e.g., "srv-001", "rack1-server5")
   string customer_id = 2;                      // Customer/tenant ID that owns this server
   string datacenter_id = 3;                   // Datacenter where the server is physically located
-  repeated BMCControlEndpoint control_endpoints = 4; // Multiple protocol support (required for RFD 006)
-  BMCType primary_protocol = 5;               // Preferred protocol for operations
-  SOLEndpoint sol_endpoint = 6;               // Serial-over-LAN endpoint (optional)
-  VNCEndpoint vnc_endpoint = 7;               // VNC/KVM endpoint (optional)
+  repeated common.v1.BMCControlEndpoint control_endpoints = 4; // Multiple protocol support (required for RFD 006)
+  common.v1.BMCType primary_protocol = 5;               // Preferred protocol for operations
+  common.v1.SOLEndpoint sol_endpoint = 6;               // Serial-over-LAN endpoint (optional)
+  common.v1.VNCEndpoint vnc_endpoint = 7;               // VNC/KVM endpoint (optional)
   repeated string features = 8;               // Supported high-level features (e.g., "power", "console", "vnc")
   string status = 9;                          // Current server status (e.g., "online", "offline", "maintenance")
   google.protobuf.Timestamp created_at = 10;  // When the server was first registered
   google.protobuf.Timestamp updated_at = 11; // Last time server information was updated
   map<string, string> metadata = 12;         // Additional server metadata
   common.v1.DiscoveryMetadata discovery_metadata = 13;  // Discovery metadata (RFD 017)
-}
-
-// BMC Control API endpoint (IPMI/Redfish)
-message BMCControlEndpoint {
-  string endpoint = 1;                     // BMC API endpoint (e.g., "192.168.1.100:623", "https://192.168.1.100")
-  BMCType type = 2;                        // IPMI or Redfish
-  string username = 3;                     // BMC credentials
-  string password = 4;                     // BMC credentials
-  TLSConfig tls = 5;                       // TLS configuration for Redfish
-  repeated string capabilities = 6;        // Control capabilities (power, sensors, sel, etc.)
-}
-
-// Serial-over-LAN console endpoint
-message SOLEndpoint {
-  SOLType type = 1;                        // IPMI SOL or Redfish serial console
-  string endpoint = 2;                     // SOL-specific endpoint (may differ from control)
-  string username = 3;                     // SOL credentials (may differ from BMC)
-  string password = 4;                     // SOL credentials
-  SOLConfig config = 5;                    // SOL-specific configuration
-}
-
-// VNC/KVM graphical console endpoint
-message VNCEndpoint {
-  VNCType type = 1;                        // BMC native VNC, noVNC proxy, or external KVM
-  string endpoint = 2;                     // VNC endpoint (websocket, TCP, or HTTP)
-  string username = 3;                     // VNC credentials
-  string password = 4;                     // VNC credentials
-  VNCConfig config = 5;                    // VNC-specific configuration
-}
-
-message TLSConfig {
-  bool enabled = 1;
-  bool insecure_skip_verify = 2;
-  string ca_cert = 3;                      // Optional CA certificate
-}
-
-message SOLConfig {
-  int32 baud_rate = 1;                     // Serial baud rate (default: 115200)
-  string flow_control = 2;                 // Flow control settings
-  int32 timeout_seconds = 3;               // SOL session timeout
-}
-
-message VNCConfig {
-  string protocol = 1;                     // "websocket", "tcp", "http"
-  string path = 2;                         // URL path for HTTP/WebSocket
-  int32 display = 3;                       // VNC display number
-  bool read_only = 4;                      // Read-only access
 }
 
 // RegionalGateway represents a gateway instance serving one or more datacenters
@@ -187,8 +124,8 @@ message ServerLocation {
   repeated string features = 5;               // BMC capabilities (e.g., "power", "sol", "kvm", "sensors")
   google.protobuf.Timestamp created_at = 6;  // When the server was first registered
   google.protobuf.Timestamp updated_at = 7;  // Last time server information was modified
-  repeated BMCControlEndpoint bmc_protocols = 8; // Multiple protocol support (required for RFD 006)
-  BMCType primary_protocol = 9;               // Preferred protocol for operations
+  repeated common.v1.BMCControlEndpoint bmc_protocols = 8; // Multiple protocol support (required for RFD 006)
+  common.v1.BMCType primary_protocol = 9;               // Preferred protocol for operations
 }
 
 // ============================================================================
@@ -243,8 +180,8 @@ message RegisterServerRequest {
   string datacenter_id = 3;       // Physical datacenter where the server is located
   string regional_gateway_id = 4; // Gateway responsible for this server (must serve the datacenter)
   repeated string features = 5;   // BMC capabilities (e.g., "power", "sol", "kvm", "sensors", "media")
-  repeated BMCControlEndpoint bmc_protocols = 6; // Multiple protocol support (required for RFD 006)
-  BMCType primary_protocol = 7;   // Preferred protocol for operations
+  repeated common.v1.BMCControlEndpoint bmc_protocols = 6; // Multiple protocol support (required for RFD 006)
+  common.v1.BMCType primary_protocol = 7;   // Preferred protocol for operations
 }
 
 // RegisterServerResponse confirms server registration
@@ -287,8 +224,8 @@ message GetServerLocationResponse {
   string regional_gateway_endpoint = 2; // Full URL/endpoint of the responsible gateway
   string datacenter_id = 3;             // Datacenter where the server is physically located
   repeated string features = 4;         // BMC capabilities supported by this server
-  repeated BMCControlEndpoint bmc_protocols = 5; // Multiple protocol support (required for RFD 006)
-  BMCType primary_protocol = 6;         // Preferred protocol for operations
+  repeated common.v1.BMCControlEndpoint bmc_protocols = 5; // Multiple protocol support (required for RFD 006)
+  common.v1.BMCType primary_protocol = 6;         // Preferred protocol for operations
 }
 
 // ============================================================================
@@ -331,7 +268,7 @@ message BMCEndpointAvailability {
   string bmc_endpoint = 1;        // BMC endpoint (e.g., "192.168.1.100:623")
   string agent_id = 2;            // Agent that provides access to this endpoint
   string datacenter_id = 3;       // Datacenter containing this BMC
-  BMCType bmc_type = 4;           // Type of BMC interface
+  common.v1.BMCType bmc_type = 4;           // Type of BMC interface
   repeated string features = 5;   // Available features
   string status = 6;              // Endpoint status
   google.protobuf.Timestamp last_seen = 7; // When this endpoint was last verified
@@ -394,8 +331,8 @@ message SystemStatusServerEntry {
   repeated string features = 5;                               // BMC capabilities
   google.protobuf.Timestamp created_at = 6;                  // When server was registered
   google.protobuf.Timestamp updated_at = 7;                  // Last update time
-  repeated BMCControlEndpoint bmc_protocols = 8;             // Multiple protocol support (required for RFD 006)
-  BMCType primary_protocol = 9;                              // Preferred protocol for operations
+  repeated common.v1.BMCControlEndpoint bmc_protocols = 8;             // Multiple protocol support (required for RFD 006)
+  common.v1.BMCType primary_protocol = 9;                              // Preferred protocol for operations
 }
 
 // Discovery metadata is now defined in common/v1/discovery.proto (RFD 017)

@@ -10,6 +10,7 @@ import (
 
 	commonauth "core/auth"
 	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/types"
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/internal/agent"
@@ -144,13 +145,13 @@ func TestRegisterAgent(t *testing.T) {
 	bmcEndpoints := []*gatewayv1.BMCEndpointRegistration{
 		{
 			ServerId: "test-server-1",
-			ControlEndpoints: []*gatewayv1.BMCControlEndpoint{
+			ControlEndpoints: []*commonv1.BMCControlEndpoint{
 				{
 					Endpoint: "192.168.1.100:623",
-					Type:     gatewayv1.BMCType_BMC_IPMI,
+					Type:     commonv1.BMCType_BMC_IPMI,
 				},
 			},
-			PrimaryProtocol: gatewayv1.BMCType_BMC_IPMI,
+			PrimaryProtocol: commonv1.BMCType_BMC_IPMI,
 			Features:        []string{"power", "console"},
 			Status:          "reachable",
 			Metadata:        map[string]string{"rack": "R1U42"},
@@ -233,13 +234,13 @@ func TestAgentHeartbeat(t *testing.T) {
 		BmcEndpoints: []*gatewayv1.BMCEndpointRegistration{
 			{
 				ServerId: "test-server-2",
-				ControlEndpoints: []*gatewayv1.BMCControlEndpoint{
+				ControlEndpoints: []*commonv1.BMCControlEndpoint{
 					{
 						Endpoint: "192.168.1.100:623",
-						Type:     gatewayv1.BMCType_BMC_REDFISH,
+						Type:     commonv1.BMCType_BMC_REDFISH,
 					},
 				},
-				PrimaryProtocol: gatewayv1.BMCType_BMC_REDFISH,
+				PrimaryProtocol: commonv1.BMCType_BMC_REDFISH,
 				Features:        []string{"power", "console"},
 				Status:          "reachable",
 				Metadata:        map[string]string{"rack": "R1U42"},
@@ -907,23 +908,23 @@ func TestRegisterAgentWithMultipleControlEndpoints(t *testing.T) {
 	bmcEndpoints := []*gatewayv1.BMCEndpointRegistration{
 		{
 			ServerId: "test-server-multi",
-			ControlEndpoints: []*gatewayv1.BMCControlEndpoint{
+			ControlEndpoints: []*commonv1.BMCControlEndpoint{
 				{
 					Endpoint:     "192.168.1.50:623",
-					Type:         gatewayv1.BMCType_BMC_IPMI,
+					Type:         commonv1.BMCType_BMC_IPMI,
 					Username:     "admin",
 					Password:     "ipmi_password",
 					Capabilities: []string{"power", "sensors", "sel"},
 				},
 				{
 					Endpoint:     "https://192.168.1.50:443",
-					Type:         gatewayv1.BMCType_BMC_REDFISH,
+					Type:         commonv1.BMCType_BMC_REDFISH,
 					Username:     "admin",
 					Password:     "redfish_password",
 					Capabilities: []string{"power", "sensors", "info"},
 				},
 			},
-			PrimaryProtocol: gatewayv1.BMCType_BMC_IPMI,
+			PrimaryProtocol: commonv1.BMCType_BMC_IPMI,
 			Features:        []string{"power", "console", "sensors"},
 			Status:          "online",
 			Metadata:        map[string]string{"rack": "R2U10", "model": "Dell PowerEdge R750"},
