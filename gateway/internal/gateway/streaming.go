@@ -11,9 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
+	"core/streaming"
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/gen/gateway/v1/gatewayv1connect"
-	"core/streaming"
 	gatewaystreaming "gateway/internal/streaming"
 )
 

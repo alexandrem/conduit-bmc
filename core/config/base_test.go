@@ -16,12 +16,12 @@ type TestConfig struct {
 }
 
 type TestSection struct {
-	StringValue    string        `yaml:"string_value" env:"TEST_STRING" default:"default_string"`
-	IntValue       int           `yaml:"int_value" env:"TEST_INT" default:"42"`
-	BoolValue      bool          `yaml:"bool_value" env:"TEST_BOOL" default:"true"`
-	DurationValue  time.Duration `yaml:"duration_value" env:"TEST_DURATION" default:"5m"`
-	RequiredValue  string        `yaml:"required_value" env:"TEST_REQUIRED"`
-	NestedSection  NestedSection `yaml:"nested"`
+	StringValue   string        `yaml:"string_value" env:"TEST_STRING" default:"default_string"`
+	IntValue      int           `yaml:"int_value" env:"TEST_INT" default:"42"`
+	BoolValue     bool          `yaml:"bool_value" env:"TEST_BOOL" default:"true"`
+	DurationValue time.Duration `yaml:"duration_value" env:"TEST_DURATION" default:"5m"`
+	RequiredValue string        `yaml:"required_value" env:"TEST_REQUIRED"`
+	NestedSection NestedSection `yaml:"nested"`
 }
 
 type NestedSection struct {
@@ -145,12 +145,12 @@ test:
 func TestConfigLoader_LoadFromEnv(t *testing.T) {
 	// Set environment variables
 	envVars := map[string]string{
-		"TEST_STRING":    "env_string",
-		"TEST_INT":       "456",
-		"TEST_BOOL":      "false",
-		"TEST_DURATION":  "15m",
-		"NESTED_STRING":  "env_nested",
-		"NESTED_INT":     "300",
+		"TEST_STRING":   "env_string",
+		"TEST_INT":      "456",
+		"TEST_BOOL":     "false",
+		"TEST_DURATION": "15m",
+		"NESTED_STRING": "env_nested",
+		"NESTED_INT":    "300",
 	}
 
 	// Set environment variables

@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"connectrpc.com/connect"
 	managerv1 "manager/gen/manager/v1"
+
+	"connectrpc.com/connect"
 
 	"cli/pkg/config"
 

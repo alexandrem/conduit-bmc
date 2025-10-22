@@ -8,8 +8,8 @@ import (
 	"connectrpc.com/connect"
 
 	managerv1 "manager/gen/manager/v1"
-	"manager/pkg/auth"
 	"manager/internal/database"
+	"manager/pkg/auth"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
