@@ -204,34 +204,41 @@ local-env-setup:
 # Start test BMC servers (synthetic Redfish endpoints)
 local-env-start-test-servers:
 	@echo "🔄 Starting test BMC servers..."
-	@cd cli && nohup go run . test setup start --daemon > ../tmp/logs/test-servers.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+	@cd cli && go run . test setup start --daemon > ../tmp/logs/test-servers.log 2>&1 & \
+		echo $$! >> $(LOCAL_PIDS_FILE)
 	@sleep 3
 	@echo "✅ Test BMC servers started on ports $(LOCAL_TEST_PORTS)"
 
 # Start Manager service with Air
 local-env-start-manager:
 	@echo "🔄 Starting Manager service with Air..."
-	@cd manager && DB_PATH=../$(LOCAL_DB_PATH) JWT_SECRET=$(LOCAL_JWT_SECRET) PORT=$(LOCAL_MANAGER_PORT) \
-		nohup air -c .air.toml > ../tmp/logs/manager.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+	@cd manager && \
+		DB_PATH=../$(LOCAL_DB_PATH) JWT_SECRET=$(LOCAL_JWT_SECRET) PORT=$(LOCAL_MANAGER_PORT) \
+		air -c .air.toml > ../tmp/logs/manager.log 2>&1 & \
+		echo $$! >> $(LOCAL_PIDS_FILE)
 	@sleep 3
 	@echo "✅ Manager service started on port $(LOCAL_MANAGER_PORT)"
 
 # Start Gateway service with Air
 local-env-start-gateway:
 	@echo "🔄 Starting Gateway service with Air..."
-	@cd gateway && BMC_MANAGER_ENDPOINT=http://localhost:$(LOCAL_MANAGER_PORT) JWT_SECRET=$(LOCAL_JWT_SECRET) \
+	@cd gateway && \
+		BMC_MANAGER_ENDPOINT=http://localhost:$(LOCAL_MANAGER_PORT) JWT_SECRET=$(LOCAL_JWT_SECRET) \
 		PORT=$(LOCAL_GATEWAY_PORT) GATEWAY_ID=local-gateway-1 REGION=local-dev \
-		nohup air -c .air.toml > ../tmp/logs/gateway.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+		air -c .air.toml > ../tmp/logs/gateway.log 2>&1 & \
+		echo $$! >> $(LOCAL_PIDS_FILE)
 	@sleep 3
 	@echo "✅ Gateway service started on port $(LOCAL_GATEWAY_PORT)"
 
 # Start Local Agent service with Air
 local-env-start-agent:
 	@echo "🔄 Starting Local Agent service with Air..."
-	@cd local-agent && BMC_REGIONAL_GATEWAY_ENDPOINT=http://localhost:$(LOCAL_GATEWAY_PORT) \
+	@cd local-agent && \
+		BMC_REGIONAL_GATEWAY_ENDPOINT=http://localhost:$(LOCAL_GATEWAY_PORT) \
 		BMC_AGENT_ENDPOINT=http://localhost:$(LOCAL_AGENT_PORT) \
 		CONFIG_FILE=config/local-agent.yaml \
-		nohup air -c .air.toml > ../tmp/logs/local-agent.log 2>&1 & echo $$! >> $(LOCAL_PIDS_FILE)
+		air -c .air.toml > ../tmp/logs/local-agent.log 2>&1 & \
+		echo $$! >> $(LOCAL_PIDS_FILE)
 	@sleep 2
 	@echo "✅ Local Agent service started on port $(LOCAL_AGENT_PORT)"
 
@@ -298,12 +305,15 @@ local-env-down:
 	fi
 	@# Step 2: Pattern-based cleanup for any remaining processes
 	@echo "🧹 Cleaning up remaining BMC processes..."
-	@# Kill Air processes first (parent processes)
-	@for pattern in "air.*manager" "air.*gateway" "air.*local-agent"; do \
-		pids=$$(pgrep -f "$$pattern" 2>/dev/null || true); \
-		if [ ! -z "$$pids" ]; then \
-			echo "  Killing $$pattern processes: $$pids"; \
-			echo "$$pids" | xargs -r kill -TERM 2>/dev/null || true; \
+	@# Kill Air processes running in workspace directories
+	@workspace_dir="$(CURDIR)"; \
+	ps -ef | grep "air -c .air.toml" | grep -v grep | awk '{print $$2}' | while read -r pid; do \
+		if [ ! -z "$$pid" ]; then \
+			cwd=$$(lsof -a -d cwd -p $$pid 2>/dev/null | tail -1 | awk '{print $$NF}' || true); \
+			if [ ! -z "$$cwd" ] && echo "$$cwd" | grep -q "$$workspace_dir"; then \
+				echo "  Killing air process $$pid in workspace ($$cwd)"; \
+				kill -TERM $$pid 2>/dev/null || true; \
+			fi; \
 		fi; \
 	done
 	@sleep 1
@@ -312,33 +322,33 @@ local-env-down:
 		pids=$$(pgrep -f "$$pattern" 2>/dev/null || true); \
 		if [ ! -z "$$pids" ]; then \
 			echo "  Killing $$pattern processes: $$pids"; \
-			echo "$$pids" | xargs -r kill -TERM 2>/dev/null || true; \
+			echo "$$pids" | xargs kill -TERM 2>/dev/null || true; \
 		fi; \
 	done
 	@# Kill test servers
 	@pids=$$(pgrep -f "bmc-cli.*test.*setup" 2>/dev/null || true); \
 	if [ ! -z "$$pids" ]; then \
 		echo "  Killing test servers: $$pids"; \
-		echo "$$pids" | xargs -r kill -TERM 2>/dev/null || true; \
+		echo "$$pids" | xargs kill -TERM 2>/dev/null || true; \
 	fi
 	@sleep 1
 	@# Step 3: Force kill any remaining processes
 	@echo "💀 Force killing any remaining processes..."
-	@for pattern in "air.*manager" "air.*gateway" "air.*local-agent" "tmp/bmc-manager" "tmp/gateway" "tmp/local-agent" "bmc-cli.*test.*setup"; do \
+	@workspace_dir="$(CURDIR)"; \
+	ps -ef | grep "air -c .air.toml" | grep -v grep | awk '{print $$2}' | while read -r pid; do \
+		if [ ! -z "$$pid" ]; then \
+			cwd=$$(lsof -a -d cwd -p $$pid 2>/dev/null | tail -1 | awk '{print $$NF}' || true); \
+			if [ ! -z "$$cwd" ] && echo "$$cwd" | grep -q "$$workspace_dir"; then \
+				echo "  Force killing air process $$pid in workspace"; \
+				kill -KILL $$pid 2>/dev/null || true; \
+			fi; \
+		fi; \
+	done
+	@for pattern in "tmp/bmc-manager" "tmp/gateway" "tmp/local-agent" "bmc-cli.*test.*setup"; do \
 		pids=$$(pgrep -f "$$pattern" 2>/dev/null || true); \
 		if [ ! -z "$$pids" ]; then \
 			echo "  Force killing $$pattern processes: $$pids"; \
-			echo "$$pids" | xargs -r kill -KILL 2>/dev/null || true; \
-		fi; \
-	done
-	@# Step 3.5: Kill orphaned Air processes in our workspace
-	@echo "🔍 Cleaning up orphaned Air processes in workspace..."
-	@ps aux | grep "air -c .air.toml" | grep -v grep | while IFS= read -r line; do \
-		pid=$$(echo "$$line" | awk '{print $$2}'); \
-		cwd_info=$$(lsof -p $$pid 2>/dev/null | grep cwd | head -1 || true); \
-		if echo "$$cwd_info" | grep -q "bmc-mgmt"; then \
-			echo "  Killing orphaned Air process $$pid in workspace"; \
-			kill -KILL $$pid 2>/dev/null || true; \
+			echo "$$pids" | xargs kill -KILL 2>/dev/null || true; \
 		fi; \
 	done
 	@# Step 4: Port-based cleanup as final safety
