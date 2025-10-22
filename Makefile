@@ -1,4 +1,4 @@
-.PHONY: build build-all run-all test clean deps help
+.PHONY: build build-all fmt-all run-all test clean deps help
 
 ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 
@@ -11,12 +11,14 @@ help:
 	@echo "BMC Management System - Monorepo Build"
 	@echo ""
 	@echo "Available targets:"
+	@echo "  init                Initialize tooling"
 	@echo "  gen-all             Generate all protobuf code"
 	@echo "  build-all           Build all components"
 	@echo "  build-manager       Build Manager (Gateway + BMC Manager)"
 	@echo "  build-gateway       Build Gateway"
 	@echo "  build-local-agent   Build Local Agent"
 	@echo "  build-cli           Build CLI"
+	@echo "  fmt-all             Format all components (goimports)"
 	@echo "  clean-all           Clean all build artifacts"
 	@echo "  clean-gen           Clean all generated protobuf code"
 	@echo "  deps-all            Update dependencies for all components"
@@ -31,6 +33,10 @@ help:
 	@echo "  test-smoke          Run smoke tests (quick confidence checks)"
 	@echo "  test-e2e-help       Show E2E test commands"
 
+
+# Initialize tooling
+init:
+	go install golang.org/x/tools/cmd/goimports@latest
 
 # Generate all protobuf code
 gen-all:
@@ -73,6 +79,19 @@ build-local-agent:
 build-cli:
 	@echo "Building CLI..."
 	cd cli && $(MAKE) build
+
+# Format all components
+fmt-all:
+	@echo "Formatting core..."
+	cd core && $(MAKE) fmt
+	@echo "Formatting Manager..."
+	cd manager && $(MAKE) fmt
+	@echo "Formatting Gateway..."
+	cd gateway && $(MAKE) fmt
+	@echo "Formatting Local Agent..."
+	cd local-agent && $(MAKE) fmt
+	@echo "Formatting CLI..."
+	cd cli && $(MAKE) fmt
 
 # Test all components
 test-all:

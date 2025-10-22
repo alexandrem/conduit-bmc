@@ -23,7 +23,7 @@ deps:
 
 # Format code
 fmt:
-	go fmt ./...
+	goimports -w .
 
 # Install CLI globally
 install: build

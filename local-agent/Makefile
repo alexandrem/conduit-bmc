@@ -27,7 +27,7 @@ lint:
 
 # Format code
 fmt:
-	go fmt ./...
+	goimports -w .
 
 # Create bin directory
 bin:

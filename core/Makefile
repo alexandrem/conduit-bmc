@@ -1,4 +1,8 @@
-.PHONY: gen clean
+.PHONY: fmt gen clean
+
+# Format code
+fmt:
+	goimports -w .
 
 # Generate protobuf code
 gen:

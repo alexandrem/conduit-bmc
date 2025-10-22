@@ -31,7 +31,7 @@ lint:
 
 # Format code
 fmt:
-	go fmt ./...
+	goimports -w .
 
 # Build for different platforms
 build-linux:

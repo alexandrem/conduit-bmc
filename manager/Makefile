@@ -31,7 +31,7 @@ lint:
 
 # Format code
 fmt:
-	go fmt ./...
+	goimports -w .
 
 # Install protobuf tools
 install-tools:
