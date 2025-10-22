@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"core/domain"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/gen/manager/v1/managerv1connect"
@@ -140,7 +141,7 @@ func (c *BMCManagerClient) ListGateways(ctx context.Context) ([]RegionalGateway,
 }
 
 // ListServers returns all servers accessible to the authenticated customer
-func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
+func (c *BMCManagerClient) ListServers(ctx context.Context) ([]domain.Server, error) {
 	req := connect.NewRequest(&managerv1.ListServersRequest{})
 	c.addAuthHeaders(req)
 
@@ -149,9 +150,9 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
 		return nil, fmt.Errorf("failed to list servers: %w", err)
 	}
 
-	var servers []Server
+	var servers []domain.Server
 	for _, server := range resp.Msg.Servers {
-		clientServer := Server{
+		clientServer := domain.Server{
 			ID:           server.Id,
 			CustomerID:   server.CustomerId,
 			DatacenterID: server.DatacenterId,
@@ -223,7 +224,7 @@ func (c *BMCManagerClient) ListServers(ctx context.Context) ([]Server, error) {
 }
 
 // GetServer returns detailed information about a specific server
-func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Server, error) {
+func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*domain.Server, error) {
 	req := connect.NewRequest(&managerv1.GetServerRequest{
 		ServerId: serverID,
 	})
@@ -235,7 +236,7 @@ func (c *BMCManagerClient) GetServer(ctx context.Context, serverID string) (*Ser
 	}
 
 	server := resp.Msg.Server
-	clientServer := &Server{
+	clientServer := &domain.Server{
 		ID:           server.Id,
 		CustomerID:   server.CustomerId,
 		DatacenterID: server.DatacenterId,
@@ -395,39 +396,7 @@ type RegionalGateway struct {
 	DelegatedToken string
 }
 
-type Server struct {
-	ID                string
-	CustomerID        string
-	DatacenterID      string
-	ControlEndpoints  []*types.BMCControlEndpoint
-	PrimaryProtocol   types.BMCType
-	SOLEndpoint       *types.SOLEndpoint
-	VNCEndpoint       *types.VNCEndpoint
-	Features          []string
-	Status            string
-	Metadata          map[string]string
-	DiscoveryMetadata *types.DiscoveryMetadata
-}
-
-// GetPrimaryControlEndpoint returns the primary control endpoint.
-// Looks for endpoint matching PrimaryProtocol, otherwise returns first endpoint.
-func (s *Server) GetPrimaryControlEndpoint() *types.BMCControlEndpoint {
-	if len(s.ControlEndpoints) == 0 {
-		return nil
-	}
-
-	// Try to find endpoint matching PrimaryProtocol
-	if s.PrimaryProtocol != types.BMCTypeNone {
-		for _, ep := range s.ControlEndpoints {
-			if ep.Type == s.PrimaryProtocol {
-				return ep
-			}
-		}
-	}
-
-	// Fallback to first endpoint
-	return s.ControlEndpoints[0]
-}
+// Server is now imported from core/models
 
 type ServerTokenResult struct {
 	Token     string

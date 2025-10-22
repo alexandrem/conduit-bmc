@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
 
-	"local-agent/internal/discovery"
+	"core/domain"
 	solpkg "local-agent/pkg/sol"
 )
 
@@ -46,7 +46,7 @@ func NewService() *Service {
 }
 
 // HandleConnectionForServer handles a WebSocket connection for SOL access to a specific server
-func (s *Service) HandleConnectionForServer(w http.ResponseWriter, r *http.Request, sessionID string, server *discovery.Server) error {
+func (s *Service) HandleConnectionForServer(w http.ResponseWriter, r *http.Request, sessionID string, server *domain.Server) error {
 	// Check if server has SOL endpoint
 	if server.SOLEndpoint == nil {
 		return fmt.Errorf("SOL not available for server %s", server.ID)
@@ -100,7 +100,7 @@ func (s *Service) HandleConnectionForServer(w http.ResponseWriter, r *http.Reque
 }
 
 // handleSOLSession manages the SOL session lifecycle
-func (s *Service) handleSOLSession(session *Session, server *discovery.Server, config *solpkg.Config) {
+func (s *Service) handleSOLSession(session *Session, server *domain.Server, config *solpkg.Config) {
 	defer func() {
 		// Clean up session
 		s.mu.Lock()

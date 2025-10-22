@@ -10,47 +10,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"core/domain"
 	"core/types"
 	"local-agent/pkg/config"
 	"local-agent/pkg/ipmi"
 	"local-agent/pkg/redfish"
 )
-
-// Server represents a discovered BMC server with separate endpoint types
-type Server struct {
-	ID                string                      `json:"id"`
-	CustomerID        string                      `json:"customer_id"`
-	ControlEndpoints  []*types.BMCControlEndpoint `json:"control_endpoints"`  // Multiple BMC control APIs (RFD 006)
-	PrimaryProtocol   types.BMCType               `json:"primary_protocol"`   // Preferred protocol for operations (RFD 006)
-	SOLEndpoint       *types.SOLEndpoint          `json:"sol_endpoint"`       // Serial-over-LAN (optional)
-	VNCEndpoint       *types.VNCEndpoint          `json:"vnc_endpoint"`       // VNC/KVM access (optional)
-	Features          []string                    `json:"features"`           // High-level features
-	Status            string                      `json:"status"`             // "active", "inactive", etc.
-	Metadata          map[string]string           `json:"metadata"`           // Additional metadata
-	DiscoveryMetadata *types.DiscoveryMetadata    `json:"discovery_metadata"` // Discovery metadata (RFD 017)
-}
-
-// GetPrimaryControlEndpoint returns the control endpoint matching PrimaryProtocol.
-// If PrimaryProtocol is set and found, returns that endpoint.
-// Otherwise, falls back to the first endpoint in the array.
-// Returns nil if no endpoints are available.
-func (s *Server) GetPrimaryControlEndpoint() *types.BMCControlEndpoint {
-	if len(s.ControlEndpoints) == 0 {
-		return nil
-	}
-
-	// If PrimaryProtocol is set, try to find matching endpoint
-	if s.PrimaryProtocol != "" {
-		for _, endpoint := range s.ControlEndpoints {
-			if endpoint.Type == s.PrimaryProtocol {
-				return endpoint
-			}
-		}
-	}
-
-	// Fallback to first endpoint
-	return s.ControlEndpoints[0]
-}
 
 // Service handles BMC discovery in the local datacenter
 type Service struct {
@@ -68,10 +33,10 @@ func NewService(ipmiClient *ipmi.Client, redfishClient *redfish.Client, cfg *con
 }
 
 // DiscoverServers discovers all BMC endpoints combining static config and auto-discovery
-func (s *Service) DiscoverServers(ctx context.Context) ([]*Server, error) {
+func (s *Service) DiscoverServers(ctx context.Context) ([]*domain.Server, error) {
 	log.Info().Msg("Starting BMC discovery")
 
-	var allServers []*Server
+	var allServers []*domain.Server
 
 	// First, add statically configured servers
 	staticServers := s.loadStaticServers()
@@ -102,8 +67,8 @@ func (s *Service) DiscoverServers(ctx context.Context) ([]*Server, error) {
 }
 
 // loadStaticServers converts configured static hosts to Server structs
-func (s *Service) loadStaticServers() []*Server {
-	var servers []*Server
+func (s *Service) loadStaticServers() []*domain.Server {
+	var servers []*domain.Server
 
 	for _, host := range s.config.Static.Hosts {
 		// Initialize metadata map if not present
@@ -112,7 +77,7 @@ func (s *Service) loadStaticServers() []*Server {
 			metadata = make(map[string]string)
 		}
 
-		server := &Server{
+		server := &domain.Server{
 			ID:         host.ID,
 			CustomerID: host.CustomerID,
 			Features:   host.Features,
@@ -242,8 +207,8 @@ func (s *Service) loadStaticServers() []*Server {
 }
 
 // performAutoDiscovery runs the original auto-discovery logic
-func (s *Service) performAutoDiscovery(ctx context.Context) ([]*Server, error) {
-	var allServers []*Server
+func (s *Service) performAutoDiscovery(ctx context.Context) ([]*domain.Server, error) {
+	var allServers []*domain.Server
 
 	// Get list of network interfaces and subnets to scan
 	subnets, err := s.getLocalSubnets()
@@ -275,8 +240,8 @@ func (s *Service) performAutoDiscovery(ctx context.Context) ([]*Server, error) {
 }
 
 // filterDuplicates removes discovered servers that match static configuration
-func (s *Service) filterDuplicates(staticServers, discoveredServers []*Server) []*Server {
-	var filtered []*Server
+func (s *Service) filterDuplicates(staticServers, discoveredServers []*domain.Server) []*domain.Server {
+	var filtered []*domain.Server
 
 	// Create a map of static control endpoints for quick lookup
 	staticEndpoints := make(map[string]bool)
@@ -303,10 +268,10 @@ func (s *Service) filterDuplicates(staticServers, discoveredServers []*Server) [
 }
 
 // discoverIPMI discovers IPMI-enabled BMCs in a subnet
-func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*Server, error) {
+func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*domain.Server, error) {
 	log.Debug().Str("subnet", subnet).Msg("Discovering IPMI BMCs")
 
-	var servers []*Server
+	var servers []*domain.Server
 
 	// Parse subnet to get IP range
 	_, ipnet, err := net.ParseCIDR(subnet)
@@ -326,7 +291,7 @@ func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*Server, e
 		// Test for IPMI on port 623
 		endpoint := fmt.Sprintf("%s:623", ip.String())
 		if s.ipmiClient.IsAccessible(ctx, endpoint) {
-			server := &Server{
+			server := &domain.Server{
 				ID:         fmt.Sprintf("server-%s", strings.ReplaceAll(ip.String(), ".", "-")),
 				CustomerID: "customer-1", // TODO: Determine customer ownership
 				ControlEndpoints: []*types.BMCControlEndpoint{
@@ -357,10 +322,10 @@ func (s *Service) discoverIPMI(ctx context.Context, subnet string) ([]*Server, e
 }
 
 // discoverRedfish discovers Redfish-enabled BMCs in a subnet
-func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server, error) {
+func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*domain.Server, error) {
 	log.Debug().Str("subnet", subnet).Msg("Discovering Redfish BMCs")
 
-	var servers []*Server
+	var servers []*domain.Server
 
 	// Parse subnet to get IP range
 	_, ipnet, err := net.ParseCIDR(subnet)
@@ -382,7 +347,7 @@ func (s *Service) discoverRedfish(ctx context.Context, subnet string) ([]*Server
 		for _, port := range redfishPorts {
 			endpoint := fmt.Sprintf("https://%s:%d", ip.String(), port)
 			if s.redfishClient.IsAccessible(ctx, endpoint) {
-				server := &Server{
+				server := &domain.Server{
 					ID:         fmt.Sprintf("server-%s-%d", strings.ReplaceAll(ip.String(), ".", "-"), port),
 					CustomerID: "customer-1", // TODO: Determine customer ownership
 					ControlEndpoints: []*types.BMCControlEndpoint{
@@ -567,7 +532,7 @@ func (s *Service) generateIPsFromSubnet(ipnet *net.IPNet) []net.IP {
 }
 
 // buildDiscoveryMetadata constructs discovery metadata for a server
-func (s *Service) buildDiscoveryMetadata(server *Server, discoveryMethod types.DiscoveryMethod, configSource string) *types.DiscoveryMetadata {
+func (s *Service) buildDiscoveryMetadata(server *domain.Server, discoveryMethod types.DiscoveryMethod, configSource string) *types.DiscoveryMetadata {
 	metadata := &types.DiscoveryMetadata{
 		DiscoveryMethod: discoveryMethod,
 		DiscoveredAt:    time.Time{}, // Will be set by caller with time.Now()

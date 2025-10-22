@@ -31,33 +31,6 @@ func convertCustomerToManager(customer *domain.Customer) *managermodels.Customer
 	}
 }
 
-// convertServerToManager converts common/domain.Server to manager/pkg/domain.Server
-func convertServerToManager(server *domain.Server) *managermodels.Server {
-	var controlEndpoints []*types.BMCControlEndpoint
-	var primaryProtocol types.BMCType
-	if server.BMCEndpoint != "" {
-		controlEndpoints = []*types.BMCControlEndpoint{
-			{
-				Endpoint: server.BMCEndpoint,
-				Type:     types.BMCType(server.BMCType),
-			},
-		}
-		primaryProtocol = types.BMCType(server.BMCType)
-	}
-
-	return &managermodels.Server{
-		ID:               server.ID,
-		CustomerID:       server.CustomerID,
-		DatacenterID:     server.DatacenterID,
-		ControlEndpoints: controlEndpoints,
-		PrimaryProtocol:  primaryProtocol,
-		Features:         server.Features,
-		Status:           server.Status,
-		CreatedAt:        server.CreatedAt,
-		UpdatedAt:        server.UpdatedAt,
-	}
-}
-
 // convertAuthClaimsFromManager converts manager/pkg/models.AuthClaims to common/auth.AuthClaims
 func convertAuthClaimsFromManager(claims *managermodels.AuthClaims) *commonauth.AuthClaims {
 	return &commonauth.AuthClaims{
@@ -99,17 +72,22 @@ func createAuthenticatedContext(serverID, customerID string) context.Context {
 	}
 
 	server := &domain.Server{
-		ID:           serverID,
-		CustomerID:   customerID,
-		BMCEndpoint:  serverID, // For tests, use server ID as BMC endpoint
-		BMCType:      types.BMCTypeIPMI,
-		Features:     []string{"power", "console", "sensors"},
-		DatacenterID: "dc-1",
+		ID:         serverID,
+		CustomerID: customerID,
+		ControlEndpoints: []*types.BMCControlEndpoint{
+			{
+				Endpoint: serverID, // For tests, use server ID as BMC endpoint
+				Type:     types.BMCTypeIPMI,
+			},
+		},
+		PrimaryProtocol: types.BMCTypeIPMI,
+		Features:        []string{"power", "console", "sensors"},
+		DatacenterID:    "dc-1",
 	}
 
 	permissions := []string{"power:read", "power:write", "console:read", "sensors:read"}
 
-	token, err := jwtManager.GenerateServerToken(convertCustomerToManager(customer), convertServerToManager(server), permissions)
+	token, err := jwtManager.GenerateServerToken(convertCustomerToManager(customer), server, permissions)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to generate test token: %v", err))
 	}
@@ -506,18 +484,23 @@ func TestCreateVNCSession(t *testing.T) {
 		ID:           "192.168.1.100:623",
 		CustomerID:   customer.ID,
 		DatacenterID: "dc-1",
-		BMCType:      types.BMCTypeIPMI,
-		BMCEndpoint:  "192.168.1.100:623",
-		Features:     []string{"console", "power"},
-		Status:       "active",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		ControlEndpoints: []*types.BMCControlEndpoint{
+			{
+				Endpoint: "192.168.1.100:623",
+				Type:     types.BMCTypeIPMI,
+			},
+		},
+		PrimaryProtocol: types.BMCTypeIPMI,
+		Features:        []string{"console", "power"},
+		Status:          "active",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	permissions := []string{"console:write", "power:write"}
 
 	// Generate a server token
-	token, err := handler.jwtManager.GenerateServerToken(convertCustomerToManager(customer), convertServerToManager(server), permissions)
+	token, err := handler.jwtManager.GenerateServerToken(convertCustomerToManager(customer), server, permissions)
 	if err != nil {
 		t.Fatalf("Failed to generate server token: %v", err)
 	}
@@ -838,18 +821,23 @@ func TestCreateVNCSession_WithAuthentication(t *testing.T) {
 		ID:           "192.168.1.100:623",
 		CustomerID:   customer.ID,
 		DatacenterID: "dc-1",
-		BMCType:      types.BMCTypeIPMI,
-		BMCEndpoint:  "192.168.1.100:623",
-		Features:     []string{"console", "power"},
-		Status:       "active",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		ControlEndpoints: []*types.BMCControlEndpoint{
+			{
+				Endpoint: "192.168.1.100:623",
+				Type:     types.BMCTypeIPMI,
+			},
+		},
+		PrimaryProtocol: types.BMCTypeIPMI,
+		Features:        []string{"console", "power"},
+		Status:          "active",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	permissions := []string{"console:write", "power:write"}
 
 	// Generate a server token
-	token, err := handler.jwtManager.GenerateServerToken(convertCustomerToManager(customer), convertServerToManager(server), permissions)
+	token, err := handler.jwtManager.GenerateServerToken(convertCustomerToManager(customer), server, permissions)
 	if err != nil {
 		t.Fatalf("Failed to generate server token: %v", err)
 	}

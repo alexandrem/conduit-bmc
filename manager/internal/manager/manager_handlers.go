@@ -6,18 +6,18 @@ import (
 	"runtime"
 	"time"
 
-	commonv1 "core/gen/common/v1"
-	managerv1 "manager/gen/manager/v1"
-	"manager/internal/database"
-	"manager/pkg/auth"
-	"manager/pkg/models"
-
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"core/domain"
+	commonv1 "core/gen/common/v1"
 	"core/types"
+	managerv1 "manager/gen/manager/v1"
+	"manager/internal/database"
+	"manager/pkg/auth"
+	"manager/pkg/models"
 )
 
 type BMCManagerServiceHandler struct {
@@ -218,7 +218,7 @@ func (h *BMCManagerServiceHandler) RegisterServer(
 	}
 
 	// Create server record with BMC endpoint information
-	server := &models.Server{
+	server := &domain.Server{
 		ID:               req.Msg.ServerId,
 		CustomerID:       customerID,
 		DatacenterID:     req.Msg.DatacenterId,
@@ -480,7 +480,7 @@ func (h *BMCManagerServiceHandler) GetSystemStatus(
 	}
 
 	// Create a map of servers by ID for quick lookup
-	serverMap := make(map[string]*models.Server)
+	serverMap := make(map[string]*domain.Server)
 	for _, s := range servers {
 		serverMap[s.ID] = s
 	}
@@ -924,7 +924,7 @@ func (h *BMCManagerServiceHandler) updateServerWithBMCEndpoint(ctx context.Conte
 		Capabilities: endpoint.Capabilities,
 	}
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:                serverID,
 		CustomerID:        "system", // System-managed servers from gateway reports
 		DatacenterID:      endpoint.DatacenterId,

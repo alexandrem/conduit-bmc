@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"core/domain"
 	"core/types"
 	"manager/pkg/models"
 )
@@ -77,7 +78,7 @@ func TestServerRepository_CRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test Create
-	server := &models.Server{
+	server := &domain.Server{
 		ID:           "server-001",
 		CustomerID:   "customer-123",
 		DatacenterID: "dc-test-01",
@@ -152,7 +153,7 @@ func TestServer_JSONFields(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create server with complex JSON fields
-	server := &models.Server{
+	server := &domain.Server{
 		ID:           "server-001",
 		CustomerID:   "customer-123",
 		DatacenterID: "dc-test-01",
@@ -339,7 +340,7 @@ func TestProxySessionRepository_ListActive(t *testing.T) {
 	}
 	db.Customers.Create(ctx, customer)
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:           "server-001",
 		CustomerID:   "customer-123",
 		DatacenterID: "dc-01",

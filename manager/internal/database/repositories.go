@@ -8,16 +8,17 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"manager/pkg/models"
+	"core/domain"
+	managermodels "manager/pkg/models"
 )
 
 // ServerRepository provides database operations for servers
 type ServerRepository interface {
-	Get(ctx context.Context, id string) (*models.Server, error)
-	List(ctx context.Context, customerID string) ([]*models.Server, error)
-	ListAll(ctx context.Context) ([]*models.Server, error)
-	Create(ctx context.Context, server *models.Server) error
-	Update(ctx context.Context, server *models.Server) error
+	Get(ctx context.Context, id string) (*domain.Server, error)
+	List(ctx context.Context, customerID string) ([]*domain.Server, error)
+	ListAll(ctx context.Context) ([]*domain.Server, error)
+	Create(ctx context.Context, server *domain.Server) error
+	Update(ctx context.Context, server *domain.Server) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -30,7 +31,7 @@ func NewServerRepository(db *bun.DB) ServerRepository {
 	return &serverRepository{db: db}
 }
 
-func (r *serverRepository) Get(ctx context.Context, id string) (*models.Server, error) {
+func (r *serverRepository) Get(ctx context.Context, id string) (*domain.Server, error) {
 	server := new(Server)
 	err := r.db.NewSelect().
 		Model(server).
@@ -47,7 +48,7 @@ func (r *serverRepository) Get(ctx context.Context, id string) (*models.Server, 
 	return server.ToModel(), nil
 }
 
-func (r *serverRepository) List(ctx context.Context, customerID string) ([]*models.Server, error) {
+func (r *serverRepository) List(ctx context.Context, customerID string) ([]*domain.Server, error) {
 	var servers []*Server
 	err := r.db.NewSelect().
 		Model(&servers).
@@ -59,14 +60,14 @@ func (r *serverRepository) List(ctx context.Context, customerID string) ([]*mode
 		return nil, err
 	}
 
-	result := make([]*models.Server, len(servers))
+	result := make([]*domain.Server, len(servers))
 	for i, s := range servers {
 		result[i] = s.ToModel()
 	}
 	return result, nil
 }
 
-func (r *serverRepository) ListAll(ctx context.Context) ([]*models.Server, error) {
+func (r *serverRepository) ListAll(ctx context.Context) ([]*domain.Server, error) {
 	var servers []*Server
 	err := r.db.NewSelect().
 		Model(&servers).
@@ -77,14 +78,14 @@ func (r *serverRepository) ListAll(ctx context.Context) ([]*models.Server, error
 		return nil, err
 	}
 
-	result := make([]*models.Server, len(servers))
+	result := make([]*domain.Server, len(servers))
 	for i, s := range servers {
 		result[i] = s.ToModel()
 	}
 	return result, nil
 }
 
-func (r *serverRepository) Create(ctx context.Context, server *models.Server) error {
+func (r *serverRepository) Create(ctx context.Context, server *domain.Server) error {
 	dbServer := ServerFromModel(server)
 	_, err := r.db.NewInsert().
 		Model(dbServer).
@@ -92,7 +93,7 @@ func (r *serverRepository) Create(ctx context.Context, server *models.Server) er
 	return err
 }
 
-func (r *serverRepository) Update(ctx context.Context, server *models.Server) error {
+func (r *serverRepository) Update(ctx context.Context, server *domain.Server) error {
 	dbServer := ServerFromModel(server)
 	_, err := r.db.NewUpdate().
 		Model(dbServer).
@@ -111,11 +112,11 @@ func (r *serverRepository) Delete(ctx context.Context, id string) error {
 
 // CustomerRepository provides database operations for customers
 type CustomerRepository interface {
-	Get(ctx context.Context, id string) (*models.Customer, error)
-	GetByEmail(ctx context.Context, email string) (*models.Customer, error)
-	GetByAPIKey(ctx context.Context, apiKey string) (*models.Customer, error)
-	Create(ctx context.Context, customer *models.Customer) error
-	Update(ctx context.Context, customer *models.Customer) error
+	Get(ctx context.Context, id string) (*managermodels.Customer, error)
+	GetByEmail(ctx context.Context, email string) (*managermodels.Customer, error)
+	GetByAPIKey(ctx context.Context, apiKey string) (*managermodels.Customer, error)
+	Create(ctx context.Context, customer *managermodels.Customer) error
+	Update(ctx context.Context, customer *managermodels.Customer) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -128,7 +129,7 @@ func NewCustomerRepository(db *bun.DB) CustomerRepository {
 	return &customerRepository{db: db}
 }
 
-func (r *customerRepository) Get(ctx context.Context, id string) (*models.Customer, error) {
+func (r *customerRepository) Get(ctx context.Context, id string) (*managermodels.Customer, error) {
 	customer := new(Customer)
 	err := r.db.NewSelect().
 		Model(customer).
@@ -145,7 +146,7 @@ func (r *customerRepository) Get(ctx context.Context, id string) (*models.Custom
 	return customer.ToModel(), nil
 }
 
-func (r *customerRepository) GetByEmail(ctx context.Context, email string) (*models.Customer, error) {
+func (r *customerRepository) GetByEmail(ctx context.Context, email string) (*managermodels.Customer, error) {
 	customer := new(Customer)
 	err := r.db.NewSelect().
 		Model(customer).
@@ -162,7 +163,7 @@ func (r *customerRepository) GetByEmail(ctx context.Context, email string) (*mod
 	return customer.ToModel(), nil
 }
 
-func (r *customerRepository) GetByAPIKey(ctx context.Context, apiKey string) (*models.Customer, error) {
+func (r *customerRepository) GetByAPIKey(ctx context.Context, apiKey string) (*managermodels.Customer, error) {
 	customer := new(Customer)
 	err := r.db.NewSelect().
 		Model(customer).
@@ -179,7 +180,7 @@ func (r *customerRepository) GetByAPIKey(ctx context.Context, apiKey string) (*m
 	return customer.ToModel(), nil
 }
 
-func (r *customerRepository) Create(ctx context.Context, customer *models.Customer) error {
+func (r *customerRepository) Create(ctx context.Context, customer *managermodels.Customer) error {
 	dbCustomer := CustomerFromModel(customer)
 	_, err := r.db.NewInsert().
 		Model(dbCustomer).
@@ -187,7 +188,7 @@ func (r *customerRepository) Create(ctx context.Context, customer *models.Custom
 	return err
 }
 
-func (r *customerRepository) Update(ctx context.Context, customer *models.Customer) error {
+func (r *customerRepository) Update(ctx context.Context, customer *managermodels.Customer) error {
 	dbCustomer := CustomerFromModel(customer)
 	_, err := r.db.NewUpdate().
 		Model(dbCustomer).
@@ -206,11 +207,11 @@ func (r *customerRepository) Delete(ctx context.Context, id string) error {
 
 // AgentRepository provides database operations for agents
 type AgentRepository interface {
-	Get(ctx context.Context, id string) (*models.Agent, error)
-	GetByDatacenter(ctx context.Context, datacenterID string) (*models.Agent, error)
-	List(ctx context.Context) ([]*models.Agent, error)
-	Create(ctx context.Context, agent *models.Agent) error
-	Update(ctx context.Context, agent *models.Agent) error
+	Get(ctx context.Context, id string) (*managermodels.Agent, error)
+	GetByDatacenter(ctx context.Context, datacenterID string) (*managermodels.Agent, error)
+	List(ctx context.Context) ([]*managermodels.Agent, error)
+	Create(ctx context.Context, agent *managermodels.Agent) error
+	Update(ctx context.Context, agent *managermodels.Agent) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -223,7 +224,7 @@ func NewAgentRepository(db *bun.DB) AgentRepository {
 	return &agentRepository{db: db}
 }
 
-func (r *agentRepository) Get(ctx context.Context, id string) (*models.Agent, error) {
+func (r *agentRepository) Get(ctx context.Context, id string) (*managermodels.Agent, error) {
 	agent := new(Agent)
 	err := r.db.NewSelect().
 		Model(agent).
@@ -240,7 +241,7 @@ func (r *agentRepository) Get(ctx context.Context, id string) (*models.Agent, er
 	return agent.ToModel(), nil
 }
 
-func (r *agentRepository) GetByDatacenter(ctx context.Context, datacenterID string) (*models.Agent, error) {
+func (r *agentRepository) GetByDatacenter(ctx context.Context, datacenterID string) (*managermodels.Agent, error) {
 	agent := new(Agent)
 	err := r.db.NewSelect().
 		Model(agent).
@@ -257,7 +258,7 @@ func (r *agentRepository) GetByDatacenter(ctx context.Context, datacenterID stri
 	return agent.ToModel(), nil
 }
 
-func (r *agentRepository) List(ctx context.Context) ([]*models.Agent, error) {
+func (r *agentRepository) List(ctx context.Context) ([]*managermodels.Agent, error) {
 	var agents []*Agent
 	err := r.db.NewSelect().
 		Model(&agents).
@@ -268,14 +269,14 @@ func (r *agentRepository) List(ctx context.Context) ([]*models.Agent, error) {
 		return nil, err
 	}
 
-	result := make([]*models.Agent, len(agents))
+	result := make([]*managermodels.Agent, len(agents))
 	for i, a := range agents {
 		result[i] = a.ToModel()
 	}
 	return result, nil
 }
 
-func (r *agentRepository) Create(ctx context.Context, agent *models.Agent) error {
+func (r *agentRepository) Create(ctx context.Context, agent *managermodels.Agent) error {
 	dbAgent := AgentFromModel(agent)
 	_, err := r.db.NewInsert().
 		Model(dbAgent).
@@ -283,7 +284,7 @@ func (r *agentRepository) Create(ctx context.Context, agent *models.Agent) error
 	return err
 }
 
-func (r *agentRepository) Update(ctx context.Context, agent *models.Agent) error {
+func (r *agentRepository) Update(ctx context.Context, agent *managermodels.Agent) error {
 	dbAgent := AgentFromModel(agent)
 	_, err := r.db.NewUpdate().
 		Model(dbAgent).
@@ -302,11 +303,11 @@ func (r *agentRepository) Delete(ctx context.Context, id string) error {
 
 // GatewayRepository provides database operations for regional gateways
 type GatewayRepository interface {
-	Get(ctx context.Context, id string) (*models.RegionalGateway, error)
-	List(ctx context.Context) ([]*models.RegionalGateway, error)
-	Create(ctx context.Context, gateway *models.RegionalGateway) error
-	Update(ctx context.Context, gateway *models.RegionalGateway) error
-	Upsert(ctx context.Context, gateway *models.RegionalGateway) error
+	Get(ctx context.Context, id string) (*managermodels.RegionalGateway, error)
+	List(ctx context.Context) ([]*managermodels.RegionalGateway, error)
+	Create(ctx context.Context, gateway *managermodels.RegionalGateway) error
+	Update(ctx context.Context, gateway *managermodels.RegionalGateway) error
+	Upsert(ctx context.Context, gateway *managermodels.RegionalGateway) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -319,7 +320,7 @@ func NewGatewayRepository(db *bun.DB) GatewayRepository {
 	return &gatewayRepository{db: db}
 }
 
-func (r *gatewayRepository) Get(ctx context.Context, id string) (*models.RegionalGateway, error) {
+func (r *gatewayRepository) Get(ctx context.Context, id string) (*managermodels.RegionalGateway, error) {
 	gateway := new(RegionalGateway)
 	err := r.db.NewSelect().
 		Model(gateway).
@@ -336,7 +337,7 @@ func (r *gatewayRepository) Get(ctx context.Context, id string) (*models.Regiona
 	return gateway.ToModel(), nil
 }
 
-func (r *gatewayRepository) List(ctx context.Context) ([]*models.RegionalGateway, error) {
+func (r *gatewayRepository) List(ctx context.Context) ([]*managermodels.RegionalGateway, error) {
 	var gateways []*RegionalGateway
 	err := r.db.NewSelect().
 		Model(&gateways).
@@ -347,14 +348,14 @@ func (r *gatewayRepository) List(ctx context.Context) ([]*models.RegionalGateway
 		return nil, err
 	}
 
-	result := make([]*models.RegionalGateway, len(gateways))
+	result := make([]*managermodels.RegionalGateway, len(gateways))
 	for i, g := range gateways {
 		result[i] = g.ToModel()
 	}
 	return result, nil
 }
 
-func (r *gatewayRepository) Create(ctx context.Context, gateway *models.RegionalGateway) error {
+func (r *gatewayRepository) Create(ctx context.Context, gateway *managermodels.RegionalGateway) error {
 	dbGateway := RegionalGatewayFromModel(gateway)
 	_, err := r.db.NewInsert().
 		Model(dbGateway).
@@ -362,7 +363,7 @@ func (r *gatewayRepository) Create(ctx context.Context, gateway *models.Regional
 	return err
 }
 
-func (r *gatewayRepository) Update(ctx context.Context, gateway *models.RegionalGateway) error {
+func (r *gatewayRepository) Update(ctx context.Context, gateway *managermodels.RegionalGateway) error {
 	dbGateway := RegionalGatewayFromModel(gateway)
 	_, err := r.db.NewUpdate().
 		Model(dbGateway).
@@ -371,7 +372,7 @@ func (r *gatewayRepository) Update(ctx context.Context, gateway *models.Regional
 	return err
 }
 
-func (r *gatewayRepository) Upsert(ctx context.Context, gateway *models.RegionalGateway) error {
+func (r *gatewayRepository) Upsert(ctx context.Context, gateway *managermodels.RegionalGateway) error {
 	dbGateway := RegionalGatewayFromModel(gateway)
 	_, err := r.db.NewInsert().
 		Model(dbGateway).
@@ -395,11 +396,11 @@ func (r *gatewayRepository) Delete(ctx context.Context, id string) error {
 
 // ServerLocationRepository provides database operations for server locations
 type ServerLocationRepository interface {
-	Get(ctx context.Context, serverID string) (*models.ServerLocation, error)
-	List(ctx context.Context) ([]*models.ServerLocation, error)
-	Create(ctx context.Context, location *models.ServerLocation) error
-	Update(ctx context.Context, location *models.ServerLocation) error
-	Upsert(ctx context.Context, location *models.ServerLocation) error
+	Get(ctx context.Context, serverID string) (*managermodels.ServerLocation, error)
+	List(ctx context.Context) ([]*managermodels.ServerLocation, error)
+	Create(ctx context.Context, location *managermodels.ServerLocation) error
+	Update(ctx context.Context, location *managermodels.ServerLocation) error
+	Upsert(ctx context.Context, location *managermodels.ServerLocation) error
 	Delete(ctx context.Context, serverID string) error
 }
 
@@ -412,7 +413,7 @@ func NewServerLocationRepository(db *bun.DB) ServerLocationRepository {
 	return &serverLocationRepository{db: db}
 }
 
-func (r *serverLocationRepository) Get(ctx context.Context, serverID string) (*models.ServerLocation, error) {
+func (r *serverLocationRepository) Get(ctx context.Context, serverID string) (*managermodels.ServerLocation, error) {
 	location := new(ServerLocation)
 	err := r.db.NewSelect().
 		Model(location).
@@ -429,7 +430,7 @@ func (r *serverLocationRepository) Get(ctx context.Context, serverID string) (*m
 	return location.ToModel(), nil
 }
 
-func (r *serverLocationRepository) List(ctx context.Context) ([]*models.ServerLocation, error) {
+func (r *serverLocationRepository) List(ctx context.Context) ([]*managermodels.ServerLocation, error) {
 	var locations []*ServerLocation
 	err := r.db.NewSelect().
 		Model(&locations).
@@ -440,14 +441,14 @@ func (r *serverLocationRepository) List(ctx context.Context) ([]*models.ServerLo
 		return nil, err
 	}
 
-	result := make([]*models.ServerLocation, len(locations))
+	result := make([]*managermodels.ServerLocation, len(locations))
 	for i, l := range locations {
 		result[i] = l.ToModel()
 	}
 	return result, nil
 }
 
-func (r *serverLocationRepository) Create(ctx context.Context, location *models.ServerLocation) error {
+func (r *serverLocationRepository) Create(ctx context.Context, location *managermodels.ServerLocation) error {
 	dbLocation := ServerLocationFromModel(location)
 	_, err := r.db.NewInsert().
 		Model(dbLocation).
@@ -455,7 +456,7 @@ func (r *serverLocationRepository) Create(ctx context.Context, location *models.
 	return err
 }
 
-func (r *serverLocationRepository) Update(ctx context.Context, location *models.ServerLocation) error {
+func (r *serverLocationRepository) Update(ctx context.Context, location *managermodels.ServerLocation) error {
 	dbLocation := ServerLocationFromModel(location)
 	_, err := r.db.NewUpdate().
 		Model(dbLocation).
@@ -464,7 +465,7 @@ func (r *serverLocationRepository) Update(ctx context.Context, location *models.
 	return err
 }
 
-func (r *serverLocationRepository) Upsert(ctx context.Context, location *models.ServerLocation) error {
+func (r *serverLocationRepository) Upsert(ctx context.Context, location *managermodels.ServerLocation) error {
 	dbLocation := ServerLocationFromModel(location)
 	_, err := r.db.NewInsert().
 		Model(dbLocation).
@@ -483,11 +484,11 @@ func (r *serverLocationRepository) Delete(ctx context.Context, serverID string) 
 
 // ProxySessionRepository provides database operations for proxy sessions
 type ProxySessionRepository interface {
-	Get(ctx context.Context, id string) (*models.ProxySession, error)
-	ListByCustomer(ctx context.Context, customerID string) ([]*models.ProxySession, error)
-	ListActive(ctx context.Context) ([]*models.ProxySession, error)
-	Create(ctx context.Context, session *models.ProxySession) error
-	Update(ctx context.Context, session *models.ProxySession) error
+	Get(ctx context.Context, id string) (*managermodels.ProxySession, error)
+	ListByCustomer(ctx context.Context, customerID string) ([]*managermodels.ProxySession, error)
+	ListActive(ctx context.Context) ([]*managermodels.ProxySession, error)
+	Create(ctx context.Context, session *managermodels.ProxySession) error
+	Update(ctx context.Context, session *managermodels.ProxySession) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -500,7 +501,7 @@ func NewProxySessionRepository(db *bun.DB) ProxySessionRepository {
 	return &proxySessionRepository{db: db}
 }
 
-func (r *proxySessionRepository) Get(ctx context.Context, id string) (*models.ProxySession, error) {
+func (r *proxySessionRepository) Get(ctx context.Context, id string) (*managermodels.ProxySession, error) {
 	session := new(ProxySession)
 	err := r.db.NewSelect().
 		Model(session).
@@ -517,7 +518,7 @@ func (r *proxySessionRepository) Get(ctx context.Context, id string) (*models.Pr
 	return session.ToModel(), nil
 }
 
-func (r *proxySessionRepository) ListByCustomer(ctx context.Context, customerID string) ([]*models.ProxySession, error) {
+func (r *proxySessionRepository) ListByCustomer(ctx context.Context, customerID string) ([]*managermodels.ProxySession, error) {
 	var sessions []*ProxySession
 	err := r.db.NewSelect().
 		Model(&sessions).
@@ -529,14 +530,14 @@ func (r *proxySessionRepository) ListByCustomer(ctx context.Context, customerID 
 		return nil, err
 	}
 
-	result := make([]*models.ProxySession, len(sessions))
+	result := make([]*managermodels.ProxySession, len(sessions))
 	for i, s := range sessions {
 		result[i] = s.ToModel()
 	}
 	return result, nil
 }
 
-func (r *proxySessionRepository) ListActive(ctx context.Context) ([]*models.ProxySession, error) {
+func (r *proxySessionRepository) ListActive(ctx context.Context) ([]*managermodels.ProxySession, error) {
 	var sessions []*ProxySession
 	err := r.db.NewSelect().
 		Model(&sessions).
@@ -549,14 +550,14 @@ func (r *proxySessionRepository) ListActive(ctx context.Context) ([]*models.Prox
 		return nil, err
 	}
 
-	result := make([]*models.ProxySession, len(sessions))
+	result := make([]*managermodels.ProxySession, len(sessions))
 	for i, s := range sessions {
 		result[i] = s.ToModel()
 	}
 	return result, nil
 }
 
-func (r *proxySessionRepository) Create(ctx context.Context, session *models.ProxySession) error {
+func (r *proxySessionRepository) Create(ctx context.Context, session *managermodels.ProxySession) error {
 	dbSession := ProxySessionFromModel(session)
 	_, err := r.db.NewInsert().
 		Model(dbSession).
@@ -564,7 +565,7 @@ func (r *proxySessionRepository) Create(ctx context.Context, session *models.Pro
 	return err
 }
 
-func (r *proxySessionRepository) Update(ctx context.Context, session *models.ProxySession) error {
+func (r *proxySessionRepository) Update(ctx context.Context, session *managermodels.ProxySession) error {
 	dbSession := ProxySessionFromModel(session)
 	_, err := r.db.NewUpdate().
 		Model(dbSession).

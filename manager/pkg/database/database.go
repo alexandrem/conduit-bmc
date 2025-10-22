@@ -9,9 +9,11 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	_ "modernc.org/sqlite"
+
+	"core/domain"
 	"core/types"
 	"manager/pkg/models"
-	_ "modernc.org/sqlite"
 )
 
 type DB struct {
@@ -184,7 +186,7 @@ type legacyServerRow struct {
 	UpdatedAt    time.Time `db:"updated_at"`
 }
 
-func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
+func (db *DB) GetServerByID(serverID string) (*domain.Server, error) {
 	var row legacyServerRow
 	var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON, discoveryMetadataJSON sql.NullString
 
@@ -201,7 +203,7 @@ func (db *DB) GetServerByID(serverID string) (*models.Server, error) {
 	}
 
 	// Convert legacy format to new Server structure
-	server := &models.Server{
+	server := &domain.Server{
 		ID:           row.ID,
 		CustomerID:   row.CustomerID,
 		DatacenterID: row.DatacenterID,
@@ -327,7 +329,7 @@ func (db *DB) UpdateProxySessionStatus(sessionID, status string) error {
 	return err
 }
 
-func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
+func (db *DB) GetServersByCustomer(customerID string) ([]domain.Server, error) {
 	rows, err := db.conn.Query(
 		"SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, username, capabilities, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at FROM servers WHERE customer_id = ?",
 		customerID,
@@ -337,7 +339,7 @@ func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 	}
 	defer rows.Close()
 
-	var servers []models.Server
+	var servers []domain.Server
 	for rows.Next() {
 		var row legacyServerRow
 		var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON sql.NullString
@@ -348,7 +350,7 @@ func (db *DB) GetServersByCustomer(customerID string) ([]models.Server, error) {
 		}
 
 		// Convert legacy format to new Server structure
-		server := models.Server{
+		server := domain.Server{
 			ID:           row.ID,
 			CustomerID:   row.CustomerID,
 			DatacenterID: row.DatacenterID,
@@ -591,7 +593,7 @@ var (
 )
 
 // GetServerByIDAndCustomer retrieves a server by ID and ensures it belongs to the customer
-func (db *DB) GetServerByIDAndCustomer(serverID, customerID string) (*models.Server, error) {
+func (db *DB) GetServerByIDAndCustomer(serverID, customerID string) (*domain.Server, error) {
 	var row legacyServerRow
 
 	err := db.conn.QueryRow(
@@ -607,7 +609,7 @@ func (db *DB) GetServerByIDAndCustomer(serverID, customerID string) (*models.Ser
 	}
 
 	// Convert legacy format to new Server structure
-	server := &models.Server{
+	server := &domain.Server{
 		ID:           row.ID,
 		CustomerID:   row.CustomerID,
 		DatacenterID: row.DatacenterID,
@@ -651,7 +653,7 @@ func (db *DB) GetServerByIDAndCustomer(serverID, customerID string) (*models.Ser
 }
 
 // ListServersByCustomer retrieves servers for a customer with pagination
-func (db *DB) ListServersByCustomer(customerID string, pageSize int32, pageToken string) ([]models.Server, string, error) {
+func (db *DB) ListServersByCustomer(customerID string, pageSize int32, pageToken string) ([]domain.Server, string, error) {
 	// For simplicity, we're not implementing full pagination with tokens
 	// In a production system, you'd parse the pageToken to determine offset
 
@@ -664,7 +666,7 @@ func (db *DB) ListServersByCustomer(customerID string, pageSize int32, pageToken
 	}
 	defer rows.Close()
 
-	var servers []models.Server
+	var servers []domain.Server
 	for rows.Next() {
 		var row legacyServerRow
 
@@ -674,7 +676,7 @@ func (db *DB) ListServersByCustomer(customerID string, pageSize int32, pageToken
 		}
 
 		// Convert legacy format to new Server structure
-		server := models.Server{
+		server := domain.Server{
 			ID:           row.ID,
 			CustomerID:   row.CustomerID,
 			DatacenterID: row.DatacenterID,
@@ -721,7 +723,7 @@ func (db *DB) ListServersByCustomer(customerID string, pageSize int32, pageToken
 }
 
 // CreateServer creates a new server record or updates existing one
-func (db *DB) CreateServer(server *models.Server) error {
+func (db *DB) CreateServer(server *domain.Server) error {
 	// Convert features slice to string (simplified)
 	featuresStr := ""
 	for i, feature := range server.Features {
@@ -900,7 +902,7 @@ func (db *DB) CreateServerCustomerMapping(mapping *models.ServerCustomerMapping)
 }
 
 // GetServersForCustomer returns all servers accessible by a customer via the mapping table
-func (db *DB) GetServersForCustomer(customerID string) ([]models.Server, error) {
+func (db *DB) GetServersForCustomer(customerID string) ([]domain.Server, error) {
 	rows, err := db.conn.Query(`
 		SELECT s.id, s.customer_id, s.datacenter_id, s.bmc_type, s.bmc_endpoint, s.features, s.status, s.created_at, s.updated_at
 		FROM servers s
@@ -912,7 +914,7 @@ func (db *DB) GetServersForCustomer(customerID string) ([]models.Server, error) 
 	}
 	defer rows.Close()
 
-	var servers []models.Server
+	var servers []domain.Server
 	for rows.Next() {
 		var row legacyServerRow
 		err := rows.Scan(
@@ -931,7 +933,7 @@ func (db *DB) GetServersForCustomer(customerID string) ([]models.Server, error) 
 		}
 
 		// Convert legacy format to new Server structure
-		server := models.Server{
+		server := domain.Server{
 			ID:           row.ID,
 			CustomerID:   row.CustomerID,
 			DatacenterID: row.DatacenterID,
@@ -971,7 +973,7 @@ func (db *DB) GetServersForCustomer(customerID string) ([]models.Server, error) 
 }
 
 // GetAllServers returns all servers in the system (for temporary use)
-func (db *DB) GetAllServers() ([]models.Server, error) {
+func (db *DB) GetAllServers() ([]domain.Server, error) {
 	rows, err := db.conn.Query(`
 		SELECT id, customer_id, datacenter_id, bmc_type, bmc_endpoint, features, status, sol_endpoint, vnc_endpoint, control_endpoint, metadata, created_at, updated_at
 		FROM servers
@@ -981,7 +983,7 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 	}
 	defer rows.Close()
 
-	var servers []models.Server
+	var servers []domain.Server
 	for rows.Next() {
 		var row legacyServerRow
 		var solEndpointJSON, vncEndpointJSON, controlEndpointJSON, metadataJSON sql.NullString
@@ -1006,7 +1008,7 @@ func (db *DB) GetAllServers() ([]models.Server, error) {
 		}
 
 		// Convert legacy format to new Server structure
-		server := models.Server{
+		server := domain.Server{
 			ID:           row.ID,
 			CustomerID:   row.CustomerID,
 			DatacenterID: row.DatacenterID,

@@ -10,7 +10,7 @@ import (
 	"io"
 	"time"
 
-	"manager/pkg/models"
+	"core/domain"
 )
 
 // ServerContext contains the BMC endpoint information that will be encrypted
@@ -61,7 +61,7 @@ func NewServerContextService(encryptionKey string) *ServerContextService {
 }
 
 // CreateServerContext creates a server context with BMC endpoint information.
-func (s *ServerContextService) CreateServerContext(server *models.Server, permissions []string) *ServerContext {
+func (s *ServerContextService) CreateServerContext(server *domain.Server, permissions []string) *ServerContext {
 	now := time.Now()
 
 	bmcEndpoint := ""

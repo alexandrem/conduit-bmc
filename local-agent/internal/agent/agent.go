@@ -17,6 +17,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
+	"core/domain"
 	"core/identity"
 	"core/types"
 	gatewayv1 "gateway/gen/gateway/v1"
@@ -47,7 +48,7 @@ type LocalAgent struct {
 	httpServer *http.Server
 
 	// Current state
-	discoveredServers map[string]*discovery.Server
+	discoveredServers map[string]*domain.Server
 	registered        bool
 }
 
@@ -71,7 +72,7 @@ func NewLocalAgent(cfg *config.Config, discoveryService *discovery.Service, bmcC
 		httpClient:        httpClient,
 		bmcClient:         bmcClient,
 		solService:        solService,
-		discoveredServers: make(map[string]*discovery.Server),
+		discoveredServers: make(map[string]*domain.Server),
 	}
 
 	// Setup HTTP/Connect server
@@ -301,7 +302,7 @@ func (a *LocalAgent) discoverAndRegister(ctx context.Context) error {
 
 	// Update internal state
 	// Index servers by both their config ID and BMC endpoint to handle manager's ID format
-	a.discoveredServers = make(map[string]*discovery.Server)
+	a.discoveredServers = make(map[string]*domain.Server)
 	for _, server := range servers {
 		// Index by original server ID
 		a.discoveredServers[server.ID] = server
@@ -338,7 +339,7 @@ func (a *LocalAgent) discoverAndRegister(ctx context.Context) error {
 }
 
 // registerWithGateway registers this agent and its discovered servers with the Regional Gateway
-func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*discovery.Server) error {
+func (a *LocalAgent) registerWithGateway(ctx context.Context, servers []*domain.Server) error {
 	// Convert servers to BMC endpoint registrations
 	var bmcEndpoints []*gatewayv1.BMCEndpointRegistration
 	for _, server := range servers {

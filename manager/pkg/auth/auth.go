@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
+	"core/domain"
 	"manager/pkg/models"
 )
 
@@ -45,7 +46,7 @@ func (j *JWTManager) GenerateToken(customer *models.Customer) (string, error) {
 }
 
 // GenerateServerToken generates a JWT token with encrypted server context
-func (j *JWTManager) GenerateServerToken(customer *models.Customer, server *models.Server, permissions []string) (string, error) {
+func (j *JWTManager) GenerateServerToken(customer *models.Customer, server *domain.Server, permissions []string) (string, error) {
 	if j.secretKey == "" {
 		return "", fmt.Errorf("JWT secret key is empty")
 	}

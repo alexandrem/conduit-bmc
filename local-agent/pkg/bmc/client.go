@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"core/domain"
 	gatewayv1 "gateway/gen/gateway/v1"
 
 	"core/types"
-	"local-agent/internal/discovery"
 	"local-agent/pkg/ipmi"
 	"local-agent/pkg/redfish"
 )
@@ -28,7 +28,7 @@ func NewClient(ipmiClient *ipmi.Client, redfishClient *redfish.Client) *Client {
 }
 
 // GetPowerState retrieves the current power state of a server
-func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (string, error) {
+func (c *Client) GetPowerState(ctx context.Context, server *domain.Server) (string, error) {
 	if server == nil {
 		return "", fmt.Errorf("server is nil")
 	}
@@ -38,6 +38,9 @@ func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (s
 	}
 
 	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+	if controlEndpoint == nil {
+		return "", fmt.Errorf("server has no primary control endpoint")
+	}
 
 	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return "", fmt.Errorf("IPMI client is nil")
@@ -72,7 +75,7 @@ func (c *Client) GetPowerState(ctx context.Context, server *discovery.Server) (s
 }
 
 // PowerOn powers on a server
-func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
+func (c *Client) PowerOn(ctx context.Context, server *domain.Server) error {
 	if server == nil {
 		return fmt.Errorf("server is nil")
 	}
@@ -82,13 +85,16 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 	}
 
 	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+	if controlEndpoint == nil {
+		return fmt.Errorf("server has no primary control endpoint")
+	}
 
 	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
 	}
 
 	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
-		return fmt.Errorf("Redfish client is nil")
+		return fmt.Errorf("redfish client is nil")
 	}
 
 	endpoint := controlEndpoint.Endpoint
@@ -104,7 +110,7 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 
 	case types.BMCTypeRedfish:
 		if err := c.redfishClient.PowerOn(ctx, endpoint, username, password); err != nil {
-			return fmt.Errorf("Redfish PowerOn failed: %w", err)
+			return fmt.Errorf("redfish PowerOn failed: %w", err)
 		}
 		return nil
 
@@ -114,7 +120,7 @@ func (c *Client) PowerOn(ctx context.Context, server *discovery.Server) error {
 }
 
 // PowerOff powers off a server
-func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
+func (c *Client) PowerOff(ctx context.Context, server *domain.Server) error {
 	if server == nil {
 		return fmt.Errorf("server is nil")
 	}
@@ -124,6 +130,9 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 	}
 
 	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+	if controlEndpoint == nil {
+		return fmt.Errorf("server has no primary control endpoint")
+	}
 
 	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
@@ -146,7 +155,7 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 
 	case types.BMCTypeRedfish:
 		if err := c.redfishClient.PowerOff(ctx, endpoint, username, password); err != nil {
-			return fmt.Errorf("Redfish PowerOff failed: %w", err)
+			return fmt.Errorf("redfish PowerOff failed: %w", err)
 		}
 		return nil
 
@@ -156,7 +165,7 @@ func (c *Client) PowerOff(ctx context.Context, server *discovery.Server) error {
 }
 
 // PowerCycle power cycles a server
-func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error {
+func (c *Client) PowerCycle(ctx context.Context, server *domain.Server) error {
 	if server == nil {
 		return fmt.Errorf("server is nil")
 	}
@@ -166,6 +175,9 @@ func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error
 	}
 
 	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+	if controlEndpoint == nil {
+		return fmt.Errorf("server has no primary control endpoint")
+	}
 
 	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
@@ -198,23 +210,22 @@ func (c *Client) PowerCycle(ctx context.Context, server *discovery.Server) error
 }
 
 // Reset resets a server
-func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
+func (c *Client) Reset(ctx context.Context, server *domain.Server) error {
 	if server == nil {
 		return fmt.Errorf("server is nil")
 	}
 
-	if len(server.ControlEndpoints) == 0 {
-		return fmt.Errorf("server has no control endpoint")
-	}
-
 	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+	if controlEndpoint == nil {
+		return fmt.Errorf("server has no primary control endpoint")
+	}
 
 	if c.ipmiClient == nil && controlEndpoint.Type == types.BMCTypeIPMI {
 		return fmt.Errorf("IPMI client is nil")
 	}
 
 	if c.redfishClient == nil && controlEndpoint.Type == types.BMCTypeRedfish {
-		return fmt.Errorf("Redfish client is nil")
+		return fmt.Errorf("redfish client is nil")
 	}
 
 	endpoint := controlEndpoint.Endpoint
@@ -230,7 +241,7 @@ func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
 
 	case types.BMCTypeRedfish:
 		if err := c.redfishClient.Reset(ctx, endpoint, username, password); err != nil {
-			return fmt.Errorf("Redfish Reset failed: %w", err)
+			return fmt.Errorf("redfish Reset failed: %w", err)
 		}
 		return nil
 
@@ -240,16 +251,15 @@ func (c *Client) Reset(ctx context.Context, server *discovery.Server) error {
 }
 
 // GetBMCInfo retrieves detailed BMC hardware information
-func (c *Client) GetBMCInfo(ctx context.Context, server *discovery.Server) (*gatewayv1.BMCInfo, error) {
+func (c *Client) GetBMCInfo(ctx context.Context, server *domain.Server) (*gatewayv1.BMCInfo, error) {
 	if server == nil {
 		return nil, fmt.Errorf("server is nil")
 	}
 
-	if len(server.ControlEndpoints) == 0 {
-		return nil, fmt.Errorf("server has no control endpoint")
-	}
-
 	controlEndpoint := server.GetPrimaryControlEndpoint() // Use primary endpoint
+	if controlEndpoint == nil {
+		return nil, fmt.Errorf("server has no primary control endpoint")
+	}
 
 	endpoint := controlEndpoint.Endpoint
 	username := controlEndpoint.Username

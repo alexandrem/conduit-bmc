@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"core/domain"
 	"core/types"
 	"manager/pkg/models"
 
@@ -23,7 +24,7 @@ func TestJWTManager_GenerateServerToken(t *testing.T) {
 		Email: "test@example.com",
 	}
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
 		ControlEndpoints: []*types.BMCControlEndpoint{
@@ -113,7 +114,7 @@ func TestJWTManager_ValidateServerToken_WrongSigningKey(t *testing.T) {
 		Email: "test@example.com",
 	}
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
 		ControlEndpoints: []*types.BMCControlEndpoint{
@@ -147,7 +148,7 @@ func TestJWTManager_ValidateServerToken_CustomerMismatch(t *testing.T) {
 		Email: "test@example.com",
 	}
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:         "server-001",
 		CustomerID: "different-customer", // Different customer ID
 		ControlEndpoints: []*types.BMCControlEndpoint{
@@ -205,7 +206,7 @@ func TestJWTManager_EmptySecretKey(t *testing.T) {
 		Email: "test@example.com",
 	}
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
 		ControlEndpoints: []*types.BMCControlEndpoint{
@@ -234,7 +235,7 @@ func TestJWTManager_ServerTokenExpirationMatches(t *testing.T) {
 		Email: "test@example.com",
 	}
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
 		ControlEndpoints: []*types.BMCControlEndpoint{
@@ -270,7 +271,7 @@ func TestJWTManager_MultipleServerTokens(t *testing.T) {
 		Email: "test@example.com",
 	}
 
-	servers := []*models.Server{
+	servers := []*domain.Server{
 		{
 			ID:         "server-001",
 			CustomerID: "customer-123",

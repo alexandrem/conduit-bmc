@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"core/domain"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/internal/database"
@@ -557,7 +558,7 @@ func TestDatabaseRoundTrip_PreservesSOLAndVNCEndpoints(t *testing.T) {
 	handler := setupTestHandler(t)
 
 	// Create a server with full SOL and VNC endpoint configuration
-	server := &models.Server{
+	server := &domain.Server{
 		ID:           "test-server-roundtrip",
 		CustomerID:   "test-customer",
 		DatacenterID: "dc-test-01",

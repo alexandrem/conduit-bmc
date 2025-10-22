@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"core/domain"
 	"core/types"
 	managerv1 "manager/gen/manager/v1"
 	"manager/pkg/models"
@@ -120,7 +121,7 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 	setupTestGateway(t, handler)
 
 	// Create servers (all belong to "system" in new architecture)
-	server1 := &models.Server{
+	server1 := &domain.Server{
 		ID:           "server-alice-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
@@ -140,7 +141,7 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	server2 := &models.Server{
+	server2 := &domain.Server{
 		ID:           "server-bob-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
@@ -160,7 +161,7 @@ func TestListServers_FiltersByEmailCustomerID(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	server3 := &models.Server{
+	server3 := &domain.Server{
 		ID:           "server-alice-02",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
@@ -285,7 +286,7 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 	handler := setupTestHandler(t)
 
 	// Create servers (all belong to "system" in new architecture)
-	server1 := &models.Server{
+	server1 := &domain.Server{
 		ID:           "server-alice-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",
@@ -305,7 +306,7 @@ func TestGetServer_ChecksOwnership(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	server2 := &models.Server{
+	server2 := &domain.Server{
 		ID:           "server-bob-01",
 		CustomerID:   "system",
 		DatacenterID: "dc-test-01",

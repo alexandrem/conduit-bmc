@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"core/domain"
 	"core/types"
 	"local-agent/pkg/config"
 	"local-agent/pkg/ipmi"
@@ -152,7 +153,7 @@ func TestService_DiscoverServers_StaticOnly(t *testing.T) {
 func TestService_FilterDuplicates(t *testing.T) {
 	service := NewService(ipmi.NewClient(), redfish.NewClient(), &config.Config{})
 
-	existing := []*Server{
+	existing := []*domain.Server{
 		{
 			ID: "server-1",
 			ControlEndpoints: []*types.BMCControlEndpoint{{
@@ -169,7 +170,7 @@ func TestService_FilterDuplicates(t *testing.T) {
 		},
 	}
 
-	discovered := []*Server{
+	discovered := []*domain.Server{
 		{
 			ID: "discovered-1",
 			ControlEndpoints: []*types.BMCControlEndpoint{{
@@ -199,7 +200,7 @@ func TestService_FilterDuplicates(t *testing.T) {
 }
 
 func TestServer_Features(t *testing.T) {
-	server := &Server{
+	server := &domain.Server{
 		ID: "test-server",
 		ControlEndpoints: []*types.BMCControlEndpoint{{
 			Endpoint:     "192.168.1.100:623",

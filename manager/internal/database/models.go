@@ -5,6 +5,7 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"core/domain"
 	"core/types"
 	"manager/pkg/models"
 )
@@ -65,8 +66,8 @@ type Server struct {
 }
 
 // ToModel converts database Server to domain model
-func (s *Server) ToModel() *models.Server {
-	return &models.Server{
+func (s *Server) ToModel() *domain.Server {
+	return &domain.Server{
 		ID:                s.ID,
 		CustomerID:        s.CustomerID,
 		DatacenterID:      s.DatacenterID,
@@ -84,7 +85,7 @@ func (s *Server) ToModel() *models.Server {
 }
 
 // FromModel converts domain model to database Server
-func ServerFromModel(m *models.Server) *Server {
+func ServerFromModel(m *domain.Server) *Server {
 	return &Server{
 		ID:                m.ID,
 		CustomerID:        m.CustomerID,

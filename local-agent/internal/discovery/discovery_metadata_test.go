@@ -3,6 +3,7 @@ package discovery
 import (
 	"testing"
 
+	"core/domain"
 	"core/types"
 	"local-agent/pkg/config"
 )
@@ -20,7 +21,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		server           *Server
+		server           *domain.Server
 		discoveryMethod  types.DiscoveryMethod
 		configSource     string
 		wantProtocol     bool
@@ -32,7 +33,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 	}{
 		{
 			name: "Redfish server with TLS",
-			server: &Server{
+			server: &domain.Server{
 				ID:         "test-server-1",
 				CustomerID: "customer-1",
 				ControlEndpoints: []*types.BMCControlEndpoint{
@@ -77,7 +78,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 		},
 		{
 			name: "IPMI server without TLS",
-			server: &Server{
+			server: &domain.Server{
 				ID:         "test-server-2",
 				CustomerID: "customer-1",
 				ControlEndpoints: []*types.BMCControlEndpoint{
@@ -110,7 +111,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 		},
 		{
 			name: "Redfish with IPMI fallback",
-			server: &Server{
+			server: &domain.Server{
 				ID:         "test-server-3",
 				CustomerID: "customer-1",
 				ControlEndpoints: []*types.BMCControlEndpoint{
@@ -150,7 +151,7 @@ func TestBuildDiscoveryMetadata(t *testing.T) {
 		},
 		{
 			name: "Server with discovery error",
-			server: &Server{
+			server: &domain.Server{
 				ID:         "test-server-4",
 				CustomerID: "customer-1",
 				ControlEndpoints: []*types.BMCControlEndpoint{

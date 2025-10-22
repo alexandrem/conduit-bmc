@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"core/domain"
 	"core/types"
-	"manager/pkg/models"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 func TestServerContextService_CreateServerContext(t *testing.T) {
 	service := NewServerContextService("test-encryption-key")
 
-	server := &models.Server{
+	server := &domain.Server{
 		ID:         "server-001",
 		CustomerID: "customer-123",
 		ControlEndpoints: []*types.BMCControlEndpoint{
