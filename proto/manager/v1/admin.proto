@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package manager.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "manager/gen/manager/v1;managerv1";
+
+// AdminService provides administrative operations for managing the BMC infrastructure
+// All methods require is_admin=true in JWT claims
+service AdminService {
+  // Dashboard metrics and overview
+  rpc GetDashboardMetrics(GetDashboardMetricsRequest) returns (GetDashboardMetricsResponse);
+
+  // Server management across all customers
+  rpc ListAllServers(ListAllServersRequest) returns (ListAllServersResponse);
+
+  // Customer management
+  rpc ListAllCustomers(ListAllCustomersRequest) returns (ListAllCustomersResponse);
+
+  // Gateway health and monitoring
+  rpc GetGatewayHealth(GetGatewayHealthRequest) returns (GetGatewayHealthResponse);
+
+  // Available regions for filtering
+  rpc GetRegions(GetRegionsRequest) returns (GetRegionsResponse);
+
+  // VNC/SOL session management for admin console
+  rpc LaunchVNCSession(LaunchSessionRequest) returns (LaunchSessionResponse);
+  rpc LaunchSOLSession(LaunchSessionRequest) returns (LaunchSessionResponse);
+}
+
+// Dashboard metrics aggregation
+message GetDashboardMetricsRequest {}
+
+message GetDashboardMetricsResponse {
+  int32 total_bmcs = 1;
+  int32 online_bmcs = 2;
+  int32 offline_bmcs = 3;
+  int32 total_gateways = 4;
+  int32 active_gateways = 5;
+  int32 total_customers = 6;
+  int32 active_sessions = 7; // Future: requires session tracking
+}
+
+// List all servers across all customers (admin only)
+message ListAllServersRequest {
+  int32 page_size = 1; // Default 100, max 500
+  string page_token = 2; // Pagination token
+  string customer_filter = 3; // Optional: filter by customer_id
+  repeated string region_filter = 4; // Optional: filter by gateway regions (multi-select)
+  string gateway_filter = 5; // Optional: filter by specific gateway_id
+  string status_filter = 6; // Optional: filter by status
+}
+
+message ListAllServersResponse {
+  repeated ServerDetails servers = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message ServerDetails {
+  string server_id = 1;
+  string customer_id = 2;
+  string datacenter_id = 3;
+  string gateway_id = 4;
+  string primary_endpoint = 5;
+  string primary_protocol = 6; // "ipmi" or "redfish"
+  string status = 7; // "online", "offline", "unknown"
+  bool has_vnc = 8;
+  bool has_sol = 9;
+  google.protobuf.Timestamp last_seen = 10;
+  google.protobuf.Timestamp created_at = 11;
+}
+
+// List customers with server counts (admin only)
+message ListAllCustomersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListAllCustomersResponse {
+  repeated CustomerSummary customers = 1;
+  string next_page_token = 2;
+}
+
+message CustomerSummary {
+  string customer_id = 1;
+  string email = 2;
+  int32 server_count = 3;
+  int32 online_server_count = 4;
+  bool is_admin = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+// Gateway health metrics (admin only)
+message GetGatewayHealthRequest {}
+
+message GetGatewayHealthResponse {
+  repeated GatewayHealth gateways = 1;
+}
+
+message GatewayHealth {
+  string gateway_id = 1;
+  string region = 2;
+  string endpoint = 3;
+  string status = 4; // "active", "degraded", "offline"
+  google.protobuf.Timestamp last_seen = 5;
+  int32 server_count = 6;
+  repeated string datacenter_ids = 7;
+}
+
+// Available regions for filtering
+message GetRegionsRequest {}
+
+message GetRegionsResponse {
+  repeated string regions = 1; // e.g., ["us-east-1", "us-west-2", "eu-west-1"]
+}
+
+// VNC/SOL session launch (admin only)
+message LaunchSessionRequest {
+  string server_id = 1; // Server ID to launch console session for
+}
+
+message LaunchSessionResponse {
+  string session_id = 1;                       // Unique session identifier
+  string websocket_endpoint = 2;               // WebSocket endpoint for streaming
+  string viewer_url = 3;                       // Direct URL to web-based viewer/console
+  google.protobuf.Timestamp expires_at = 4;    // When the session expires
+}

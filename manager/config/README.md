@@ -33,6 +33,7 @@ Environment variables for the Manager service. Copy to `manager.env` and set app
 - `MANAGER_PORT` - Listen port (default: `8080`)
 - `ENVIRONMENT` - Environment name (`development`, `staging`, `production`)
 - `LOG_LEVEL` - Logging level (`debug`, `info`, `warn`, `error`)
+- `ADMIN_EMAILS` - Comma-separated list of admin user emails (e.g., `admin@example.com,ops@example.com`)
 
 **Security Variables:**
 - `TLS_ENABLED` - Enable TLS (default: `false`)

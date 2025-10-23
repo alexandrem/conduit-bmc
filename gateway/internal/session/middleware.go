@@ -110,34 +110,3 @@ func (m *Middleware) OptionalSession(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// GetSessionFromContext retrieves the web session from the request context
-// NOTE: Currently unused - prepared for Phase 3 when WebSocket handlers will use middleware
-func GetSessionFromContext(ctx context.Context) (*WebSession, bool) {
-	session, ok := ctx.Value(ContextKey).(*WebSession)
-	return session, ok
-}
-
-// GetJWTFromContext retrieves the JWT token from the request context
-// NOTE: Currently unused - prepared for Phase 3 when WebSocket handlers will use middleware
-func GetJWTFromContext(ctx context.Context) (string, bool) {
-	jwt, ok := ctx.Value(JWTContextKey).(string)
-	return jwt, ok
-}
-
-// GetJWTOrFallback retrieves JWT from context, or falls back to Authorization header
-// NOTE: Currently unused - prepared for Phase 3 when handlers use middleware instead of direct session lookup
-func GetJWTOrFallback(r *http.Request) (string, error) {
-	// Try context first (from session)
-	if jwt, ok := GetJWTFromContext(r.Context()); ok {
-		return jwt, nil
-	}
-
-	// Fallback to Authorization header (for API calls with direct JWT)
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" {
-		return ExtractJWTFromAuthHeader(authHeader)
-	}
-
-	return "", ErrSessionNotFound
-}

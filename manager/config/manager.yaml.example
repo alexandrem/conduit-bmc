@@ -69,6 +69,13 @@ database:
 auth:
   # JWT secret key MUST be set via JWT_SECRET_KEY environment variable
 
+  # Admin users - list of email addresses with admin privileges
+  # These users can access the admin dashboard at /admin
+  # Can also be set via ADMIN_EMAILS environment variable (comma-separated)
+  admin_emails:
+    - admin@example.com
+    - ops@example.com
+
   # Token TTL settings (not currently used)
   # token_ttl: 24h
   # refresh_token_ttl: 168h  # 7 days

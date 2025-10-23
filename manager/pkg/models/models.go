@@ -33,6 +33,7 @@ type Customer struct {
 	ID        string    `json:"id" db:"id"`
 	Email     string    `json:"email" db:"email"`
 	APIKey    string    `json:"api_key" db:"api_key"`
+	IsAdmin   bool      `json:"is_admin" db:"is_admin"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
@@ -61,6 +62,7 @@ type ServerInfo struct {
 type AuthClaims struct {
 	CustomerID string `json:"customer_id"`
 	Email      string `json:"email"`
+	IsAdmin    bool   `json:"is_admin"`
 	uuid.UUID  `json:"jti"`
 }
 

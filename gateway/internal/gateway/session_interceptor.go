@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/zerolog/log"
 
+	coreauth "core/auth"
 	gatewayv1 "gateway/gen/gateway/v1"
 	"gateway/internal/session"
 )
@@ -90,7 +91,7 @@ func (i *SessionCookieInterceptor) handleSOLSessionResponse(
 ) {
 	// Extract JWT from request header
 	authHeader := req.Header().Get("Authorization")
-	jwt, err := session.ExtractJWTFromAuthHeader(authHeader)
+	jwt, err := coreauth.ExtractJWTFromAuthHeader(authHeader)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to extract JWT from CreateSOLSession request")
 		return
@@ -151,7 +152,7 @@ func (i *SessionCookieInterceptor) handleVNCSessionResponse(
 ) {
 	// Extract JWT from request header
 	authHeader := req.Header().Get("Authorization")
-	jwt, err := session.ExtractJWTFromAuthHeader(authHeader)
+	jwt, err := coreauth.ExtractJWTFromAuthHeader(authHeader)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to extract JWT from CreateVNCSession request")
 		return

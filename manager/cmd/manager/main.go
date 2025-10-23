@@ -16,6 +16,7 @@ import (
 	"manager/internal/database"
 	"manager/internal/manager"
 	"manager/internal/metrics"
+	"manager/internal/webui"
 	"manager/pkg/auth"
 	"manager/pkg/config"
 
@@ -67,11 +68,25 @@ func main() {
 	// Initialize JWT manager
 	jwtManager := auth.NewJWTManager(cfg.Auth.JWTSecretKey)
 
+	// Log admin users
+	if len(cfg.Auth.AdminEmails) > 0 {
+		log.Info().Strs("admins", cfg.Auth.AdminEmails).Msg("Admin users configured")
+	} else {
+		log.Warn().Msg("No admin users configured - admin dashboard will be inaccessible")
+	}
+
 	// Initialize Connect handler
-	managerHandler := manager.NewBMCManagerServiceHandler(db, jwtManager)
+	managerHandler := manager.NewBMCManagerServiceHandler(db, jwtManager, cfg.Auth.AdminEmails)
+
+	// Initialize Admin service handler
+	adminHandler := manager.NewAdminServiceHandler(db, jwtManager)
 
 	// Create interceptors
 	interceptors := connect.WithInterceptors(managerHandler.AuthInterceptor())
+
+	// Create admin interceptor (requires admin privileges)
+	adminAuthInterceptor := auth.NewAdminAuthInterceptor(jwtManager)
+	adminInterceptors := connect.WithInterceptors(adminAuthInterceptor)
 
 	// Create the Connect service handler
 	path, handler := managerv1connect.NewBMCManagerServiceHandler(
@@ -79,9 +94,16 @@ func main() {
 		interceptors,
 	)
 
+	// Create the Admin service handler
+	adminPath, adminHandlerConnect := managerv1connect.NewAdminServiceHandler(
+		adminHandler,
+		adminInterceptors,
+	)
+
 	// Create HTTP mux
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
+	mux.Handle(adminPath, adminHandlerConnect)
 
 	// Add health check endpoint (non-Connect)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -122,6 +144,18 @@ func main() {
 	// Add Prometheus metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 
+	// Add login page
+	loginHandler := webui.NewLoginHandler()
+	mux.Handle("/login", loginHandler)
+
+	// Add logout handler
+	logoutHandler := webui.NewLogoutHandler()
+	mux.Handle("/logout", logoutHandler)
+
+	// Add admin dashboard web UI
+	adminDashboardHandler := webui.NewAdminDashboardHandler(jwtManager)
+	mux.Handle("/admin", adminDashboardHandler)
+
 	// Add CORS and metrics middleware for web clients
 	corsHandler := addCORS(metrics.HTTPMetricsMiddleware(mux))
 
@@ -144,12 +178,15 @@ func main() {
 	log.Info().
 		Str("address", cfg.GetListenAddress()).
 		Str("rpc_path", path).
+		Str("admin_rpc_path", adminPath).
 		Str("database", cfg.Database.Driver).
 		Bool("rate_limiting", cfg.Manager.RateLimit.Enabled).
 		Msg("Starting manager server")
 	log.Info().Msgf("Health check: http://%s/health", cfg.GetListenAddress())
 	log.Info().Msgf("System status: http://%s/status", cfg.GetListenAddress())
 	log.Info().Msgf("Metrics: http://%s/metrics", cfg.GetListenAddress())
+	log.Info().Msgf("Login page: http://%s/login", cfg.GetListenAddress())
+	log.Info().Msgf("Admin dashboard: http://%s/admin", cfg.GetListenAddress())
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal().Err(err).Msg("Server failed to start")

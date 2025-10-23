@@ -21,16 +21,18 @@ import (
 )
 
 type BMCManagerServiceHandler struct {
-	db         *database.BunDB
-	jwtManager *auth.JWTManager
-	startTime  time.Time
+	db          *database.BunDB
+	jwtManager  *auth.JWTManager
+	startTime   time.Time
+	adminEmails []string
 }
 
-func NewBMCManagerServiceHandler(db *database.BunDB, jwtManager *auth.JWTManager) *BMCManagerServiceHandler {
+func NewBMCManagerServiceHandler(db *database.BunDB, jwtManager *auth.JWTManager, adminEmails []string) *BMCManagerServiceHandler {
 	return &BMCManagerServiceHandler{
-		db:         db,
-		jwtManager: jwtManager,
-		startTime:  time.Now(),
+		db:          db,
+		jwtManager:  jwtManager,
+		startTime:   time.Now(),
+		adminEmails: adminEmails,
 	}
 }
 
@@ -85,10 +87,21 @@ func (h *BMCManagerServiceHandler) Authenticate(
 
 	// Use email address as customer ID - this aligns with OIDC where email is a stable identifier
 	customerID := req.Msg.Email
+
+	// Check if user is admin
+	isAdmin := h.isAdminEmail(req.Msg.Email)
+
 	customer := &models.Customer{
-		ID:    customerID,
-		Email: req.Msg.Email,
+		ID:      customerID,
+		Email:   req.Msg.Email,
+		IsAdmin: isAdmin,
 	}
+
+	// Log admin authentication
+	if isAdmin {
+		log.Info().Str("email", req.Msg.Email).Msg("Admin user authenticated")
+	}
+
 	accessToken, err := h.jwtManager.GenerateToken(customer)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to generate token: %w", err))
@@ -106,6 +119,16 @@ func (h *BMCManagerServiceHandler) Authenticate(
 	}
 
 	return connect.NewResponse(response), nil
+}
+
+// isAdminEmail checks if an email is in the admin list
+func (h *BMCManagerServiceHandler) isAdminEmail(email string) bool {
+	for _, adminEmail := range h.adminEmails {
+		if adminEmail == email {
+			return true
+		}
+	}
+	return false
 }
 
 // RefreshToken issues new access tokens using refresh tokens

@@ -17,6 +17,7 @@ type Customer struct {
 	ID        string    `bun:"id,pk"`
 	Email     string    `bun:"email,unique,notnull"`
 	APIKey    string    `bun:"api_key,unique,notnull"`
+	IsAdmin   bool      `bun:"is_admin,notnull,default:false"`
 	CreatedAt time.Time `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 
 	// Relations
@@ -29,6 +30,7 @@ func (c *Customer) ToModel() *models.Customer {
 		ID:        c.ID,
 		Email:     c.Email,
 		APIKey:    c.APIKey,
+		IsAdmin:   c.IsAdmin,
 		CreatedAt: c.CreatedAt,
 	}
 }
@@ -39,6 +41,7 @@ func CustomerFromModel(m *models.Customer) *Customer {
 		ID:        m.ID,
 		Email:     m.Email,
 		APIKey:    m.APIKey,
+		IsAdmin:   m.IsAdmin,
 		CreatedAt: m.CreatedAt,
 	}
 }
@@ -191,6 +194,11 @@ type ServerLocation struct {
 	Features          []string                    `bun:"features,type:json,notnull"`
 	CreatedAt         time.Time                   `bun:"created_at,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt         time.Time                   `bun:"updated_at,nullzero,notnull,default:current_timestamp"`
+
+	// Relations
+	Server          *Server          `bun:"rel:belongs-to,join:server_id=id"`
+	Customer        *Customer        `bun:"rel:belongs-to,join:customer_id=id"`
+	RegionalGateway *RegionalGateway `bun:"rel:belongs-to,join:regional_gateway_id=id"`
 }
 
 // ToModel converts database ServerLocation to domain model

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='20' height='14' x='2' y='3' rx='2' ry='2' fill='%2300ff00'/><circle cx='12' cy='10' r='2' fill='%23000'/></svg>">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						naturals: {
+							n0: '#0b0e12', // near-black, cool base
+							n1: '#10141b',
+							n2: '#151a22',
+							n3: '#1b212b',
+							n4: '#232a36',
+							n5: '#2d3544',
+							n6: '#374051',
+							n7: '#454f63',
+							n8: '#5b667d',
+							n9: '#7a859b',
+							n10: '#96a1b4',
+							n11: '#bcc4d3',
+							n12: '#e0e5ec',
+							n13: '#f4f6fa',
+							n14: '#ffffff',
+						},
+
+						primary: {
+							p1: '#a8c9ff', // light accent (hover)
+							p2: '#6da8ff',
+							p3: '#3c8bff', // main accent
+							p4: '#2a6edc', // pressed / focused
+							p5: '#1d4ea5', // deep accent
+							p6: '#14233a', // dark tone for contrast blocks
+						},
+
+						green: {
+							g1: '#4bd6a5', // success
+							g2: '#20926e',
+							g3: '#10231d',
+						},
+
+						red: {
+							r1: '#ff5b6e', // error
+							r2: '#9e3642',
+							r3: '#2a181c',
+						},
+
+						yellow: {
+							y1: '#ffc857', // warning / pending
+							y2: '#c89a2b',
+							y3: '#2b2412',
+						},
+
+						blue: {
+							b1: '#5bb8ff', // info highlight
+							b2: '#2a94f5', // vibrant
+							b3: '#1a395d', // muted dark
+						},
+
+						accent: {
+							a1: '#93b4ff', // link hover, highlight frames
+							a2: '#4269e1', // buttons, tags
+							a3: '#1a2540', // subtle panels
+						},
+					},
+
+					boxShadow: {
+						soft: '0 1px 3px rgba(0, 0, 0, 0.25)',
+						focus: '0 0 0 2px rgba(66,105,225,0.4)',
+					},
+
+					animation: {
+						pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+					},
+				},
+			},
+		};
+
+	</script>
+
+    <!-- Connect RPC Web Client -->
+    <script type="module">
+        import { createPromiseClient } from "https://esm.sh/@connectrpc/connect@1.1.2";
+        import { createConnectTransport } from "https://esm.sh/@connectrpc/connect-web@1.1.2";
+
+        // Make available globally
+        window.createPromiseClient = createPromiseClient;
+        window.createConnectTransport = createConnectTransport;
+        window.connectReady = true;
+    </script>
+
+    <style>
+        {{block "styles" .}}{{end}}
+    </style>
+</head>
+<body class="font-sans bg-naturals-n0 text-naturals-n11 min-h-screen antialiased">
+    <!-- Header -->
+    <div class="bg-naturals-n2 border-b border-naturals-n4 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-semibold flex items-center gap-3">
+            <div class="w-6 h-6 bg-primary-p4 rounded-lg flex items-center justify-center text-xs text-naturals-n14 font-bold">A</div>
+            <span class="text-naturals-n14">{{.HeaderTitle}}</span>
+        </h1>
+        <div class="flex items-center gap-4">
+            <div class="text-sm text-naturals-n11">{{.UserEmail}}</div>
+            <button onclick="logout()" class="px-4 py-2 bg-red-r3 hover:bg-red-r2 border border-red-r2 rounded-lg text-sm transition-colors text-red-r1">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+        {{block "content" .}}{{end}}
+    </div>
+
+    <script>
+        // Global utility functions
+        function logout() {
+            // Clear session and redirect to login
+            window.location.href = '/logout';
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Never';
+            const date = new Date(timestamp.seconds * 1000);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+            return date.toLocaleDateString();
+        }
+
+        function formatTimestampFull(timestamp) {
+            if (!timestamp) return 'Never';
+            const date = new Date(timestamp.seconds * 1000);
+            return date.toLocaleString();
+        }
+
+        {{block "scripts" .}}{{end}}
+    </script>
+</body>
+</html>

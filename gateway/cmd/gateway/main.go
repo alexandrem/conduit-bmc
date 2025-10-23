@@ -20,6 +20,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
+	coreauth "core/auth"
 	baseconf "core/config"
 	"core/streaming"
 	"gateway/gen/gateway/v1/gatewayv1connect"
@@ -634,7 +635,5 @@ func getJWTFromRequest(r *http.Request, gatewayHandler *gateway.RegionalGatewayH
 		return "", fmt.Errorf("no authentication provided")
 	}
 
-	return session.ExtractJWTFromAuthHeader(authHeader)
+	return coreauth.ExtractJWTFromAuthHeader(authHeader)
 }
-
-// handleSimpleVNCTest - simple test to verify WebSocket is working before trying full VNC protocol

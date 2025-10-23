@@ -28,7 +28,7 @@ func setupTestHandler(t *testing.T) *BMCManagerServiceHandler {
 	// Create JWT manager with test secret
 	jwtManager := auth.NewJWTManager("test-secret-key")
 
-	return NewBMCManagerServiceHandler(db, jwtManager)
+	return NewBMCManagerServiceHandler(db, jwtManager, []string{})
 }
 
 func setupTestGateway(t *testing.T, handler *BMCManagerServiceHandler) *models.RegionalGateway {
@@ -152,7 +152,7 @@ func TestListGateways_HandlesTokenGenerationError(t *testing.T) {
 
 	// Create JWT manager with empty secret (will cause errors)
 	jwtManager := auth.NewJWTManager("")
-	handler := NewBMCManagerServiceHandler(db, jwtManager)
+	handler := NewBMCManagerServiceHandler(db, jwtManager, []string{})
 
 	// Setup test gateway and customer
 	setupTestGateway(t, handler)

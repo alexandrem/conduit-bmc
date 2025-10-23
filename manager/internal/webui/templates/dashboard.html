@@ -1,0 +1,447 @@
+{{define "content"}}
+<div class="space-y-6">
+    <!-- System Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl p-5">
+            <div class="text-naturals-n9 text-sm mb-1">Total BMCs</div>
+            <div id="metric-total-bmcs" class="text-3xl font-bold text-naturals-n14">-</div>
+        </div>
+        <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl p-5">
+            <div class="text-naturals-n9 text-sm mb-1">Online</div>
+            <div id="metric-online-bmcs" class="text-3xl font-bold text-green-g1">-</div>
+        </div>
+        <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl p-5">
+            <div class="text-naturals-n9 text-sm mb-1">Gateways</div>
+            <div id="metric-gateways" class="text-3xl font-bold text-naturals-n14">-</div>
+        </div>
+        <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl p-5">
+            <div class="text-naturals-n9 text-sm mb-1">Customers</div>
+            <div id="metric-customers" class="text-3xl font-bold text-naturals-n14">-</div>
+        </div>
+    </div>
+
+    <!-- Gateway Health Table -->
+    <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-naturals-n4">
+            <h2 class="text-lg font-semibold text-naturals-n14">Gateway Health</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-naturals-n2">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Gateway</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Region</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Last Seen</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Servers</th>
+                    </tr>
+                </thead>
+                <tbody id="gateway-table-body" class="divide-y divide-naturals-n4">
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-naturals-n9">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Customer Summary Table -->
+    <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-naturals-n4">
+            <h2 class="text-lg font-semibold text-naturals-n14">Customers</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-naturals-n2">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Servers</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Online</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Admin</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customer-table-body" class="divide-y divide-naturals-n4">
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-naturals-n9">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Servers Table with Filters -->
+    <div class="bg-naturals-n3 border border-naturals-n4 rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-naturals-n4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-naturals-n14">All Servers</h2>
+                <button onclick="refreshServers()" class="px-4 py-2 bg-naturals-n4 hover:bg-naturals-n5 border border-naturals-n5 rounded-lg text-sm transition-colors text-blue-b1">
+                    Refresh
+                </button>
+            </div>
+            <!-- Filters -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                <input id="filter-search" type="text" placeholder="Search server ID..."
+                       class="px-3 py-2 bg-naturals-n2 border border-naturals-n4 rounded-lg text-sm text-naturals-n14 placeholder-naturals-n9 focus:outline-none focus:ring-1 focus:ring-primary-p4 focus:border-primary-p4"
+                       onkeyup="applyFilters()">
+                <select id="filter-customer" class="px-3 py-2 bg-naturals-n2 border border-naturals-n4 rounded-lg text-sm text-naturals-n14 focus:outline-none focus:ring-1 focus:ring-primary-p4 focus:border-primary-p4" onchange="applyFilters()">
+                    <option value="">All Customers</option>
+                </select>
+                <select id="filter-region" class="px-3 py-2 bg-naturals-n2 border border-naturals-n4 rounded-lg text-sm text-naturals-n14 focus:outline-none focus:ring-1 focus:ring-primary-p4 focus:border-primary-p4" onchange="applyFilters()">
+                    <option value="">All Regions</option>
+                </select>
+                <select id="filter-gateway" class="px-3 py-2 bg-naturals-n2 border border-naturals-n4 rounded-lg text-sm text-naturals-n14 focus:outline-none focus:ring-1 focus:ring-primary-p4 focus:border-primary-p4" onchange="applyFilters()">
+                    <option value="">All Gateways</option>
+                </select>
+                <select id="filter-status" class="px-3 py-2 bg-naturals-n2 border border-naturals-n4 rounded-lg text-sm text-naturals-n14 focus:outline-none focus:ring-1 focus:ring-primary-p4 focus:border-primary-p4" onchange="applyFilters()">
+                    <option value="">All Status</option>
+                    <option value="active">Online</option>
+                    <option value="offline">Offline</option>
+                </select>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-naturals-n2">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Server ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Datacenter</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Gateway</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Endpoint</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-naturals-n9 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="server-table-body" class="divide-y divide-naturals-n4">
+                    <tr>
+                        <td colspan="7" class="px-6 py-8 text-center text-naturals-n9">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 border-t border-naturals-n4 flex justify-between items-center">
+            <div class="text-sm text-naturals-n11">
+                Showing <span id="server-count">0</span> servers
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+let adminClient = null;
+let allServers = [];
+let allCustomers = [];
+let allGateways = [];
+let allRegions = [];
+
+// Initialize dashboard when Connect is ready
+function initDashboard() {
+    if (!window.connectReady) {
+        setTimeout(initDashboard, 100);
+        return;
+    }
+
+    console.log('Initializing admin dashboard...');
+
+    // Create Connect transport
+    const transport = window.createConnectTransport({
+        baseUrl: window.location.origin,
+        credentials: "include"
+    });
+
+    // Load AdminService descriptor (we'll need to import this properly)
+    // For now, we'll use fetch API directly with Connect protocol
+    loadDashboardData();
+}
+
+async function loadDashboardData() {
+    try {
+        await Promise.all([
+            loadMetrics(),
+            loadGateways(),
+            loadCustomers(),
+            loadRegions(),
+            loadServers()
+        ]);
+        console.log('Dashboard data loaded successfully');
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        showError('Failed to load dashboard data: ' + error.message);
+    }
+}
+
+async function connectRPC(service, method, request = {}) {
+    const response = await fetch(`/manager.v1.${service}/${method}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {{.Token}}'
+        },
+        credentials: 'include',
+        body: JSON.stringify(request)
+    });
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`RPC ${method} failed: ${error}`);
+    }
+
+    return await response.json();
+}
+
+async function loadMetrics() {
+    const data = await connectRPC('AdminService', 'GetDashboardMetrics');
+    document.getElementById('metric-total-bmcs').textContent = data.totalBmcs || 0;
+    document.getElementById('metric-online-bmcs').textContent = data.onlineBmcs || 0;
+    document.getElementById('metric-gateways').textContent = `${data.activeGateways || 0}/${data.totalGateways || 0}`;
+    document.getElementById('metric-customers').textContent = data.totalCustomers || 0;
+}
+
+async function loadGateways() {
+    const data = await connectRPC('AdminService', 'GetGatewayHealth');
+    allGateways = data.gateways || [];
+    renderGateways();
+    populateGatewayFilter();
+}
+
+function renderGateways() {
+    const tbody = document.getElementById('gateway-table-body');
+    if (!allGateways.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-naturals-n9">No gateways found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = allGateways.map(gw => `
+        <tr class="hover:bg-naturals-n4 transition-colors">
+            <td class="px-6 py-4 text-sm font-mono text-naturals-n12">${gw.gatewayId}</td>
+            <td class="px-6 py-4 text-sm text-naturals-n11">${gw.region}</td>
+            <td class="px-6 py-4 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(gw.status)}">
+                    ${gw.status}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-naturals-n9">${formatTimestamp(gw.lastSeen)}</td>
+            <td class="px-6 py-4 text-sm text-naturals-n11">${gw.serverCount || 0}</td>
+        </tr>
+    `).join('');
+}
+
+async function loadCustomers() {
+    const data = await connectRPC('AdminService', 'ListAllCustomers', { pageSize: 100 });
+    allCustomers = data.customers || [];
+    renderCustomers();
+    populateCustomerFilter();
+}
+
+function renderCustomers() {
+    const tbody = document.getElementById('customer-table-body');
+    if (!allCustomers.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-naturals-n9">No customers found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = allCustomers.map(customer => `
+        <tr class="hover:bg-naturals-n4 transition-colors">
+            <td class="px-6 py-4 text-sm text-naturals-n11">${customer.email}</td>
+            <td class="px-6 py-4 text-sm text-naturals-n11">${customer.serverCount || 0}</td>
+            <td class="px-6 py-4 text-sm text-green-g1">${customer.onlineServerCount || 0}</td>
+            <td class="px-6 py-4 text-sm">
+                ${customer.isAdmin ? '<span class="px-2 py-1 bg-primary-p6 border border-primary-p5 rounded-full text-xs text-primary-p2">Admin</span>' : ''}
+            </td>
+            <td class="px-6 py-4 text-sm">
+                <button onclick="filterByCustomer('${customer.customerId}')" class="text-blue-b1 hover:text-primary-p3 transition-colors">
+                    Filter Servers
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function loadRegions() {
+    const data = await connectRPC('AdminService', 'GetRegions');
+    allRegions = data.regions || [];
+    populateRegionFilter();
+}
+
+async function loadServers() {
+    const data = await connectRPC('AdminService', 'ListAllServers', { pageSize: 500 });
+    allServers = data.servers || [];
+    applyFilters();
+}
+
+function applyFilters() {
+    const search = document.getElementById('filter-search').value.toLowerCase();
+    const customerFilter = document.getElementById('filter-customer').value;
+    const regionFilter = document.getElementById('filter-region').value;
+    const gatewayFilter = document.getElementById('filter-gateway').value;
+    const statusFilter = document.getElementById('filter-status').value;
+
+    const filtered = allServers.filter(server => {
+        if (search && !server.serverId.toLowerCase().includes(search)) return false;
+        if (customerFilter && server.customerId !== customerFilter) return false;
+        if (regionFilter) {
+            const gateway = allGateways.find(gw => gw.gatewayId === server.gatewayId);
+            if (!gateway || gateway.region !== regionFilter) return false;
+        }
+        if (gatewayFilter && server.gatewayId !== gatewayFilter) return false;
+        if (statusFilter && server.status !== statusFilter) return false;
+        return true;
+    });
+
+    renderServers(filtered);
+}
+
+function renderServers(servers) {
+    const tbody = document.getElementById('server-table-body');
+    document.getElementById('server-count').textContent = servers.length;
+
+    if (!servers.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-naturals-n9">No servers found</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = servers.map(server => `
+        <tr class="hover:bg-naturals-n4 transition-colors">
+            <td class="px-6 py-4 text-sm font-mono text-naturals-n12">${server.serverId}</td>
+            <td class="px-6 py-4 text-sm text-naturals-n9">${server.customerId}</td>
+            <td class="px-6 py-4 text-sm text-naturals-n11">${server.datacenterId}</td>
+            <td class="px-6 py-4 text-sm text-naturals-n11">${server.gatewayId}</td>
+            <td class="px-6 py-4 text-sm font-mono text-naturals-n9">${server.primaryEndpoint}</td>
+            <td class="px-6 py-4 text-sm">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(server.status)}">
+                    ${server.status}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm">
+                <div class="flex gap-2">
+                    <button onclick="showServerInfo('${server.serverId}')" class="text-blue-b1 hover:text-primary-p3 transition-colors" title="Info">ⓘ</button>
+                    ${server.hasVnc ? `<button onclick="launchVNC('${server.serverId}')" class="text-green-g1 hover:text-green-g2 transition-colors" title="VNC">VNC</button>` : ''}
+                    ${server.hasSol ? `<button onclick="launchSOL('${server.serverId}')" class="text-primary-p3 hover:text-primary-p4 transition-colors" title="SOL">SOL</button>` : ''}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function populateCustomerFilter() {
+    const select = document.getElementById('filter-customer');
+    select.innerHTML = '<option value="">All Customers</option>' +
+        allCustomers.map(c => `<option value="${c.customerId}">${c.email}</option>`).join('');
+}
+
+function populateRegionFilter() {
+    const select = document.getElementById('filter-region');
+    select.innerHTML = '<option value="">All Regions</option>' +
+        allRegions.map(r => `<option value="${r}">${r}</option>`).join('');
+}
+
+function populateGatewayFilter() {
+    const select = document.getElementById('filter-gateway');
+    select.innerHTML = '<option value="">All Gateways</option>' +
+        allGateways.map(gw => `<option value="${gw.gatewayId}">${gw.gatewayId} (${gw.region})</option>`).join('');
+}
+
+function getStatusClass(status) {
+    const statusMap = {
+        'active': 'bg-green-g3 border border-green-g2 text-green-g1',
+        'online': 'bg-green-g3 border border-green-g2 text-green-g1',
+        'offline': 'bg-red-r3 border border-red-r2 text-red-r1',
+        'degraded': 'bg-yellow-y4 border border-yellow-y3 text-yellow-y1',
+        'unknown': 'bg-naturals-n4 border border-naturals-n6 text-naturals-n10'
+    };
+    return statusMap[status.toLowerCase()] || 'bg-naturals-n4 border border-naturals-n6 text-naturals-n10';
+}
+
+function filterByCustomer(customerId) {
+    document.getElementById('filter-customer').value = customerId;
+    applyFilters();
+    // Scroll to servers table
+    document.getElementById('server-table-body').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function refreshServers() {
+    await loadServers();
+}
+
+function showServerInfo(serverId) {
+    const server = allServers.find(s => s.serverId === serverId);
+    if (!server) return;
+
+    alert(`Server: ${serverId}\nCustomer: ${server.customerId}\nDatacenter: ${server.datacenterId}\nGateway: ${server.gatewayId}\nEndpoint: ${server.primaryEndpoint}\nProtocol: ${server.primaryProtocol}\nStatus: ${server.status}`);
+}
+
+async function launchVNC(serverId) {
+    try {
+        // Cookie will be sent automatically by the browser
+        const response = await fetch('/manager.v1.AdminService/LaunchVNCSession', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin', // Include cookies in the request
+            body: JSON.stringify({
+                serverId: serverId
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create VNC session');
+        }
+
+        const data = await response.json();
+        // Open VNC viewer in new window
+        if (data.viewerUrl) {
+            window.open(data.viewerUrl, '_blank');
+        } else {
+            alert('VNC session created:\n' +
+                  'Session ID: ' + data.sessionId + '\n' +
+                  'WebSocket: ' + data.websocketEndpoint);
+        }
+    } catch (error) {
+        showError('Failed to launch VNC: ' + error.message);
+    }
+}
+
+async function launchSOL(serverId) {
+    try {
+        // Cookie will be sent automatically by the browser
+        const response = await fetch('/manager.v1.AdminService/LaunchSOLSession', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin', // Include cookies in the request
+            body: JSON.stringify({
+                serverId: serverId
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create SOL session');
+        }
+
+        const data = await response.json();
+        // Open SOL console in new window
+        if (data.viewerUrl) {
+            window.open(data.viewerUrl, '_blank');
+        } else {
+            alert('SOL session created:\n' +
+                  'Session ID: ' + data.sessionId + '\n' +
+                  'WebSocket: ' + data.websocketEndpoint);
+        }
+    } catch (error) {
+        showError('Failed to launch SOL: ' + error.message);
+    }
+}
+
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+// Start initialization when page loads
+window.addEventListener('load', initDashboard);
+{{end}}

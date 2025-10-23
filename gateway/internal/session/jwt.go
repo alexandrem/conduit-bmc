@@ -48,17 +48,3 @@ func CalculateRenewalTime(expiresAt time.Time) time.Time {
 	renewalBuffer := ttl * 20 / 100
 	return expiresAt.Add(-renewalBuffer)
 }
-
-// ExtractJWTFromAuthHeader extracts the JWT token from an Authorization header
-func ExtractJWTFromAuthHeader(authHeader string) (string, error) {
-	if authHeader == "" {
-		return "", fmt.Errorf("authorization header is empty")
-	}
-
-	parts := strings.SplitN(authHeader, " ", 2)
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		return "", fmt.Errorf("invalid authorization header format")
-	}
-
-	return parts[1], nil
-}

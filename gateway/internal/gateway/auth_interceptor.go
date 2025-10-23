@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/rs/zerolog/log"
 
+	coreauth "core/auth"
 	"gateway/internal/session"
 )
 
@@ -66,7 +67,7 @@ func (i *AuthInterceptor) extractJWT(ctx context.Context, req connect.AnyRequest
 	// First try Authorization header (for CLI/API calls)
 	authHeader := req.Header().Get("Authorization")
 	if authHeader != "" {
-		jwt, err := session.ExtractJWTFromAuthHeader(authHeader)
+		jwt, err := coreauth.ExtractJWTFromAuthHeader(authHeader)
 		if err == nil && jwt != "" {
 			log.Debug().Msg("Extracted JWT from Authorization header")
 			return jwt

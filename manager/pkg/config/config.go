@@ -76,6 +76,7 @@ type AuthConfig struct {
 	JWTSecretKey    string        `yaml:"-" env:"JWT_SECRET_KEY"`
 	TokenTTL        time.Duration `yaml:"token_ttl" default:"24h"`          // TODO: Not currently used in code
 	RefreshTokenTTL time.Duration `yaml:"refresh_token_ttl" default:"168h"` // TODO: Not currently used in code
+	AdminEmails     []string      `yaml:"admin_emails" env:"ADMIN_EMAILS"`  // List of admin user emails
 }
 
 // ManagerConfig contains manager-specific configuration

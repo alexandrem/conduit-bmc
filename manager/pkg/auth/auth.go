@@ -31,12 +31,14 @@ func (j *JWTManager) GenerateToken(customer *models.Customer) (string, error) {
 	claims := &models.AuthClaims{
 		CustomerID: customer.ID,
 		Email:      customer.Email,
+		IsAdmin:    customer.IsAdmin,
 		UUID:       uuid.New(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"customer_id": claims.CustomerID,
 		"email":       claims.Email,
+		"is_admin":    claims.IsAdmin,
 		"jti":         claims.UUID.String(),
 		"exp":         time.Now().UTC().Add(24 * time.Hour).Unix(),
 		"iat":         time.Now().UTC().Unix(),
@@ -113,6 +115,9 @@ func (j *JWTManager) ValidateToken(tokenString string) (*models.AuthClaims, erro
 		return nil, fmt.Errorf("invalid email claim")
 	}
 
+	// is_admin is optional and defaults to false
+	isAdmin, _ := claims["is_admin"].(bool)
+
 	jtiStr, ok := claims["jti"].(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid jti claim")
@@ -126,6 +131,7 @@ func (j *JWTManager) ValidateToken(tokenString string) (*models.AuthClaims, erro
 	return &models.AuthClaims{
 		CustomerID: customerID,
 		Email:      email,
+		IsAdmin:    isAdmin,
 		UUID:       jti,
 	}, nil
 }
@@ -163,6 +169,9 @@ func (j *JWTManager) ValidateServerToken(tokenString string) (*models.AuthClaims
 		return nil, nil, fmt.Errorf("invalid email claim")
 	}
 
+	// is_admin is optional and defaults to false
+	isAdmin, _ := claims["is_admin"].(bool)
+
 	jtiStr, ok := claims["jti"].(string)
 	if !ok {
 		return nil, nil, fmt.Errorf("invalid jti claim")
@@ -176,6 +185,7 @@ func (j *JWTManager) ValidateServerToken(tokenString string) (*models.AuthClaims
 	authClaims := &models.AuthClaims{
 		CustomerID: customerID,
 		Email:      email,
+		IsAdmin:    isAdmin,
 		UUID:       jti,
 	}
 

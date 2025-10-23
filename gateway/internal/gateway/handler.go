@@ -129,14 +129,50 @@ func (h *RegionalGatewayHandler) TokenValidationInterceptor() connect.UnaryInter
 				return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("no authentication token found"))
 			}
 
-			// Validate token
-			claims, err := h.jwtManager.ValidateToken(token)
+			// Validate token - try server token first (with encrypted context), fall back to regular token
+			tokenPrefix := token
+			if len(token) > 20 {
+				tokenPrefix = token[:20] + "..."
+			}
+			log.Debug().
+				Str("token_prefix", tokenPrefix).
+				Str("procedure", req.Spec().Procedure).
+				Msg("Validating server token")
+
+			claims, serverContext, err := h.jwtManager.ValidateServerToken(token)
 			if err != nil {
+				log.Error().
+					Err(err).
+					Str("procedure", req.Spec().Procedure).
+					Msg("Token validation failed")
 				return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("invalid token: %w", err))
 			}
 
+			log.Debug().
+				Bool("has_server_context", serverContext != nil).
+				Str("customer_id", claims.CustomerID).
+				Msg("Token validated successfully")
+
 			// Add claims to context for use in handlers
 			ctx = context.WithValue(ctx, "claims", claims)
+
+			// If this is a server token with context, add it to context for handlers to use
+			if serverContext != nil {
+				// Convert to gateway's ServerContext type
+				gatewayServerContext := &commonauth.ServerContext{
+					ServerID:     serverContext.ServerID,
+					CustomerID:   serverContext.CustomerID,
+					BMCEndpoint:  serverContext.BMCEndpoint,
+					BMCType:      serverContext.BMCType,
+					Features:     serverContext.Features,
+					DatacenterID: serverContext.DatacenterID,
+					Permissions:  serverContext.Permissions,
+					IssuedAt:     serverContext.IssuedAt,
+					ExpiresAt:    serverContext.ExpiresAt,
+				}
+				ctx = context.WithValue(ctx, "server_context", gatewayServerContext)
+			}
+
 			// Token is already in context from AuthInterceptor
 			return next(ctx, req)
 		}
@@ -325,42 +361,41 @@ func (h *RegionalGatewayHandler) AgentHeartbeat(
 func (h *RegionalGatewayHandler) extractServerContextFromJWT(
 	ctx context.Context,
 ) (*commonauth.ServerContext, error) {
+	// First try to get server context from context (set by TokenValidationInterceptor)
+	serverContext, ok := ctx.Value("server_context").(*commonauth.ServerContext)
+	if ok && serverContext != nil {
+		return serverContext, nil
+	}
+
+	// Fallback for tests or direct calls: extract and validate from token
 	token, ok := ctx.Value("token").(string)
 	if !ok {
 		return nil, fmt.Errorf("no token found in context")
 	}
 
-	// First validate the JWT using the regular JWT manager
-	// (same signing key as manager).
-	_, serverContext, err := h.jwtManager.ValidateServerToken(token)
+	// Validate the JWT token
+	_, managerServerContext, err := h.jwtManager.ValidateServerToken(token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate server token: %w", err)
 	}
 
-	// Check if we got server context from the token.
-	if serverContext == nil {
+	// Check if we got server context from the token
+	if managerServerContext == nil {
 		return nil, fmt.Errorf("token does not contain server context")
 	}
 
-	// Convert from manager's ServerContext to gateway's ServerContext.
+	// Convert from manager's ServerContext to gateway's ServerContext
 	gatewayServerContext := &commonauth.ServerContext{
-		ServerID:     serverContext.ServerID,
-		CustomerID:   serverContext.CustomerID,
-		BMCEndpoint:  serverContext.BMCEndpoint,
-		BMCType:      serverContext.BMCType,
-		Features:     serverContext.Features,
-		DatacenterID: serverContext.DatacenterID,
-		Permissions:  serverContext.Permissions,
-		IssuedAt:     serverContext.IssuedAt,
-		ExpiresAt:    serverContext.ExpiresAt,
+		ServerID:     managerServerContext.ServerID,
+		CustomerID:   managerServerContext.CustomerID,
+		BMCEndpoint:  managerServerContext.BMCEndpoint,
+		BMCType:      managerServerContext.BMCType,
+		Features:     managerServerContext.Features,
+		DatacenterID: managerServerContext.DatacenterID,
+		Permissions:  managerServerContext.Permissions,
+		IssuedAt:     managerServerContext.IssuedAt,
+		ExpiresAt:    managerServerContext.ExpiresAt,
 	}
-
-	// TODO: Replace with proper server-customer mapping validation
-	// Temporarily disabled: servers now belong to "system" and we have separate server-customer mappings
-	// In the new architecture, we need to validate against ServerCustomerMapping table instead
-	// if gatewayServerContext.CustomerID != claims.CustomerID {
-	//     return nil, fmt.Errorf("server context customer ID mismatch")
-	// }
 
 	return gatewayServerContext, nil
 }
@@ -827,7 +862,7 @@ func (h *RegionalGatewayHandler) GetVNCSession(
 	// For now, simulate a session response
 	log.Debug().Str("session_id", sessionID).Str("customer_id", claims.CustomerID).Msg("Retrieved VNC session")
 
-	session := &gatewayv1.VNCSession{
+	vncSession := &gatewayv1.VNCSession{
 		Id:                sessionID,
 		CustomerId:        claims.CustomerID,
 		ServerId:          "server-001", // TODO: Get from actual session storage
@@ -840,7 +875,7 @@ func (h *RegionalGatewayHandler) GetVNCSession(
 	}
 
 	resp := &gatewayv1.GetVNCSessionResponse{
-		Session: session,
+		Session: vncSession,
 	}
 
 	return connect.NewResponse(resp), nil

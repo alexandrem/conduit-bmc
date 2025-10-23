@@ -22,7 +22,7 @@ func TestAuthenticate_TokenExpirationTime(t *testing.T) {
 	defer db.Close()
 
 	jwtManager := auth.NewJWTManager("test-secret-key")
-	handler := NewBMCManagerServiceHandler(db, jwtManager)
+	handler := NewBMCManagerServiceHandler(db, jwtManager, []string{})
 
 	// Test authentication request
 	req := connect.NewRequest(&managerv1.AuthenticateRequest{
@@ -71,7 +71,7 @@ func TestAuthenticate_TokenContentMatchesExpiration(t *testing.T) {
 	defer db.Close()
 
 	jwtManager := auth.NewJWTManager("test-secret-key")
-	handler := NewBMCManagerServiceHandler(db, jwtManager)
+	handler := NewBMCManagerServiceHandler(db, jwtManager, []string{})
 
 	// Test authentication request
 	req := connect.NewRequest(&managerv1.AuthenticateRequest{
@@ -123,7 +123,7 @@ func TestAuthenticate_RegressTokenImmediateExpiration(t *testing.T) {
 	defer db.Close()
 
 	jwtManager := auth.NewJWTManager("test-secret-key")
-	handler := NewBMCManagerServiceHandler(db, jwtManager)
+	handler := NewBMCManagerServiceHandler(db, jwtManager, []string{})
 
 	// Test authentication request
 	req := connect.NewRequest(&managerv1.AuthenticateRequest{

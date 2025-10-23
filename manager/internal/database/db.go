@@ -23,6 +23,7 @@ type BunDB struct {
 	Gateways  GatewayRepository
 	Locations ServerLocationRepository
 	Sessions  ProxySessionRepository
+	Admin     AdminRepository
 }
 
 // Option is a functional option for configuring the database
@@ -67,6 +68,7 @@ func New(dbPath string, opts ...Option) (*BunDB, error) {
 	bunDB.Gateways = NewGatewayRepository(db)
 	bunDB.Locations = NewServerLocationRepository(db)
 	bunDB.Sessions = NewProxySessionRepository(db)
+	bunDB.Admin = NewAdminRepository(db)
 
 	// Run migrations
 	if err := bunDB.Migrate(context.Background()); err != nil {
@@ -135,6 +137,7 @@ func (db *BunDB) Migrate(ctx context.Context) error {
 		// Customer indexes
 		"CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email)",
 		"CREATE INDEX IF NOT EXISTS idx_customers_api_key ON customers(api_key)",
+		"CREATE INDEX IF NOT EXISTS idx_customers_is_admin ON customers(is_admin) WHERE is_admin = true",
 
 		// Gateway indexes
 		"CREATE INDEX IF NOT EXISTS idx_regional_gateways_region ON regional_gateways(region)",
