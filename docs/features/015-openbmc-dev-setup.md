@@ -1,19 +1,14 @@
 ---
 rfd: "015"
 title: "OpenBMC Development Environment"
-state: "draft"
-breaking_changes: false
+state: "approved"
 testing_required: true
-database_changes: false
-api_changes: false
-dependencies: [ "005" ]
-database_migrations: [ ]
 areas: [ "docker", "tests", "local-agent" ]
 ---
 
 # RFD 015 - OpenBMC Development Environment
 
-**Status:** 🚧 Draft
+**Status:** ✅ Approved
 
 ## Summary
 
