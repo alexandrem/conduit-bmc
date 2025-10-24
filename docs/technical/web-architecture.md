@@ -34,7 +34,7 @@ Both provide web-based server management with real-time WebSocket streaming.
 - 🎛️ **Ctrl+Alt+Del** - Send three-finger salute
 
 **Power Management**:
-- ⚡ Power On - Start server
+- ⚡ Power On - Start server (via Connect RPC)
 - ⏻ Power Off - Graceful shutdown
 - 🔄 Reset - Hard reset
 - 🔁 Power Cycle - Off then on
@@ -104,7 +104,7 @@ ws://gateway.example.com/console/{sessionId}/ws
 (Same as SOL Console - shared component)
 - Power On/Off/Reset/Cycle controls
 - Live power status monitoring
-- API-backed power operations
+- Connect RPC-backed power operations
 
 **Connection Statistics**:
 - Bytes sent/received
@@ -162,7 +162,7 @@ Both interfaces share common infrastructure and UI elements:
 - Live state updates
 
 **Power Operations**:
-- Shared REST API endpoints
+- Connect RPC endpoints (/gateway.v1.GatewayService/*)
 - Cookie-based authentication
 - Real-time status refresh after operations
 - Error handling and user feedback
@@ -192,12 +192,12 @@ Gateway HTTP/WebSocket Endpoints:
 /console/{sessionId}             → SOL console HTML (XTerm.js interface)
 /console/{sessionId}/ws          → SOL WebSocket (terminal JSON messages)
 
-# INCORRECT - Need update with buf connect HTTP/JSON
-/api/servers/{id}/power/on       → Power on REST API (cookie or header auth)
-/api/servers/{id}/power/off      → Power off REST API
-/api/servers/{id}/power/reset    → Hard reset REST API
-/api/servers/{id}/power/cycle    → Power cycle REST API
-/api/servers/{id}/power/status   → Power status query API
+# Connect RPC endpoints (HTTP/JSON with cookie or header auth)
+/gateway.v1.GatewayService/PowerOn         → Power on (POST with server_id in JSON body)
+/gateway.v1.GatewayService/PowerOff        → Power off (POST with server_id in JSON body)
+/gateway.v1.GatewayService/Reset           → Hard reset (POST with server_id in JSON body)
+/gateway.v1.GatewayService/PowerCycle      → Power cycle (POST with server_id in JSON body)
+/gateway.v1.GatewayService/GetPowerStatus  → Power status query (POST with server_id in JSON body)
 ```
 
 ## ✨ Key Differentiators
@@ -212,7 +212,7 @@ Gateway HTTP/WebSocket Endpoints:
 | **Display**      | Text-based terminal (80x25+)  | Graphical canvas (any res)   |
 | **Use Cases**    | BIOS, boot, CLI, debugging    | GUI apps, desktop management |
 | **Authentication**| Cookie-based (shared)        | Cookie-based (shared)        |
-| **Power Control** | REST API (shared)            | REST API (shared)            |
+| **Power Control** | Connect RPC (shared)         | Connect RPC (shared)         |
 | **Session Type** | SOL session + web session     | VNC session + web session    |
 
 ## 🚀 Usage Examples
@@ -261,15 +261,28 @@ Opening VNC viewer: http://localhost:8081/vnc/vnc-1759547665462170154
 ```javascript
 // Automatically uses session cookie (no token needed in JavaScript!)
 
-// Power on
-fetch('/api/servers/server-001/power/on', {
+// Power on using Connect RPC
+fetch('/gateway.v1.GatewayService/PowerOn', {
     method: 'POST',
-    credentials: 'include'  // Send cookie
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    credentials: 'include',  // Send cookie
+    body: JSON.stringify({
+        server_id: 'server-001'
+    })
 });
 
-// Get status
-fetch('/api/servers/server-001/power/status', {
-    credentials: 'include'
+// Get power status
+fetch('/gateway.v1.GatewayService/GetPowerStatus', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+        server_id: 'server-001'
+    })
 });
 ```
 
@@ -294,7 +307,8 @@ fetch('/api/servers/server-001/power/status', {
 
 **Developer Experience**:
 - Shared templates reduce duplication
-- Consistent API patterns across both consoles
+- Connect RPC provides type-safe, protocol buffer-based APIs
+- Consistent API patterns across both consoles (all use /gateway.v1.GatewayService/*)
 - Easy to extend with new features
 - Well-documented session management
 
