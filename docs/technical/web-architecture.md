@@ -291,24 +291,20 @@ fetch('/gateway.v1.GatewayService/GetPowerStatus', {
 **Separation of Concerns**:
 - SOL console optimized for text-based server management
 - VNC viewer optimized for graphical desktop access
-- Shared power management and styling
+- Shared power management and server operations
 
 **Security First**:
 - Cookie-based authentication with HttpOnly protection
-- Automatic HTTP/HTTPS security adaptation
 - JWT tokens never exposed to browser
 - Session activity tracking and expiration
 
 **User Experience**:
-- Professional terminal and VNC interfaces
 - Real-time WebSocket communication
 - Auto-reconnection with visual feedback
 - Responsive design for desktop and mobile
 
 **Developer Experience**:
-- Shared templates reduce duplication
 - Connect RPC provides type-safe, protocol buffer-based APIs
-- Consistent API patterns across both consoles (all use /gateway.v1.GatewayService/*)
 - Easy to extend with new features
 - Well-documented session management
 
