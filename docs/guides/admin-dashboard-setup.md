@@ -337,8 +337,9 @@ All require `Authorization: Bearer <admin-token>` header:
 
 ### Web UI Endpoints
 
-- `GET /login` - Login page (sets auth cookie)
-- `GET /admin` - Admin dashboard (requires admin cookie/token)
+- `GET /login`  - Login page (sets auth cookie)
+- `GET /logout` - Logout page
+- `GET /admin`  - Admin dashboard (requires admin cookie/token)
 
 ### Authentication Endpoint
 
