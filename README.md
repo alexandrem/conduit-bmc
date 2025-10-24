@@ -14,6 +14,7 @@ providers who need to give customers secure access to their server consoles.
 - 🌐 Multi-datacenter, scales with local agents
 - 👥 Multi-tenant isolation
 - 💻 CLI, web console, and API proxy
+- 🎛️ Admin dashboard for cross-tenant server management
 - 🔄 Auto-discovery or static BMC config
 - 🚀 NAT-friendly outbound connections
 - 🔌 Dual APIs: REST + gRPC
@@ -70,7 +71,7 @@ The system is split into four services:
 
 | Component       | Responsibilities                                         | Key Interfaces          |
 | --------------- | -------------------------------------------------------- | ----------------------- |
-| **Manager**     | AuthN/Z, token issuance, server-to-gateway mapping       | REST + gRPC (Connect)   |
+| **Manager**     | AuthN/Z, token issuance, server-to-gateway mapping, admin dashboard | REST + gRPC (Connect) + Web UI |
 | **Gateway**     | Web console, API proxy, per-region routing               | REST + gRPC + WebSocket |
 | **Local Agent** | BMC discovery, IPMI/Redfish operations, outbound tunnels | gRPC -> Gateway         |
 | **CLI**         | User automation and scripting surface                    | gRPC -> Gateway/Manager |
@@ -98,6 +99,24 @@ make dev-full-up
 ```
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full instructions.
+
+### Admin Dashboard Access
+
+The Manager service includes a web-based admin dashboard for cross-tenant server operations:
+
+1. Configure admin users in `config/manager.yaml` or via `ADMIN_EMAILS` environment variable
+2. Start the Manager service
+3. Login at `http://localhost:8080/login` with an admin email
+4. Access the dashboard at `http://localhost:8080/admin`
+
+The dashboard provides:
+- System-wide metrics and gateway health monitoring
+- Unified view of all BMC servers across all customers
+- Server status monitoring and filtering (by customer, region, gateway, status)
+- Direct console access (VNC/SOL) for troubleshooting
+- Server operations and control (with future support for bulk actions)
+
+See the [Admin Dashboard Setup Guide](docs/guides/admin-dashboard-setup.md) for detailed configuration and usage instructions.
 
 ### Development Workflow
 
@@ -141,6 +160,7 @@ In-depth technical specifications and protocol implementations:
 
 User-facing guides and compatibility information:
 
+- **[Admin Dashboard Setup](docs/guides/admin-dashboard-setup.md)** - Setting up and using the admin web console
 - **[BMC Support](docs/guides/BMC-SUPPORT.md)** - Supported BMC types and compatibility matrix
 - **[Building OpenBMC](docs/guides/build-openbmc.md)** - OpenBMC compilation instructions
 - **[VirtualBMC Setup](docs/guides/dev-virtualbmc.md)** - VirtualBMC development environment
