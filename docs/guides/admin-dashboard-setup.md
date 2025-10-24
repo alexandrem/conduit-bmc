@@ -353,7 +353,3 @@ For issues or questions:
 2. Verify configuration: Print `admin_emails` on startup
 3. Test API directly: Use curl to isolate frontend issues
 4. Check browser console: JavaScript errors will show there
-
----
-
-**Happy Testing!** 🎉
